@@ -178,7 +178,7 @@ export async function createVideo(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ businessId, ...input }),
+      body: JSON.stringify({ ...input, businessId }),
     });
 
     if (!response.ok) {

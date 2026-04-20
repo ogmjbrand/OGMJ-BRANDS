@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Failed to create website', 500);
     }
 
-    return createSuccessResponse(website, 201);
+    return createSuccessResponse(website, undefined, undefined, 201);
   } catch (error) {
     return handleApiError(error);
   }

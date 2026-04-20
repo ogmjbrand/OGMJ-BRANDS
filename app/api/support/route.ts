@@ -81,29 +81,32 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data to match service interface
-    const transformedTickets = tickets?.map(ticket => ({
-      id: ticket.id,
-      ticketNumber: ticket.ticket_number,
-      subject: ticket.subject,
-      description: ticket.description,
-      priority: ticket.priority,
-      status: ticket.status,
-      category: ticket.category,
-      channel: ticket.channel,
-      assignedTo: ticket.assigned_to,
-      resolveSla: ticket.resolve_sla,
-      resolvedAt: ticket.resolved_at,
-      resolutionNotes: ticket.resolution_notes,
-      createdAt: ticket.created_at,
-      updatedAt: ticket.updated_at,
-      createdBy: ticket.created_by,
-      contact: ticket.contact ? {
-        id: ticket.contact.id,
-        firstName: ticket.contact.first_name,
-        lastName: ticket.contact.last_name,
-        email: ticket.contact.email,
-      } : undefined,
-    })) || [];
+    const transformedTickets = tickets?.map(ticket => {
+      const contactObj = !Array.isArray(ticket.contact) ? ticket.contact : null;
+      return {
+        id: ticket.id,
+        ticketNumber: ticket.ticket_number,
+        subject: ticket.subject,
+        description: ticket.description,
+        priority: ticket.priority,
+        status: ticket.status,
+        category: ticket.category,
+        channel: ticket.channel,
+        assignedTo: ticket.assigned_to,
+        resolveSla: ticket.resolve_sla,
+        resolvedAt: ticket.resolved_at,
+        resolutionNotes: ticket.resolution_notes,
+        createdAt: ticket.created_at,
+        updatedAt: ticket.updated_at,
+        createdBy: ticket.created_by,
+        contact: contactObj ? {
+          id: (contactObj as any).id,
+          firstName: (contactObj as any).first_name,
+          lastName: (contactObj as any).last_name,
+          email: (contactObj as any).email,
+        } : undefined,
+      };
+    }) || [];
 
     return createSuccessResponse({
       items: transformedTickets,
@@ -212,12 +215,15 @@ export async function POST(request: NextRequest) {
       createdAt: ticket.created_at,
       updatedAt: ticket.updated_at,
       createdBy: ticket.created_by,
-      contact: ticket.contact ? {
-        id: Array.isArray(ticket.contact) ? ticket.contact[0].id : ticket.contact.id,
-        firstName: Array.isArray(ticket.contact) ? ticket.contact[0].first_name : ticket.contact.first_name,
-        lastName: Array.isArray(ticket.contact) ? ticket.contact[0].last_name : ticket.contact.last_name,
-        email: Array.isArray(ticket.contact) ? ticket.contact[0].email : ticket.contact.email,
-      } : undefined,
+      contact: (() => {
+        const contactObj = ticket.contact && !Array.isArray(ticket.contact) ? ticket.contact : null;
+        return contactObj ? {
+          id: (contactObj as any).id,
+          firstName: (contactObj as any).first_name,
+          lastName: (contactObj as any).last_name,
+          email: (contactObj as any).email,
+        } : undefined;
+      })(),
     };
 
     return createSuccessResponse(transformedTicket, undefined, undefined, 201);

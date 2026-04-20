@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Failed to create page', 500);
     }
 
-    return createSuccessResponse(page, 201);
+    return createSuccessResponse(page, undefined, undefined, 201);
   } catch (error) {
     return handleApiError(error);
   }

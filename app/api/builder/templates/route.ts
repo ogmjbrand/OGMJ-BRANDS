@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Failed to create template', 500);
     }
 
-    return createSuccessResponse(template, 201);
+    return createSuccessResponse(template, undefined, undefined, 201);
   } catch (error) {
     return handleApiError(error);
   }

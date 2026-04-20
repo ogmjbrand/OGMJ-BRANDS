@@ -114,8 +114,8 @@ export async function createWebsite(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        businessId,
         ...input,
+        businessId,
       }),
     });
 
