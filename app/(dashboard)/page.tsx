@@ -3,12 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
-import type { Business } from '@/lib/types';
+import { getDashboardMetrics } from '@/lib/services/analytics.service';
+import { useBusinessContext } from '@/lib/context/BusinessContext';
+import type { Business, DashboardMetrics } from '@/lib/types';
 
 export default function DashboardPage() {
+  const { currentBusiness } = useBusinessContext();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string>('');
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -31,6 +36,29 @@ export default function DashboardPage() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    async function loadMetrics() {
+      if (!currentBusiness) {
+        setMetrics(null);
+        return;
+      }
+
+      try {
+        setMetricsLoading(true);
+        const result = await getDashboardMetrics(currentBusiness.id, '30d');
+        if (result.success && result.data) {
+          setMetrics(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to load metrics:', error);
+      } finally {
+        setMetricsLoading(false);
+      }
+    }
+
+    loadMetrics();
+  }, [currentBusiness]);
 
   if (loading) {
     return (
@@ -59,18 +87,18 @@ export default function DashboardPage() {
           icon="🏢"
         />
         <StatCard
-          label="Total Contacts"
-          value="0"
+          label="New Contacts (30d)"
+          value={metricsLoading ? "..." : (metrics?.overview.newContacts || 0)}
           icon="👥"
         />
         <StatCard
-          label="Revenue (MRR)"
-          value="$0"
+          label="Revenue (30d)"
+          value={metricsLoading ? "..." : `$${metrics?.overview.totalRevenue || 0}`}
           icon="💰"
         />
         <StatCard
-          label="Active Deals"
-          value="0"
+          label="New Deals (30d)"
+          value={metricsLoading ? "..." : (metrics?.overview.newDeals || 0)}
           icon="💼"
         />
       </div>
