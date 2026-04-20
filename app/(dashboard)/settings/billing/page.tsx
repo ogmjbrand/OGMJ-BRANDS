@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
+import { useBusinessContext } from '@/lib/context/BusinessContext';
+import { getCurrentUser } from '@/lib/auth';
 
 const PLANS = [
   {
@@ -57,11 +59,17 @@ const PLANS = [
 ];
 
 export default function BillingPage() {
+  const { currentBusiness } = useBusinessContext();
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSelectPlan = async (planId: string) => {
+    if (!currentBusiness) {
+      setError('No business selected');
+      return;
+    }
+
     if (planId === 'professional') {
       // Already on this plan
       return;
@@ -77,9 +85,11 @@ export default function BillingPage() {
         throw new Error('Plan not found');
       }
 
-      // TODO: Get user email and business ID from context
-      const userEmail = 'user@example.com';
-      const businessId = 'business-id';
+      // Get current user
+      const user = await getCurrentUser();
+      if (!user?.email) {
+        throw new Error('User not authenticated');
+      }
 
       // Initialize payment
       const response = await fetch('/api/payments/initialize', {
@@ -87,8 +97,8 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: plan.price,
-          email: userEmail,
-          businessId,
+          email: user.email,
+          businessId: currentBusiness.id,
           planId,
         }),
       });
@@ -99,10 +109,14 @@ export default function BillingPage() {
         throw new Error(result.error || 'Payment initialization failed');
       }
 
-      // Redirect to Paystack
-      window.location.href = result.data.authorizationUrl;
+      // Redirect to Paystack payment page
+      if (result.authorization_url) {
+        window.location.href = result.authorization_url;
+      } else {
+        throw new Error('No payment URL received');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Payment initialization failed');
     } finally {
       setLoading(false);
     }

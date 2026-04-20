@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         preview_url: previewUrl,
         is_public: isPublic || false,
         created_by: user.id,
-      })
+      } as any)
       .select()
       .single();
 

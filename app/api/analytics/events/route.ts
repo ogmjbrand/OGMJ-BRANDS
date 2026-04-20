@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createServerClient();
 
-    const [{ data: recentEvents, error: recentError }, { data: counts, error: countError }] = await Promise.all([
+    const [recentResult, countResult] = await Promise.all([
       supabase
         .from('events')
         .select('*')
@@ -27,18 +27,28 @@ export async function GET(request: NextRequest) {
         .limit(50),
       supabase
         .from('events')
-        .select('event_type, count:event_type', { count: 'exact' })
-        .eq('business_id', businessId)
-        .group('event_type'),
+        .select('event_type')
+        .eq('business_id', businessId),
     ] as any);
 
-    if (recentError || countError) {
-      throw recentError || countError;
+    if (recentResult.error || countResult.error) {
+      throw recentResult.error || countResult.error;
     }
 
+    // Count event types manually
+    const eventCounts: Record<string, number> = {};
+    (countResult.data || []).forEach((event: any) => {
+      eventCounts[event.event_type] = (eventCounts[event.event_type] || 0) + 1;
+    });
+
+    const eventTypeCounts = Object.entries(eventCounts).map(([event_type, count]) => ({
+      event_type,
+      count,
+    }));
+
     return createSuccessResponse({
-      recentEvents: recentEvents || [],
-      eventTypeCounts: counts || [],
+      recentEvents: recentResult.data || [],
+      eventTypeCounts,
     });
   } catch (error) {
     return handleApiError(error);

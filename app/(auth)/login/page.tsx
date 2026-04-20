@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
-import { signIn } from '@/lib/auth';
+import { signIn, signInWithOAuth } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +21,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn(email, password);
-      
+
       if (result.error) {
         setError(result.error);
         return;
@@ -32,6 +33,28 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOAuthSignIn = async (provider: 'github' | 'google') => {
+    setOauthLoading(provider);
+    setError(null);
+
+    try {
+      const result = await signInWithOAuth(provider);
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'OAuth sign in failed');
+    } finally {
+      setOauthLoading(null);
     }
   };
 
@@ -112,11 +135,21 @@ export default function LoginPage() {
 
       {/* OAuth Buttons */}
       <div className="grid grid-cols-2 gap-3">
-        <button className="bg-[#07070A] hover:bg-[#07070A]/80 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm">
-          Google
+        <button
+          type="button"
+          onClick={() => handleOAuthSignIn('google')}
+          disabled={!!oauthLoading}
+          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
+        >
+          {oauthLoading === 'google' ? 'Connecting...' : 'Google'}
         </button>
-        <button className="bg-[#07070A] hover:bg-[#07070A]/80 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm">
-          GitHub
+        <button
+          type="button"
+          onClick={() => handleOAuthSignIn('github')}
+          disabled={!!oauthLoading}
+          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
+        >
+          {oauthLoading === 'github' ? 'Connecting...' : 'GitHub'}
         </button>
       </div>
 

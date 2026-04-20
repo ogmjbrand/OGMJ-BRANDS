@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         description,
         template_id: templateId,
         created_by: user.id,
-      })
+      } as any)
       .select()
       .single();
 

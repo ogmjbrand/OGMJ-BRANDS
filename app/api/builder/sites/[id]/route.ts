@@ -5,7 +5,7 @@ import { createErrorResponse, createSuccessResponse, handleApiError } from '@/li
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -13,7 +13,7 @@ export async function GET(
       return createErrorResponse('Unauthorized', 401);
     }
 
-    const websiteId = params.id;
+    const { id: websiteId } = await params;
     const supabase = await createServerClient();
 
     // Get website with business access verification
@@ -51,7 +51,7 @@ export async function GET(
     const { data: accessCheck } = await supabase
       .from('business_users')
       .select('role')
-      .eq('business_id', website.business_id)
+      .eq('business_id', (website as any).business_id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
@@ -68,7 +68,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -76,7 +76,7 @@ export async function PUT(
       return createErrorResponse('Unauthorized', 401);
     }
 
-    const websiteId = params.id;
+    const { id: websiteId } = await params;
     const body = await request.json();
     const supabase = await createServerClient();
 
@@ -95,7 +95,7 @@ export async function PUT(
     const { data: accessCheck } = await supabase
       .from('business_users')
       .select('role')
-      .eq('business_id', currentWebsite.business_id)
+      .eq('business_id', (currentWebsite as any).business_id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
@@ -110,7 +110,7 @@ export async function PUT(
       .update({
         ...body,
         updated_at: new Date().toISOString(),
-      })
+      } as any)
       .eq('id', websiteId)
       .select()
       .single();
@@ -127,7 +127,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -135,7 +135,7 @@ export async function DELETE(
       return createErrorResponse('Unauthorized', 401);
     }
 
-    const websiteId = params.id;
+    const { id: websiteId } = await params;
     const supabase = await createServerClient();
 
     // Get current website to verify access
@@ -153,7 +153,7 @@ export async function DELETE(
     const { data: accessCheck } = await supabase
       .from('business_users')
       .select('role')
-      .eq('business_id', currentWebsite.business_id)
+      .eq('business_id', (currentWebsite as any).business_id)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();

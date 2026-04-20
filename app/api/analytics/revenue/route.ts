@@ -114,8 +114,8 @@ export async function GET(request: NextRequest) {
 
     // Get monthly breakdown (combine both sources)
     const allRevenueTransactions = [
-      ...(transactionRevenue || []).map(t => ({ created_at: t.created_at, amount: t.amount })),
-      ...(dealRevenue || []).map(d => ({ created_at: d.closed_at, amount: d.value })),
+      ...(transactionRevenue || []).map((t: any) => ({ created_at: t.created_at, amount: t.amount })),
+      ...(dealRevenue || []).map((d: any) => ({ created_at: d.closed_at, amount: d.value })),
     ];
 
     const monthlyBreakdown = getMonthlyBreakdown(startDate, endDate, allRevenueTransactions);

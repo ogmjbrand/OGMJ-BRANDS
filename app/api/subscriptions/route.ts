@@ -98,11 +98,11 @@ export async function POST(request: NextRequest) {
       business_id: businessId,
       plan_id: planId,
       status: 'active',
-      currency: plan.currency || 'NGN',
-      amount: plan.price,
-      billing_period: plan.billing_period,
+      currency: (plan as any).currency || 'NGN',
+      amount: (plan as any).price,
+      billing_period: (plan as any).billing_period,
       current_period_start: now.toISOString().slice(0, 10),
-      current_period_end: calculateEndDate(plan.billing_period),
+      current_period_end: calculateEndDate((plan as any).billing_period),
       payment_method: paymentMethod,
       reference_id: `SUB_${Date.now()}`,
       metadata: {
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const { data: subscription, error: createError } = await supabase
       .from('subscriptions')
-      .insert(subscriptionPayload)
+      .insert(subscriptionPayload as any)
       .select('*')
       .single();
 

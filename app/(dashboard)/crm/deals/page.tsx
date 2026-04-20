@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, MoreHorizontal, AlertCircle } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { listDeals } from '@/lib/services/crm';
+import { CreateDealModal } from '@/components/CreateDealModal';
 import type { Deal } from '@/lib/types';
 
 export default function DealsPage() {
@@ -11,6 +12,7 @@ export default function DealsPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   async function loadDeals() {
     if (!currentBusiness) {
@@ -43,6 +45,10 @@ export default function DealsPage() {
     loadDeals();
   }, [currentBusiness]);
 
+  const handleCreateSuccess = () => {
+    loadDeals(); // Reload deals after creating a new one
+  };
+
   const stages = ['prospecting', 'qualification', 'proposal', 'negotiation', 'decision'];
 
   // Group deals by stage
@@ -63,6 +69,7 @@ export default function DealsPage() {
           <p className="text-[#D4AF37]/70 mt-2">Track your sales pipeline</p>
         </div>
         <button 
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition">
           <Plus className="w-5 h-5" />
           New Deal
@@ -151,6 +158,13 @@ export default function DealsPage() {
           ))}
         </div>
       )}
+
+      {/* Create Deal Modal */}
+      <CreateDealModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 }

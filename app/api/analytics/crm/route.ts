@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
       .gte('closed_at', startDate);
 
     const averageDealValue = (dealValues as any[] | null)?.length
-      ? (dealValues.reduce((sum, deal) => sum + Number(deal.value || 0), 0) / dealValues.length)
+      ? ((dealValues as any[]).reduce((sum, deal) => sum + Number(deal.value || 0), 0) / (dealValues as any[]).length)
       : 0;
 
     // Get conversion rate (won deals / total deals)

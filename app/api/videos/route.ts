@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Failed to create video', 500);
     }
 
-    return createSuccessResponse(video, 201);
+    return createSuccessResponse(video, undefined, undefined, 201);
   } catch (error) {
     return handleApiError(error);
   }

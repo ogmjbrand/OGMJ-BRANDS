@@ -10,7 +10,7 @@ import { Database } from "./database.types";
 export async function createServerClient() {
   const cookieStore = await cookies();
 
-  return createSupabaseServerClient<Database>(
+  return createSupabaseServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

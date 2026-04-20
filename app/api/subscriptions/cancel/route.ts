@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('subscriptions')
-      .update(updatePayload)
+      .update(updatePayload as any)
       .eq('id', subscriptionId)
       .eq('business_id', businessId)
       .select('*')
