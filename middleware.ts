@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClientMiddleware } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -13,8 +13,8 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Create a Supabase client configured to use cookies
-  const supabase = await createServerClient();
+  // Create a Supabase client configured to use cookies from REQUEST and write to RESPONSE
+  const supabase = await createServerClientMiddleware(request, response);
 
   // Refresh session if expired - required for Server Components
   const { data: { session }, error } = await supabase.auth.getSession();
