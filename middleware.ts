@@ -38,8 +38,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Prevent logged-in users from going back to login
   if (user && (url.pathname === "/login" || url.pathname === "/signup")) {
-    url.pathname = "/onboarding";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
