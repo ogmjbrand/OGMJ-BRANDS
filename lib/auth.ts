@@ -154,16 +154,24 @@ export async function signOut(): Promise<{
 
 export async function getCurrentUser() {
   try {
+    console.log("🔐 [AUTH] getCurrentUser - retrieving user from session");
     const supabase = createBrowserClient();
     const { data, error } = await supabase.auth.getUser();
 
-    if (error || !data.user) {
+    if (error) {
+      console.error("🔐 [AUTH] Error getting user:", error);
       return null;
     }
 
+    if (!data.user) {
+      console.warn("🔐 [AUTH] No user found in session");
+      return null;
+    }
+
+    console.log("🔐 [AUTH] User found:", data.user.email);
     return data.user;
   } catch (error) {
-    console.error("Error getting current user:", error);
+    console.error("🔐 [AUTH] Unexpected error getting current user:", error);
     return null;
   }
 }

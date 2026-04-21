@@ -1,31 +1,20 @@
 /**
  * OGMJ BRANDS — Supabase Client Configuration
- * Last Updated: April 17, 2026
+ * Last Updated: April 20, 2026
  */
 
+import { createBrowserClient as createBrowserClientSSR } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 
 // ================================
-// BROWSER CLIENT
+// BROWSER CLIENT (SSR-compatible)
 // ================================
 
 export function createBrowserClient() {
-  return createClient(
+  return createBrowserClientSSR(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-      global: {
-        headers: {
-          "x-client": "web",
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 

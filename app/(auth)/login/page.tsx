@@ -50,21 +50,23 @@ export default function LoginPage() {
       alert("Sign in successful! Redirecting to dashboard...");
 
       // Small delay to allow session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Verify session is set
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("🔐 [LOGIN] Session after sign in:", !!session);
+      console.log("🔐 [LOGIN] Session after sign in:", !!session, session?.user?.email);
 
       if (!session) {
         console.error("❌ [LOGIN] No session found after sign in!");
         setError("Sign in failed - no session created");
         alert("Sign in failed - please try again");
+        setLoading(false);
         return;
       }
 
-      // Redirect to dashboard on success
-      window.location.href = "/dashboard";
+      console.log("🔐 [LOGIN] Redirecting to dashboard with valid session");
+      // Use router.push instead of window.location to preserve session state
+      router.push("/dashboard");
     } catch (err) {
       console.error("❌ UNEXPECTED ERROR:", err);
       const errorMsg = err instanceof Error ? err.message : "Login failed";

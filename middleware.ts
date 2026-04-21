@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  console.log(`🔐 [MIDDLEWARE] Request to ${pathname}`);
+
   // Create a response object to mutate
   let response = NextResponse.next({
     request: {
@@ -16,11 +19,19 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   const { data: { session }, error } = await supabase.auth.getSession();
 
+  if (error) {
+    console.error(`🔐 [MIDDLEWARE] Error getting session:`, error);
+  }
+
+  console.log(`🔐 [MIDDLEWARE] Session found:`, !!session, session?.user?.email || 'no-email');
+
   // If no session, try to refresh from URL params (for OAuth/callback)
   if (!session) {
     const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.getSession();
     if (refreshedSession) {
       console.log("🔐 [MIDDLEWARE] Session refreshed from URL");
+    } else if (refreshError) {
+      console.error("🔐 [MIDDLEWARE] Error refreshing session:", refreshError);
     }
   }
 
@@ -33,11 +44,13 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/support')) {
 
     if (!session) {
+      console.warn(`🔐 [MIDDLEWARE] No session for protected route ${pathname}, redirecting to login`);
       // Redirect to login if not authenticated
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
     }
+    console.log(`🔐 [MIDDLEWARE] Allowing authenticated user to ${pathname}`);
   }
 
   // Redirect authenticated users away from auth pages

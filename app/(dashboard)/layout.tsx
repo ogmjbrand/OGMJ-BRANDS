@@ -16,11 +16,17 @@ function DashboardLayoutContent({
 
   useEffect(() => {
     async function checkAuth() {
+      console.log("🔐 [DASHBOARD] Checking authentication...");
       const currentUser = await getCurrentUser();
+      console.log("🔐 [DASHBOARD] Current user result:", !!currentUser, currentUser?.email);
+      
       if (!currentUser) {
+        console.error("❌ [DASHBOARD] No user found, redirecting to login");
         router.push('/login');
         return;
       }
+      
+      console.log("🔐 [DASHBOARD] User authenticated, setting state");
       setUser(currentUser);
       setLoading(false);
     }
