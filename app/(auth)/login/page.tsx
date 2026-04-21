@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { signIn, signInWithOAuth } from '@/lib/auth';
+import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,21 +17,59 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    console.log("🎯 Form submitted");
+
+    const supabase = createBrowserClient();
+
+    // Validate inputs
+    if (!email || !password) {
+      console.warn("⚠️ Email or password is empty");
+      setError("Email and password are required");
+      alert("Please enter both email and password");
+      return;
+    }
 
     try {
+      console.log("🔍 Starting sign in...", { email });
+
+      setError(null);
+      setLoading(true);
+
       const result = await signIn(email, password);
 
+      console.log("✅ SIGN IN RESULT:", result);
+
       if (result.error) {
+        console.error("❌ SIGN IN ERROR:", result.error);
         setError(result.error);
+        alert("Sign-in failed: " + result.error);
+        return;
+      }
+
+      console.log("🎉 Sign in successful");
+      alert("Sign in successful! Redirecting to dashboard...");
+
+      // Small delay to allow session to be established
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify session is set
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("🔐 [LOGIN] Session after sign in:", !!session);
+
+      if (!session) {
+        console.error("❌ [LOGIN] No session found after sign in!");
+        setError("Sign in failed - no session created");
+        alert("Sign in failed - please try again");
         return;
       }
 
       // Redirect to dashboard on success
-      router.push('/dashboard');
+      window.location.href = "/dashboard";
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      console.error("❌ UNEXPECTED ERROR:", err);
+      const errorMsg = err instanceof Error ? err.message : "Login failed";
+      setError(errorMsg);
+      alert("Unexpected sign-in error: " + errorMsg);
     } finally {
       setLoading(false);
     }

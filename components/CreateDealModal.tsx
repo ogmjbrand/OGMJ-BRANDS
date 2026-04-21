@@ -33,13 +33,6 @@ export function CreateDealModal({
     description: '',
   });
 
-  // Load contacts when modal opens
-  useEffect(() => {
-    if (isOpen && currentBusiness) {
-      loadContacts();
-    }
-  }, [isOpen, currentBusiness]);
-
   const loadContacts = async () => {
     if (!currentBusiness) return;
 
@@ -55,6 +48,13 @@ export function CreateDealModal({
       setLoadingContacts(false);
     }
   };
+
+  // Load contacts when modal opens
+  useEffect(() => {
+    if (isOpen && currentBusiness) {
+      loadContacts();
+    }
+  }, [isOpen, currentBusiness]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

@@ -5,7 +5,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
 import { getDashboardMetrics } from '@/lib/services/analytics.service';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import type { Business, DashboardMetrics } from '@/lib/types';
+import type { Business } from '@/lib/types';
+import type { DashboardMetrics } from '@/lib/services/analytics.service';
 
 export default function DashboardPage() {
   const { currentBusiness } = useBusinessContext();

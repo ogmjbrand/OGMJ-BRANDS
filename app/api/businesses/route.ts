@@ -1,12 +1,13 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUserServer } from '@/lib/auth.server';
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserServer();
 
     if (!user) {
+      console.warn("🔐 [API] GET /businesses - Unauthorized: No user");
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -42,14 +43,19 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    console.log("🔐 [API] POST /businesses - Creating business...");
+    
+    const user = await getCurrentUserServer();
 
     if (!user) {
+      console.warn("🔐 [API] POST /businesses - Unauthorized: No user found");
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    console.log(`🔐 [API] POST /businesses - User authenticated: ${user.email} (${user.id})`);
 
     const body = await request.json();
     const { name, industry, country, currency = 'USD', timezone = 'UTC' } = body;
@@ -71,6 +77,8 @@ export async function POST(request: NextRequest) {
       .replace(/-+/g, '-')
       .substring(0, 50);
 
+    console.log(`🔐 [API] Inserting business: ${name} (slug: ${slug}, user_id: ${user.id})`);
+
     const { data, error } = await (supabase as any)
       .from('businesses')
       .insert({
@@ -86,11 +94,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error(`❌ [API] Business insert error:`, error);
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message || 'Failed to create business' },
         { status: 400 }
       );
     }
+
+    console.log(`✅ [API] Business created: ${data.id}`);
 
     // Add creator as admin to business_users
     const { error: buError } = await (supabase as any)
@@ -103,9 +114,11 @@ export async function POST(request: NextRequest) {
       });
 
     if (buError) {
-      console.error('Error adding user to business:', buError);
+      console.error(`❌ [API] Error adding user to business:`, buError);
+      // This error is not critical - the business was created
     }
 
+    console.log(`✅ [API] POST /businesses successful`);
     return NextResponse.json(
       {
         success: true,
@@ -114,9 +127,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating business:', error);
+    console.error('❌ [API] Unexpected error creating business:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: message },
       { status: 500 }
     );
   }

@@ -16,6 +16,14 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   const { data: { session }, error } = await supabase.auth.getSession();
 
+  // If no session, try to refresh from URL params (for OAuth/callback)
+  if (!session) {
+    const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.getSession();
+    if (refreshedSession) {
+      console.log("🔐 [MIDDLEWARE] Session refreshed from URL");
+    }
+  }
+
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard') ||
       request.nextUrl.pathname.startsWith('/crm') ||

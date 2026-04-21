@@ -29,7 +29,7 @@ export async function signUp(
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`,
       },
     });
 
@@ -64,6 +64,8 @@ export async function signIn(
   error: string | null;
 }> {
   try {
+    console.log("🔐 [AUTH] Starting Supabase signInWithPassword...", { email });
+
     const supabase = createBrowserClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -71,16 +73,21 @@ export async function signIn(
       password,
     });
 
+    console.log("🔐 [AUTH] Supabase response:", { data, error });
+
     if (error) {
+      console.error("🔐 [AUTH] Supabase error:", error);
       return { user: null, session: null, error: error.message };
     }
 
+    console.log("🔐 [AUTH] Sign in successful, user:", data.user?.email);
     return {
       user: data.user,
       session: data.session,
       error: null,
     };
   } catch (error) {
+    console.error("🔐 [AUTH] Caught exception:", error);
     return {
       user: null,
       session: null,
