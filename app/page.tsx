@@ -1,40 +1,24 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-sm border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-xl font-bold tracking-wider">OGMJ BRANDS</div>
-          <div className="flex space-x-8 text-sm uppercase tracking-widest">
-            <a href="#work" className="hover:text-green-400 transition-colors">Work</a>
-            <a href="#studio" className="hover:text-green-400 transition-colors">Studio</a>
-            <a href="#contact" className="hover:text-green-400 transition-colors">Contact</a>
-          </div>
-        </div>
-      </nav>
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      window.location.href = data.user ? '/dashboard' : '/auth'
+    })
+  }, [])
 
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-end justify-center pb-20">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-            alt="Brutalist architecture with green LED lighting"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40"></div>
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="relative z-10 text-center max-w-4xl px-6"
-        >
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+  return (
+    <div className="min-h-screen bg-[#080B0F] flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-10 h-10 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Loading...</p>
+      </div>
+    </div>
+  )
+}          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
             Design that moves people.
           </h1>
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
