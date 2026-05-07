@@ -88,7 +88,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium text-[#D4AF37] mb-2">Full Name</label>
                   <input
                     type="text"
-                    defaultValue={user?.user_metadata?.full_name || ''}
+                    defaultValue={String(user?.user_metadata?.full_name ?? '')}
                     className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
                   />
                 </div>
