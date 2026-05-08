@@ -1,75 +1,34 @@
-/**
- * OGMJ BRANDS — Supabase Client Configuration
- * Last Updated: April 20, 2026
- */
+﻿import { createBrowserClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
-import { createBrowserClient as createBrowserClientSSR } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "./database.types";
-
-// ================================
-// BROWSER CLIENT (SSR-compatible)
-// ================================
-
-export function createBrowserClient() {
-  return createBrowserClientSSR(
+export function createBrowserClientInstance() {
+  return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
-// ================================
-// SERVER CLIENT
-// ================================
-
-// Moved to server.ts to avoid next/headers import issues in client components
-
-// ================================
-// SERVICE ROLE CLIENT (Admin)
-// ================================
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 export function createAdminClient() {
-  return createClient<Database>(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-      global: {
-        headers: {
-          "x-client": "admin",
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
-
-// ================================
-// EDGE FUNCTION CLIENT (Vercel Edge)
-// ================================
 
 export function createEdgeClient(authHeader?: string) {
-  return createClient<Database>(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: false,
-      },
-      global: {
-        headers: {
-          ...(authHeader && { Authorization: authHeader }),
-          "x-client": "edge",
-        },
-      },
-    }
+    authHeader
+      ? { global: { headers: { Authorization: authHeader } } }
+      : undefined
   );
 }
-
-// ================================
-// EXPORTS
-// ================================
-
-export type { Database };
