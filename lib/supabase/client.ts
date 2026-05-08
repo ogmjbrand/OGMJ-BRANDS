@@ -1,8 +1,7 @@
-﻿import { createBrowserClient as createSSRBrowserClient } from "@supabase/ssr";
+import { createBrowserClient as createSSRBrowserClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-// ✅ This is what login/page.tsx, auth.ts, business.ts, crm.ts all import
 export function createBrowserClient() {
   return createSSRBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
