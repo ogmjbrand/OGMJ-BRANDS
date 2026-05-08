@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building, ArrowRight, AlertCircle } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -13,6 +14,42 @@ export default function OnboardingPage() {
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check for existing business when reaching step 2
+  useEffect(() => {
+    if (step === 2) {
+      checkExistingBusiness();
+    }
+  }, [step]);
+
+  const checkExistingBusiness = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+
+      // ✅ Pre-fill form if business exists
+      const { data: existing } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('created_by', user.id)
+        .single();
+
+      if (existing) {
+        setBusinessName(existing.name || '');
+        setIndustry(existing.industry || '');
+        setCountry(existing.country || '');
+        setCurrency(existing.currency || 'USD');
+        // Don't block — let them update it
+      }
+    } catch (error) {
+      console.error('Error checking existing business:', error);
+    }
+  };
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,21 +63,31 @@ export default function OnboardingPage() {
     }
 
     try {
-      const response = await fetch('/api/businesses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: businessName,
-          industry,
-          country,
-          currency,
-        }),
-      });
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      const result = await response.json();
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create business');
+      const { data, error } = await supabase
+        .from('businesses')
+        .upsert(
+          {
+            created_by: user.id,
+            name: businessName,
+            industry,
+            country,
+            currency,
+          },
+          { onConflict: 'created_by' }
+        )
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create or update business');
       }
 
       // Redirect to dashboard
@@ -226,6 +273,58 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </form>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Add Team Members</h2>
+                <p className="text-[#D4AF37]/70 mt-1">Invite your colleagues to collaborate</p>
+              </div>
+
+              <div className="bg-[#07070A] border border-[#D4AF37]/20 rounded-lg p-6 text-center">
+                <p className="text-[#D4AF37]/70">You can add team members later from your dashboard settings</p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="flex-1 bg-[#07070A] hover:bg-[#07070A]/80 border border-[#D4AF37]/20 text-white font-semibold py-2.5 rounded-lg transition"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(4)}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-2.5 rounded-lg transition"
+                >
+                  Continue
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold text-white">You're All Set!</h2>
+                <p className="text-[#D4AF37]/70 mt-2">Your workspace is ready. Let's start building your growth.</p>
+              </div>
+
+              <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-6 text-center">
+                <p className="text-white font-semibold">Welcome to OGMJ BRANDS</p>
+                <p className="text-[#D4AF37]/70 text-sm mt-2">Access all features from your dashboard</p>
+              </div>
+
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-3 rounded-lg transition"
+              >
+                Go to Dashboard
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           )}
         </div>
       </div>
