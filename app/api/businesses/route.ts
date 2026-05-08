@@ -77,26 +77,29 @@ export async function POST(request: NextRequest) {
       .replace(/-+/g, '-')
       .substring(0, 50);
 
-    console.log(`🔐 [API] Inserting business: ${name} (slug: ${slug}, user_id: ${user.id})`);
+    console.log(`🔐 [API] Creating/updating business: ${name} (slug: ${slug}, user_id: ${user.id})`);
 
     const { data, error } = await (supabase as any)
       .from('businesses')
-      .insert({
-        name,
-        slug,
-        industry,
-        country,
-        currency,
-        timezone,
-        created_by: user.id,
-      })
+      .upsert(
+        {
+          name,
+          slug,
+          industry,
+          country,
+          currency,
+          timezone,
+          created_by: user.id,
+        },
+        { onConflict: 'created_by' }
+      )
       .select()
       .single();
 
     if (error) {
-      console.error(`❌ [API] Business insert error:`, error);
+      console.error(`❌ [API] Business create/update error:`, error);
       return NextResponse.json(
-        { error: error.message || 'Failed to create business' },
+        { error: error.message || 'Failed to create or update business' },
         { status: 400 }
       );
     }

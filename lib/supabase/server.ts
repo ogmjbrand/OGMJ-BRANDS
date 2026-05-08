@@ -1,11 +1,11 @@
-﻿import { createServerClient } from "@supabase/ssr";
+﻿import { createServerClient as createServerClientSSR } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
 
 // ✅ This is what auth/route.ts, dashboard/layout.tsx, dashboard/page.tsx import
 export async function createClient() {
   const cookieStore = await cookies();
-  return createServerClient(
+  return createServerClientSSR(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
