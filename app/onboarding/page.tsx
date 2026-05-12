@@ -36,7 +36,7 @@ export default function OnboardingPage() {
       const { data: existing } = await supabase
         .from('businesses')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('owner_id', user.id)
         .single();
 
       if (existing) {
@@ -75,13 +75,13 @@ export default function OnboardingPage() {
         .from('businesses')
         .upsert(
           {
-            created_by: user.id,
+            owner_id: user.id,
             name: businessName,
             industry,
             country,
             currency,
           },
-          { onConflict: 'created_by' }
+          { onConflict: 'owner_id' }
         )
         .select()
         .single();
