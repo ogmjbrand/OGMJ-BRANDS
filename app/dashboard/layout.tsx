@@ -27,11 +27,11 @@ export default async function DashboardLayout({
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id, business_name, type")
+    .select("id, name, slug")
     .eq("created_by", user.id)
     .maybeSingle();
 
-  if (!business) redirect("/onboarding/step-2");
+  if (!business) redirect("/onboarding");
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex">
@@ -45,10 +45,10 @@ export default async function DashboardLayout({
             </div>
             <div className="min-w-0">
               <p className="text-white font-semibold text-sm truncate">
-                {business.business_name}
+                {business.name}
               </p>
-              <p className="text-gray-500 text-xs capitalize">
-                {business.type?.replace("_", " ")}
+              <p className="text-gray-500 text-xs">
+                {business.slug}
               </p>
             </div>
           </div>
