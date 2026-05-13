@@ -33,11 +33,18 @@ export default function OnboardingPage() {
       }
 
       // ✅ Pre-fill form if business exists
-      const { data: existing } = await supabase
+      type ExistingBusinessData = {
+        name?: string | null;
+        industry?: string | null;
+        country?: string | null;
+        currency?: string | null;
+      };
+
+      const { data: existing } = (await supabase
         .from('businesses')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single();
+        .select('name, industry, country, currency')
+        .eq('created_by', user.id)
+        .single()) as { data: ExistingBusinessData | null };
 
       if (existing) {
         setBusinessName(existing.name || '');
@@ -71,20 +78,27 @@ export default function OnboardingPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('businesses')
-        .upsert(
-          {
-            owner_id: user.id,
-            name: businessName,
-            industry,
-            country,
-            currency,
-          },
-          { onConflict: 'owner_id' }
-        )
+      type CreateBusinessInput = {
+        created_by: string;
+        name: string;
+        industry?: string;
+        country?: string;
+        currency?: string;
+      };
+
+      const businessInput: CreateBusinessInput = {
+        created_by: user.id,
+        name: businessName,
+        industry,
+        country,
+        currency,
+      };
+
+      const { data, error } = (await (supabase
+        .from('businesses') as any)
+        .upsert(businessInput, { onConflict: 'created_by' })
         .select()
-        .single();
+        .single()) as { data: any; error: any };
 
       if (error) {
         throw new Error(error.message || 'Failed to create or update business');

@@ -3,7 +3,7 @@
  * Last Updated: April 17, 2026
  */
 
-import { createBrowserClient } from "../supabase/client";
+import { createClient } from "../supabase/client";
 import { getCurrentUser } from "../auth";
 import type {
   Business,
@@ -20,7 +20,7 @@ export async function createBusiness(
   input: CreateBusinessInput
 ): Promise<APIResponse<Business>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -104,7 +104,7 @@ export async function createBusiness(
 
 export async function getBusiness(businessId: string): Promise<APIResponse<Business>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from("businesses")
@@ -137,7 +137,7 @@ export async function getBusiness(businessId: string): Promise<APIResponse<Busin
 
 export async function listUserBusinesses(): Promise<APIResponse<Business[]>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -184,7 +184,7 @@ export async function updateBusiness(
   updates: Partial<Business>
 ): Promise<APIResponse<Business>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -257,7 +257,7 @@ export async function updateBusiness(
 
 export async function deleteBusiness(businessId: string): Promise<APIResponse<null>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -327,7 +327,7 @@ export async function listBusinessMembers(
   businessId: string
 ): Promise<APIResponse<(BusinessUser & { email?: string })[]>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from("business_users")
@@ -364,7 +364,7 @@ export async function inviteUser(
   role: "admin" | "editor" | "viewer" | "manager" | "member" = "member"
 ): Promise<APIResponse<{ token: string }>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -435,7 +435,7 @@ export async function inviteUser(
 
 export async function acceptInvitation(token: string): Promise<APIResponse<BusinessUser>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -533,7 +533,7 @@ async function recordAuditLog({
   changes?: any;
 }) {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     await (supabase as any).from("audit_logs").insert({
       business_id,

@@ -3,7 +3,7 @@
  * Last Updated: April 17, 2026
  */
 
-import { createBrowserClient } from "./supabase/client";
+import { createClient } from "./supabase/client";
 import type { AuthResponse, Session, User } from "@supabase/supabase-js";
 
 // ================================
@@ -20,7 +20,7 @@ export async function signUp(
   error: string | null;
 }> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -66,7 +66,7 @@ export async function signIn(
   try {
     console.log("🔐 [AUTH] Starting Supabase signInWithPassword...", { email });
 
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -102,7 +102,7 @@ export async function signIn(
 
 export async function signInWithOAuth(provider: "github" | "google") {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -132,7 +132,7 @@ export async function signOut(): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { error } = await supabase.auth.signOut();
 
@@ -155,7 +155,7 @@ export async function signOut(): Promise<{
 export async function getCurrentUser() {
   try {
     console.log("🔐 [AUTH] getCurrentUser - retrieving user from session");
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const { data, error } = await supabase.auth.getUser();
 
     if (error) {
@@ -182,7 +182,7 @@ export async function getCurrentUser() {
 
 export async function getCurrentSession() {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const { data, error } = await supabase.auth.getSession();
 
     if (error || !data.session) {
@@ -204,7 +204,7 @@ export async function resetPassword(email: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
@@ -230,7 +230,7 @@ export async function updatePassword(newPassword: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
@@ -254,7 +254,7 @@ export async function updatePassword(newPassword: string): Promise<{
 
 export async function verifyEmail(token: string, type: "signup" | "recovery") {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,

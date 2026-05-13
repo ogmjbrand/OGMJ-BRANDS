@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { signIn, signInWithOAuth } from '@/lib/auth';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     console.log("🎯 Form submitted");
 
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     // Validate inputs
     if (!email || !password) {

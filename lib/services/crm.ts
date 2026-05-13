@@ -3,7 +3,7 @@
  * Last Updated: April 17, 2026
  */
 
-import { createBrowserClient } from "../supabase/client";
+import { createClient } from "../supabase/client";
 import { getCurrentUser } from "../auth";
 import type {
   Contact,
@@ -25,7 +25,7 @@ export async function createContact(
   input: CreateContactInput
 ): Promise<APIResponse<Contact>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     if (!user) {
@@ -68,7 +68,7 @@ export async function getContact(
   contactId: string
 ): Promise<APIResponse<Contact & { interactions: Interaction[] }>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data: contact, error: contactError } = await (supabase as any)
       .from("contacts")
@@ -113,7 +113,7 @@ export async function listContacts(
   }
 ): Promise<APIResponse<PaginatedResponse<Contact>>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const page = options?.page || 1;
     const pageSize = options?.pageSize || 20;
     const offset = (page - 1) * pageSize;
@@ -166,7 +166,7 @@ export async function updateContact(
   updates: Partial<Contact>
 ): Promise<APIResponse<Contact>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     const { data, error } = await (supabase as any)
@@ -203,7 +203,7 @@ export async function deleteContact(
   contactId: string
 ): Promise<APIResponse<null>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { error } = await supabase
       .from("contacts")
@@ -237,7 +237,7 @@ export async function createDeal(
   input: CreateDealInput
 ): Promise<APIResponse<Deal>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     const { data, error } = await (supabase as any)
@@ -272,7 +272,7 @@ export async function getDeal(
   dealId: string
 ): Promise<APIResponse<Deal>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
 
     const { data, error } = await supabase
       .from("deals")
@@ -308,7 +308,7 @@ export async function listDeals(
   }
 ): Promise<APIResponse<PaginatedResponse<Deal>>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const page = options?.page || 1;
     const pageSize = options?.pageSize || 20;
     const offset = (page - 1) * pageSize;
@@ -359,7 +359,7 @@ export async function updateDeal(
   updates: Partial<Deal>
 ): Promise<APIResponse<Deal>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     const { data, error } = await (supabase as any)
@@ -401,7 +401,7 @@ export async function createInteraction(
   data: Partial<Interaction>
 ): Promise<APIResponse<Interaction>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     const { data: interaction, error } = await (supabase as any)
@@ -441,7 +441,7 @@ export async function createSupportTicket(
   input: CreateSupportTicketInput
 ): Promise<APIResponse<any>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const user = await getCurrentUser();
 
     // Generate ticket number
@@ -485,7 +485,7 @@ export async function listSupportTickets(
   }
 ): Promise<APIResponse<PaginatedResponse<any>>> {
   try {
-    const supabase = createBrowserClient();
+    const supabase = createClient();
     const page = options?.page || 1;
     const pageSize = options?.pageSize || 20;
     const offset = (page - 1) * pageSize;

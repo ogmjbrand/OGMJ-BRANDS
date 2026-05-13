@@ -21,14 +21,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
   const { data: business } = await supabase
     .from("businesses")
     .select("id, business_name, type")
-    .eq("owner_id", user.id)
+    .eq("created_by", user.id)
     .maybeSingle();
 
   if (!business) redirect("/onboarding/step-2");

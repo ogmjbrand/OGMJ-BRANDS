@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { Users, FolderOpen, CheckSquare, FileText, Plus } from "lucide-react";
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
-  const { data: business } = await supabase.from("businesses").select("*").eq("owner_id", user.id).maybeSingle();
+  const { data: business } = await supabase.from("businesses").select("*").eq("created_by", user.id).maybeSingle();
   if (!business) redirect("/onboarding/step-2");
 
   const [

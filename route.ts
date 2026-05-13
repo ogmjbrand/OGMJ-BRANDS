@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from('businesses')
       .select('id, slug')
-      .eq('owner_id', user.id)
+      .eq('created_by', user.id)
       .maybeSingle()
 
     if (existing) {
@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
         country: country || 'Nigeria',
         currency: currency || 'NGN',
         type,
-        owner_id: user.id,
         user_id: user.id,
         created_by: user.id,
         status: 'active',
@@ -75,14 +74,14 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data, error } = await supabase
       .from('businesses')
       .select('*')
-      .eq('owner_id', user.id)
+      .eq('created_by', user.id)
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 404 })

@@ -1,9 +1,10 @@
 'use client'
 import { useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
   useEffect(() => {
+    const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       window.location.href = data.user ? '/dashboard' : '/auth'
     })
