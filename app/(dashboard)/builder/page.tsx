@@ -229,6 +229,7 @@ export default function BuilderPage() {
                       {website.status}
                     </span>
                     <button
+                      title="Show pages"
                       onClick={() => toggleWebsiteExpansion(website.id)}
                       className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
                     >

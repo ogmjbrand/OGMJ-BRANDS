@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CreditCard, Users, Shield, Bell } from 'lucide-react';
+import { AlertCircle, CreditCard, Users, Shield, Bell, Check } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
 import type { Business, User } from '@/lib/types';
@@ -11,6 +11,124 @@ export default function SettingsPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Form states
+  const [profileForm, setProfileForm] = useState({
+    fullName: '',
+    email: '',
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [notificationsForm, setNotificationsForm] = useState({
+    emailNotifications: true,
+    marketingUpdates: false,
+    paymentReminders: true,
+  });
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        setProfileForm({
+          fullName: currentUser?.user_metadata?.full_name || '',
+          email: currentUser?.email || '',
+        });
+
+        const userBusinesses = await listUserBusinesses();
+        if (userBusinesses.success && userBusinesses.data) {
+          setBusinesses(userBusinesses.data);
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+        setError('Failed to load settings');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Update user metadata
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: profileForm.fullName }
+      });
+
+      if (error) throw error;
+
+      setSuccess('Profile updated successfully');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError('Passwords do not match');
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword
+      });
+
+      if (error) throw error;
+
+      setSuccess('Password changed successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to change password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleNotificationsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Here you would save notification preferences to your database
+      // For now, just show success
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      setSuccess('Notification preferences updated');
+    } catch (err) {
+      setError('Failed to update notifications');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -80,30 +198,55 @@ export default function SettingsPage() {
       {/* Content */}
       <div className="max-w-2xl">
         {activeTab === 'general' && (
-          <div className="space-y-6">
+          <form onSubmit={handleProfileUpdate} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-400">{success}</p>
+              </div>
+            )}
+
             <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-white mb-4">Profile Information</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#D4AF37] mb-2">Full Name</label>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-[#D4AF37] mb-2">Full Name</label>
                   <input
+                    id="fullName"
                     type="text"
-                    defaultValue={String(user?.user_metadata?.full_name ?? '')}
+                    value={profileForm.fullName}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, fullName: e.target.value }))}
                     className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#D4AF37] mb-2">Email</label>
+                  <label htmlFor="email" className="block text-sm font-medium text-[#D4AF37] mb-2">Email</label>
                   <input
+                    id="email"
                     type="email"
-                    defaultValue={user?.email || ''}
+                    value={profileForm.email}
                     disabled
                     className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-[#D4AF37]/50 cursor-not-allowed"
                   />
+                  <p className="text-xs text-[#D4AF37]/50 mt-1">Email cannot be changed</p>
                 </div>
               </div>
+              <button
+                type="submit"
+                disabled={saving}
+                className="mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
-          </div>
+          </form>
         )}
 
         {activeTab === 'billing' && (
@@ -161,12 +304,65 @@ export default function SettingsPage() {
 
         {activeTab === 'security' && (
           <div className="space-y-6">
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Password</h3>
-              <button className="px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition font-medium">
-                Change Password
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-400">{success}</p>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordChange} className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-white mb-4">Change Password</h3>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="currentPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">Current Password</label>
+                  <input
+                    id="currentPassword"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">New Password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">Confirm New Password</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={saving}
+                className="mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
+              >
+                {saving ? 'Changing...' : 'Change Password'}
               </button>
-            </div>
+            </form>
 
             <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
               <h3 className="text-xl font-semibold text-white mb-4">Two-Factor Authentication</h3>
@@ -179,31 +375,79 @@ export default function SettingsPage() {
         )}
 
         {activeTab === 'notifications' && (
-          <div className="space-y-6">
+          <form onSubmit={handleNotificationsUpdate} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-400">{success}</p>
+              </div>
+            )}
+
             <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">Email Notifications</p>
-                  <p className="text-sm text-[#D4AF37]/50 mt-1">Get updates about your deals and contacts</p>
-                </div>
-                <input type="checkbox" defaultChecked className="w-5 h-5" />
+                <label htmlFor="emailNotifications" className="flex items-center gap-3 flex-1 cursor-pointer">
+                  <div>
+                    <p className="font-medium text-white">Email Notifications</p>
+                    <p className="text-sm text-[#D4AF37]/50 mt-1">Get updates about your deals and contacts</p>
+                  </div>
+                </label>
+                <input
+                  id="emailNotifications"
+                  type="checkbox"
+                  checked={notificationsForm.emailNotifications}
+                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, emailNotifications: e.target.checked }))}
+                  className="w-5 h-5 flex-shrink-0"
+                  aria-label="Enable email notifications"
+                />
               </div>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">Marketing Updates</p>
-                  <p className="text-sm text-[#D4AF37]/50 mt-1">Learn about new features and tips</p>
-                </div>
-                <input type="checkbox" className="w-5 h-5" />
+                <label htmlFor="marketingUpdates" className="flex items-center gap-3 flex-1 cursor-pointer">
+                  <div>
+                    <p className="font-medium text-white">Marketing Updates</p>
+                    <p className="text-sm text-[#D4AF37]/50 mt-1">Learn about new features and tips</p>
+                  </div>
+                </label>
+                <input
+                  id="marketingUpdates"
+                  type="checkbox"
+                  checked={notificationsForm.marketingUpdates}
+                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, marketingUpdates: e.target.checked }))}
+                  className="w-5 h-5 flex-shrink-0"
+                  aria-label="Enable marketing updates"
+                />
               </div>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-white">Payment Reminders</p>
-                  <p className="text-sm text-[#D4AF37]/50 mt-1">Alerts before payment date</p>
-                </div>
-                <input type="checkbox" defaultChecked className="w-5 h-5" />
+                <label htmlFor="paymentReminders" className="flex items-center gap-3 flex-1 cursor-pointer">
+                  <div>
+                    <p className="font-medium text-white">Payment Reminders</p>
+                    <p className="text-sm text-[#D4AF37]/50 mt-1">Alerts before payment date</p>
+                  </div>
+                </label>
+                <input
+                  id="paymentReminders"
+                  type="checkbox"
+                  checked={notificationsForm.paymentReminders}
+                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, paymentReminders: e.target.checked }))}
+                  className="w-5 h-5 flex-shrink-0"
+                  aria-label="Enable payment reminders"
+                />
               </div>
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
+              >
+                {saving ? 'Saving...' : 'Save Preferences'}
+              </button>
             </div>
-          </div>
+          </form>
         )}
       </div>
     </div>

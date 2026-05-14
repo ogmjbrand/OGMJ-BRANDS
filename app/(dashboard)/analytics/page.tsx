@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
             >
               <div className="flex items-start justify-between mb-4">
                 <Icon className="w-5 h-5 text-[#D4AF37]" />
-                <button className="text-[#D4AF37]/50 hover:text-[#D4AF37]">
+                <button title="More options" className="text-[#D4AF37]/50 hover:text-[#D4AF37]">
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </div>
@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
             {[40, 55, 45, 75, 60, 80, 70].map((value, idx) => (
               <div
                 key={idx}
-                className="flex-1 bg-gradient-to-t from-[#D4AF37] to-[#D4AF37]/60 rounded-t hover:from-[#D4AF37]/80 hover:to-[#D4AF37]/40 transition cursor-pointer"
+                className={`revenue-bar`}
                 style={{ height: `${(value / 100) * 100}%` }}
                 title={`$${value * 100}`}
               />
@@ -244,7 +244,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="w-full h-2 bg-[#07070A] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-[#D4AF37] to-[#D4AF37]/60 rounded-full"
+                      className={`pipeline-progress-fill`}
                       style={{ width: `${percent}%` }}
                     />
                   </div>

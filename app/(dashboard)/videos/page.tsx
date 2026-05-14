@@ -148,7 +148,7 @@ export default function VideosPage() {
                   )}
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-                    <button className="p-2 bg-[#D4AF37] text-[#07070A] rounded-full opacity-0 group-hover:opacity-100 transition">
+                    <button title="Play video" className="p-2 bg-[#D4AF37] text-[#07070A] rounded-full opacity-0 group-hover:opacity-100 transition">
                       <Play className="w-6 h-6 ml-0.5" />
                     </button>
                   </div>
@@ -172,7 +172,7 @@ export default function VideosPage() {
                     <h3 className="font-semibold text-white group-hover:text-[#D4AF37] transition">
                       {video.title}
                     </h3>
-                    <button className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] opacity-0 group-hover:opacity-100 transition">
+                    <button title="More options" className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] opacity-0 group-hover:opacity-100 transition">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                   </div>

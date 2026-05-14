@@ -124,7 +124,7 @@ export default function OnboardingPage() {
           </div>
           <div className="h-1 bg-[#0E1116] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#D4AF37] transition-all duration-300"
+              className={`progress-bar-fill`}
               style={{ width: `${(step / 4) * 100}%` }}
             ></div>
           </div>
@@ -255,8 +255,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">Currency</label>
+                  <label htmlFor="currency-select" className="block text-sm font-medium text-white mb-2">Currency</label>
                   <select
+                    id="currency-select"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className="w-full px-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]/60 transition"

@@ -122,7 +122,9 @@ export default function DealsPage() {
                         <h4 className="font-medium text-white text-sm group-hover:text-[#D4AF37] transition">
                           {deal.title}
                         </h4>
-                        <button className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] opacity-0 group-hover:opacity-100 transition">
+                        <button 
+                          title="More options"
+                          className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] opacity-0 group-hover:opacity-100 transition">
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </div>

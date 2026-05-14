@@ -1,0 +1,74 @@
+/* Inline Style Utilities - Progress bars and dynamic widths */
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #D4AF37;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.revenue-bar {
+  flex: 1;
+  background: linear-gradient(to top, #D4AF37, rgba(212, 175, 55, 0.375));
+  border-radius: 0.375rem 0.375rem 0 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.revenue-bar:hover {
+  background: linear-gradient(to top, rgba(212, 175, 55, 0.5), rgba(212, 175, 55, 0.25));
+}
+
+.pipeline-progress-bar {
+  height: 0.5rem;
+  background-color: #07070A;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.pipeline-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #D4AF37, rgba(212, 175, 55, 0.375));
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.checkbox-toggle {
+  position: relative;
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.checkbox-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-toggle input:checked + .slider {
+  background-color: #D4AF37;
+}
+
+.checkbox-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #07070A;
+  transition: 0.3s;
+  border: 1px solid #D4AF37;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-toggle input:checked + .slider:after {
+  content: '✓';
+  color: #07070A;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
