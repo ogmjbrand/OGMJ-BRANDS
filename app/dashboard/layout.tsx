@@ -1,97 +1,129 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import {
-  Building2, Users, FolderOpen, CheckSquare,
-  TrendingUp, LogOut, FileText, Briefcase, Settings, UserCheck,
-} from "lucide-react";
+'use client';
 
-const navItems = [
-  { icon: TrendingUp,  label: "Overview",  href: "/dashboard" },
-  { icon: Users,       label: "Clients",   href: "/dashboard/clients" },
-  { icon: FolderOpen,  label: "Projects",  href: "/dashboard/projects" },
-  { icon: CheckSquare, label: "Tasks",     href: "/dashboard/tasks" },
-  { icon: FileText,    label: "Invoices",  href: "/dashboard/invoices" },
-  { icon: Briefcase,   label: "Services",  href: "/dashboard/services" },
-  { icon: UserCheck,   label: "Team",      href: "/dashboard/team" },
-  { icon: Settings,    label: "Settings",  href: "/dashboard/settings" },
-];
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
+import { BusinessProvider } from '@/lib/context/BusinessContext';
 
-export default async function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth");
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name, slug")
-    .eq("created_by", user.id)
-    .maybeSingle();
+  useEffect(() => {
+    async function checkAuth() {
+      console.log("🔐 [DASHBOARD] Checking authentication...");
+      const currentUser = await getCurrentUser();
+      console.log("🔐 [DASHBOARD] Current user result:", !!currentUser, currentUser?.email);
+      
+      if (!currentUser) {
+        console.error("❌ [DASHBOARD] No user found, redirecting to login");
+        router.push('/login');
+        return;
+      }
+      
+      console.log("🔐 [DASHBOARD] User authenticated, setting state");
+      setUser(currentUser);
+      setLoading(false);
+    }
+    checkAuth();
+  }, [router]);
 
-  if (!business) redirect("/onboarding");
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
+          <p className="text-[#D4AF37]/70">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex">
-      {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-full w-56 bg-[#161616] border-r border-gray-800 flex flex-col z-40">
-        {/* Logo */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-4 h-4 text-black" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-white font-semibold text-sm truncate">
-                {business.name}
-              </p>
-              <p className="text-gray-500 text-xs">
-                {business.slug}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
+      {/* Sidebar Navigation */}
+      <aside className="fixed left-0 top-0 w-64 h-screen bg-[#0E1116] border-r border-[#D4AF37]/10 overflow-y-auto">
+        <div className="p-6 space-y-8">
+          {/* Logo */}
+          <div>
+            <h2 className="text-2xl font-bold text-[#D4AF37]">OGMJ</h2>
+            <p className="text-xs text-[#D4AF37]/50">BRANDS</p>
+          </div>
+
+          {/* Navigation Menu */}
+          <nav className="space-y-2">
+            <NavItem icon="📊" label="Dashboard" href="/dashboard" />
+            <NavItem icon="🧾" label="Invoices" href="/dashboard/invoices" />
+            <NavItem icon="👥" label="Contacts" href="/dashboard/crm/contacts" />
+            <NavItem icon="💼" label="Deals" href="/dashboard/crm/deals" />
+            <NavItem icon="🎬" label="Videos" href="/dashboard/videos" />
+            <NavItem icon="🎨" label="Builder" href="/dashboard/builder" />
+            <NavItem icon="📈" label="Analytics" href="/dashboard/analytics" />
+            <NavItem icon="🤖" label="AI" href="/dashboard/ai" />
+            <NavItem icon="📣" label="Social" href="/dashboard/social" />
+            <NavItem icon="⚡" label="Workflows" href="/dashboard/workflows" />
+            <NavItem icon="💬" label="Support" href="/dashboard/support" />
+            <NavItem icon="⚙️" label="Settings" href="/dashboard/settings" />
+          </nav>
+
+          {/* User Section */}
+          <div className="border-t border-[#D4AF37]/10 pt-6">
+            <div className="flex items-center gap-3 p-3 bg-[#07070A] rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
+                <span className="text-sm font-bold text-[#D4AF37]">
+                  {user?.email?.[0].toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{user?.email}</p>
+                <p className="text-xs text-[#D4AF37]/50">Account</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ icon: Icon, label, href }) => (
-            <a
-              key={href}
-              href={href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm
-                text-gray-400 hover:bg-gray-800 hover:text-white transition-colors group"
-            >
-              <Icon className="w-4 h-4 flex-shrink-0 group-hover:text-yellow-500 transition-colors" />
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        {/* User + signout */}
-        <div className="p-3 border-t border-gray-800">
-          <div className="flex items-center gap-2.5 px-2 py-1.5 mb-1">
-            <div className="w-7 h-7 bg-yellow-500/20 rounded-full flex items-center justify-center text-xs font-bold text-yellow-500 flex-shrink-0">
-              {user.email?.[0]?.toUpperCase()}
-            </div>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-          </div>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-                text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign out
-            </button>
-          </form>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="ml-56 flex-1 min-h-screen">{children}</main>
+      {/* Main Content */}
+      <main className="ml-64 p-8">
+        {children}
+      </main>
     </div>
+  );
+}
+
+function NavItem({
+  icon,
+  label,
+  href,
+}: {
+  icon: string;
+  label: string;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[#D4AF37]/70 hover:text-[#D4AF37] hover:bg-[#07070A] transition"
+    >
+      <span className="text-lg">{icon}</span>
+      <span className="text-sm font-medium">{label}</span>
+    </a>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <BusinessProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </BusinessProvider>
   );
 }

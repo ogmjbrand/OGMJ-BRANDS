@@ -197,6 +197,7 @@ export default function SupportPage() {
             <option value="urgent">Urgent</option>
           </select>
         </div>
+      </div>
 
       {/* Tickets Table */}
       <div className="overflow-x-auto">
