@@ -357,6 +357,65 @@ export interface Transaction {
   updated_at: string;
 }
 
+export type InvoiceStatus =
+  | 'draft'
+  | 'sent'
+  | 'viewed'
+  | 'paid'
+  | 'overdue'
+  | 'cancelled'
+  | 'partially_paid';
+
+export interface Invoice {
+  id: string;
+  business_id: string;
+  invoice_number: string;
+  status: InvoiceStatus;
+  contact_id?: string;
+  total_amount: number;
+  paid_amount: number;
+  due_date: string;
+  sent_at?: string;
+  paid_at?: string;
+  created_at: string;
+  updated_at: string;
+  metadata: Record<string, any>;
+  line_items?: InvoiceLineItem[];
+}
+
+export interface InvoiceLineItem {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  description: string;
+  quantity: number;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoicePayment {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceTemplate {
+  id: string;
+  business_id: string;
+  name: string;
+  html_template: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
 // ================================
 // VIDEO TYPES
 // ================================

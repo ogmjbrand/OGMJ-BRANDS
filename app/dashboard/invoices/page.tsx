@@ -9,7 +9,7 @@ import { listInvoices, deleteInvoice, getInvoiceStats } from '@/lib/services/inv
 interface Invoice {
   id: string;
   invoice_number: string;
-  status: 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled';
+  status: 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled' | 'partially_paid';
   contact_id?: string;
   total_amount: number;
   paid_amount: number;

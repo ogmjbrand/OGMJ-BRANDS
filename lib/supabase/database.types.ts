@@ -342,6 +342,149 @@ export interface Database {
           updated_at?: string
         }
       }
+      invoices: {
+        Row: {
+          id: string
+          business_id: string
+          invoice_number: string
+          status: string
+          contact_id: string | null
+          total_amount: number
+          paid_amount: number
+          due_date: string
+          sent_at: string | null
+          paid_at: string | null
+          created_at: string
+          updated_at: string
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          invoice_number?: string
+          status?: string
+          contact_id?: string | null
+          total_amount?: number
+          paid_amount?: number
+          due_date?: string
+          sent_at?: string | null
+          paid_at?: string | null
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          invoice_number?: string
+          status?: string
+          contact_id?: string | null
+          total_amount?: number
+          paid_amount?: number
+          due_date?: string
+          sent_at?: string | null
+          paid_at?: string | null
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+      }
+      invoice_line_items: {
+        Row: {
+          id: string
+          invoice_id: string
+          business_id: string
+          description: string
+          quantity: number
+          amount: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          business_id: string
+          description: string
+          quantity: number
+          amount: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          business_id?: string
+          description?: string
+          quantity?: number
+          amount?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      invoice_payments: {
+        Row: {
+          id: string
+          invoice_id: string
+          business_id: string
+          amount: number
+          payment_date: string
+          payment_method: string
+          reference_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          business_id: string
+          amount: number
+          payment_date: string
+          payment_method: string
+          reference_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          business_id?: string
+          amount?: number
+          payment_date?: string
+          payment_method?: string
+          reference_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      invoice_templates: {
+        Row: {
+          id: string
+          business_id: string
+          name: string
+          html_template: string
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          name: string
+          html_template: string
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          name?: string
+          html_template?: string
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
       audit_logs: {
         Row: {
           id: string
