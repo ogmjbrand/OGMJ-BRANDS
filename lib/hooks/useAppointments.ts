@@ -130,3 +130,4 @@ export function useAppointments(businessId: string, month?: Date) {
     deleteAppointment,
   }
 }
+

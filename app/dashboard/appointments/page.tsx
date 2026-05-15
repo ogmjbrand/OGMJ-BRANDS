@@ -54,7 +54,7 @@ export default function AppointmentsPage() {
         }
 
         if (membership?.business_id) {
-          setBusinessId(membership.business_id)
+          setBusinessId((membership as any).business_id)
         }
       } catch (err) {
         console.error('fetchBusinessId error:', err)
@@ -165,3 +165,5 @@ export default function AppointmentsPage() {
     </div>
   )
 }
+
+

@@ -55,7 +55,7 @@ export function useBusinessId(): UseBusinessIdReturn {
           return
         }
 
-        setBusinessId(data?.business_id ?? null)
+        setBusinessId((data as any)?.business_id ?? null)
       } catch (err) {
         if (!cancelled) setError('Failed to resolve business')
       } finally {
@@ -69,3 +69,5 @@ export function useBusinessId(): UseBusinessIdReturn {
 
   return { businessId, loading, error }
 }
+
+

@@ -94,3 +94,4 @@ export interface FeatureFlag {
   enabled: boolean
   plan: string
 }
+

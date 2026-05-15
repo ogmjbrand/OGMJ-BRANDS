@@ -279,3 +279,4 @@ export async function verifyEmail(token: string, type: "signup" | "recovery") {
 // ================================
 
 export type { User, Session };
+

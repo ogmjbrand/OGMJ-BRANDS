@@ -306,3 +306,4 @@ export async function getInvoiceStats(businessId: string) {
 
   return stats;
 }
+

@@ -36,3 +36,4 @@ export async function getCurrentUserServer(): Promise<User | null> {
     return null;
   }
 }
+

@@ -168,3 +168,4 @@ function getStatusColor(status: string): string {
   };
   return colors[status] || 'bg-[#D4AF37]/20 text-[#D4AF37]';
 }
+

@@ -22,7 +22,7 @@ export default function SequencesPage() {
           .eq('user_id', user.id)
           .limit(1)
           .single()
-        if (business) setBusinessId(business.business_id)
+        if (business) setBusinessId((business as any).business_id)
       }
     }
     fetchBusinessId()
@@ -31,12 +31,10 @@ export default function SequencesPage() {
   const handleCreateSequence = async () => {
     if (!newSequenceName.trim()) return
     await createSequence({
-      id: '',
       name: newSequenceName,
       description: '',
       business_id: businessId,
       status: 'draft',
-      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     setNewSequenceName('')
@@ -167,3 +165,7 @@ export default function SequencesPage() {
     </div>
   )
 }
+
+
+
+

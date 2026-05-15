@@ -23,7 +23,7 @@ export default function LeadsPage() {
           .eq('user_id', user.id)
           .limit(1)
           .single()
-        if (business) setBusinessId(business.business_id)
+        if (business) setBusinessId((business as any).business_id)
       }
     }
     fetchBusinessId()
@@ -108,10 +108,10 @@ export default function LeadsPage() {
               {filteredLeads.map((lead) => (
                 <tr key={lead.id} className="border-b border-[#D4AF37]/5 hover:bg-[#D4AF37]/5 transition">
                   <td className="px-6 py-4 text-white">
-                    {lead.contact?.first_name} {lead.contact?.last_name}
+                    {(lead as any).contact?.first_name} {(lead as any).contact?.last_name}
                   </td>
-                  <td className="px-6 py-4 text-[#D4AF37]/70">{lead.contact?.email}</td>
-                  <td className="px-6 py-4 text-[#D4AF37]/70">{lead.contact?.company_name || '—'}</td>
+                  <td className="px-6 py-4 text-[#D4AF37]/70">{(lead as any).contact?.email}</td>
+                  <td className="px-6 py-4 text-[#D4AF37]/70">{(lead as any).contact?.company_name || '—'}</td>
                   <td className="px-6 py-4 text-white font-semibold">{lead.lead_score || 0}</td>
                   <td className="px-6 py-4">
                     <select
@@ -171,3 +171,6 @@ function StatCard({ label, value, color }: { label: string; value: number; color
     </div>
   )
 }
+
+
+

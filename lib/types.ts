@@ -770,3 +770,4 @@ export interface CreateBusinessInput {
   phone?: string;
   metadata?: Record<string, any>;
 }
+

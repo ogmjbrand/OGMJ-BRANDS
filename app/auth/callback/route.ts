@@ -30,3 +30,4 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect('https://ogmjbrands.com/onboarding')
 }
+

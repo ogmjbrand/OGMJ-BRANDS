@@ -1,8 +1,7 @@
-﻿import { createServerClient as createServerClientSSR } from "@supabase/ssr";
+import { createServerClient as createServerClientSSR } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "./database.types";
 
-// ✅ This is what auth/route.ts, dashboard/layout.tsx, dashboard/page.tsx import
+// ? This is what auth/route.ts, dashboard/layout.tsx, dashboard/page.tsx import
 export async function createClient() {
   const cookieStore = await cookies();
   return createServerClientSSR(
@@ -19,3 +18,4 @@ export async function createClient() {
 }
 
 export const createServerClient = createClient;
+

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 interface FeatureFlag {
   feature_name: string
   enabled: boolean
-  plan_id: string
+  plan_id?: string
 }
 
 export function useFeatureFlags(businessId: string) {
@@ -85,3 +85,5 @@ export function useFeatureFlags(businessId: string) {
     refetch: fetchFeatureFlags,
   }
 }
+
+

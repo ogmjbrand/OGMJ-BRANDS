@@ -31,3 +31,4 @@ export async function getServerUser() {
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
+

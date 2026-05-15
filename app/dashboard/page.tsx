@@ -494,3 +494,4 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
     </div>
   );
 }
+

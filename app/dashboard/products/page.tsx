@@ -28,7 +28,7 @@ export default function ProductsPage() {
           .eq('user_id', user.id)
           .limit(1)
           .single()
-        if (business) setBusinessId(business.business_id)
+        if (business) setBusinessId((business as any).business_id)
       }
     }
     fetchBusinessId()
@@ -203,3 +203,5 @@ export default function ProductsPage() {
     </div>
   )
 }
+
+
