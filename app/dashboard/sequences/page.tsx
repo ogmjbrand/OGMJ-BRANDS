@@ -35,7 +35,6 @@ export default function SequencesPage() {
       description: '',
       business_id: businessId,
       status: 'draft',
-      updated_at: new Date().toISOString(),
     })
     setNewSequenceName('')
     setShowCreateModal(false)
