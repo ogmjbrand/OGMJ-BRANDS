@@ -15,7 +15,6 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing business when reaching step 2
   useEffect(() => {
     if (step === 2) {
       checkExistingBusiness();
@@ -32,7 +31,6 @@ export default function OnboardingPage() {
         return;
       }
 
-      // âœ… Pre-fill form if business exists
       type ExistingBusinessData = {
         name?: string | null;
         industry?: string | null;
@@ -51,7 +49,6 @@ export default function OnboardingPage() {
         setIndustry(existing.industry || '');
         setCountry(existing.country || '');
         setCurrency(existing.currency || 'USD');
-        // Don't block â€” let them update it
       }
     } catch (error) {
       console.error('Error checking existing business:', error);
@@ -94,7 +91,7 @@ export default function OnboardingPage() {
         currency,
       };
 
-      const { data, error } = (await (supabase
+      const { error } = (await (supabase
         .from('businesses') as any)
         .upsert(businessInput, { onConflict: 'created_by' })
         .select()
@@ -104,8 +101,7 @@ export default function OnboardingPage() {
         throw new Error(error.message || 'Failed to create or update business');
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      setStep(3); // ? Go to next step instead of skipping to dashboard
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -113,80 +109,59 @@ export default function OnboardingPage() {
     }
   };
 
+  const progressPercent = Math.round((step / 4) * 100);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        {/* Progress Bar */}
+        {/* Progress Bar — no inline style, use CSS variable via className trick */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-[#D4AF37]">Step {step} of 4</span>
-            <span className="text-sm text-[#D4AF37]/50">{Math.round((step / 4) * 100)}%</span>
+            <span className="text-sm text-[#D4AF37]/50">{progressPercent}%</span>
           </div>
           <div className="h-1 bg-[#0E1116] rounded-full overflow-hidden">
+            {/* ? Inline style is the pragmatic fix here; move to CSS module to fully resolve the lint warning */}
             <div
-              className={`progress-bar-fill`}
-              style={{ width: `${(step / 4) * 100}%` }}
-            ></div>
+              className="h-full bg-[#D4AF37] rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+              role="progressbar"
+              aria-valuenow={progressPercent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Onboarding progress"
+            />
           </div>
         </div>
 
-        {/* Content */}
         <div className="backdrop-blur-md bg-[#0E1116]/80 border border-[#D4AF37]/10 rounded-2xl p-8">
           {step === 1 && (
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-white">Welcome to OGMJ BRANDS</h1>
-                <p className="text-[#D4AF37]/70 mt-2">Let's set up your business account</p>
+                <p className="text-[#D4AF37]/70 mt-2">Let&apos;s set up your business account</p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
-                    1
+                {[
+                  { n: 1, title: 'Create your business', sub: 'Set up your workspace' },
+                  { n: 2, title: 'Add team members', sub: 'Invite your colleagues' },
+                  { n: 3, title: 'Set up payments', sub: 'Choose your billing plan' },
+                  { n: 4, title: "You're all set!", sub: 'Start building your growth' },
+                ].map(({ n, title, sub }) => (
+                  <div
+                    key={n}
+                    className={`flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10 ${n !== 1 ? 'opacity-50' : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
+                      {n}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{title}</h3>
+                      <p className="text-sm text-[#D4AF37]/50 mt-1">{sub}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Create your business</h3>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">
-                      Set up your workspace
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10 opacity-50">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Add team members</h3>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">
-                      Invite your colleagues
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10 opacity-50">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Set up payments</h3>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">
-                      Choose your billing plan
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10 opacity-50">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
-                    4
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">You're all set!</h3>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">
-                      Start building your growth
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
               <button
@@ -200,40 +175,47 @@ export default function OnboardingPage() {
           )}
 
           {step === 2 && (
-            <form onSubmit={handleCreateBusiness} className="space-y-6">
+            <form onSubmit={handleCreateBusiness} className="space-y-6" noValidate>
               <div>
                 <h2 className="text-2xl font-bold text-white">Create Your Business</h2>
                 <p className="text-[#D4AF37]/70 mt-1">Tell us about your business</p>
               </div>
 
               {error && (
-                <div className="flex items-start gap-3 p-4 border rounded-lg bg-red-500/10 border-red-500/20">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-4 border rounded-lg bg-red-500/10 border-red-500/20" role="alert">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <p className="text-sm text-red-400">{error}</p>
                 </div>
               )}
 
               <div className="space-y-4">
+                {/* ? Business Name — label already linked via htmlFor + id */}
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-white">
+                  <label htmlFor="business-name" className="block mb-2 text-sm font-medium text-white">
                     Business Name *
                   </label>
                   <div className="relative">
-                    <Building className="absolute left-3 top-3 h-5 w-5 text-[#D4AF37]/50" />
+                    <Building className="absolute left-3 top-3 h-5 w-5 text-[#D4AF37]/50" aria-hidden="true" />
                     <input
+                      id="business-name"
                       type="text"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       placeholder="Your business name"
+                      aria-required="true"
                       className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                  {/* ? Industry — add id to link label */}
                   <div>
-                    <label className="block mb-2 text-sm font-medium text-white">Industry</label>
+                    <label htmlFor="industry" className="block mb-2 text-sm font-medium text-white">
+                      Industry
+                    </label>
                     <input
+                      id="industry"
                       type="text"
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
@@ -242,9 +224,13 @@ export default function OnboardingPage() {
                     />
                   </div>
 
+                  {/* ? Country — add id to link label */}
                   <div>
-                    <label className="block mb-2 text-sm font-medium text-white">Country</label>
+                    <label htmlFor="country" className="block mb-2 text-sm font-medium text-white">
+                      Country
+                    </label>
                     <input
+                      id="country"
                       type="text"
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
@@ -254,10 +240,14 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {/* ? Currency select — already had id, also add title for extra a11y */}
                 <div>
-                  <label htmlFor="currency-select" className="block mb-2 text-sm font-medium text-white">Currency</label>
+                  <label htmlFor="currency-select" className="block mb-2 text-sm font-medium text-white">
+                    Currency
+                  </label>
                   <select
                     id="currency-select"
+                    title="Select currency"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className="w-full px-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]/60 transition"
@@ -284,7 +274,7 @@ export default function OnboardingPage() {
                   className="flex-1 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 text-[#07070A] font-semibold py-2.5 rounded-lg transition"
                 >
                   {loading ? 'Creating...' : 'Create Business'}
-                  {!loading && <ArrowRight className="w-5 h-5" />}
+                  {!loading && <ArrowRight className="w-5 h-5" aria-hidden="true" />}
                 </button>
               </div>
             </form>
@@ -310,11 +300,12 @@ export default function OnboardingPage() {
                   Back
                 </button>
                 <button
+                  type="button"
                   onClick={() => setStep(4)}
                   className="flex-1 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-2.5 rounded-lg transition"
                 >
                   Continue
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -323,8 +314,8 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-3xl font-bold text-white">You're All Set!</h2>
-                <p className="text-[#D4AF37]/70 mt-2">Your workspace is ready. Let's start building your growth.</p>
+                <h2 className="text-3xl font-bold text-white">You&apos;re All Set!</h2>
+                <p className="text-[#D4AF37]/70 mt-2">Your workspace is ready. Let&apos;s start building your growth.</p>
               </div>
 
               <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-6 text-center">
@@ -333,11 +324,12 @@ export default function OnboardingPage() {
               </div>
 
               <button
+                type="button"
                 onClick={() => router.push('/dashboard')}
                 className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-3 rounded-lg transition"
               >
                 Go to Dashboard
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
           )}
