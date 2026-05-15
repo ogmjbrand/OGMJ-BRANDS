@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, DollarSign, ShoppingCart, Activity, AlertCircle, Sparkles, MessageCircle, Zap } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, ShoppingCart, Activity, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
+import { useFeatureFlags } from '@/lib/hooks';
 import { listContacts, listDeals } from '@/lib/services/crm';
 import { getVideos } from '@/lib/services/videos.service';
 import { getWebsites } from '@/lib/services/builder.service';
@@ -168,6 +170,9 @@ export default function DashboardPage() {
         <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
         <p className="text-[#D4AF37]/70">Welcome back to your business hub</p>
       </div>
+
+      {/* Feature Gating Section */}
+      <FeatureGatingSection businessId={currentBusiness?.id || ''} />
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -367,6 +372,125 @@ export default function DashboardPage() {
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Feature Gating Section Component
+function FeatureGatingSection({ businessId }: { businessId: string }) {
+  const router = useRouter();
+  const { isFeatureEnabled, loading, planId } = useFeatureFlags(businessId);
+
+  if (!businessId || loading) return null;
+
+  const features = [
+    {
+      name: 'Leads Management',
+      description: 'Track and manage sales leads',
+      icon: Users,
+      enabled: isFeatureEnabled('leads_management'),
+      path: '/dashboard/leads',
+      badge: 'Pro+',
+    },
+    {
+      name: 'Appointment Booking',
+      description: 'Calendar and meeting management',
+      icon: BarChart3,
+      enabled: isFeatureEnabled('appointment_booking'),
+      path: '/dashboard/appointments',
+      badge: 'Pro+',
+    },
+    {
+      name: 'Email Sequences',
+      description: 'Automate email campaigns',
+      icon: Mail,
+      enabled: isFeatureEnabled('email_sequences'),
+      path: '/dashboard/sequences',
+      badge: 'Pro+',
+    },
+    {
+      name: 'Team Messaging',
+      description: 'Collaborate with your team',
+      icon: MessageCircle,
+      enabled: isFeatureEnabled('team_messaging'),
+      path: '/dashboard/inbox',
+      badge: 'Business+',
+    },
+    {
+      name: 'Product Catalog',
+      description: 'Manage products and inventory',
+      icon: Package,
+      enabled: isFeatureEnabled('product_catalog'),
+      path: '/dashboard/products',
+      badge: 'Business+',
+    },
+  ];
+
+  const enabledFeatures = features.filter(f => f.enabled);
+  const disabledFeatures = features.filter(f => !f.enabled);
+
+  return (
+    <div className="space-y-6">
+      {enabledFeatures.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-4">Available Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {enabledFeatures.map(feature => {
+              const Icon = feature.icon;
+              return (
+                <button
+                  key={feature.name}
+                  onClick={() => router.push(feature.path)}
+                  className="backdrop-blur-md bg-[#0E1116]/50 border border-[#D4AF37]/20 rounded-lg p-4 hover:border-[#D4AF37]/50 hover:bg-[#0E1116]/70 transition text-left group"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2 bg-[#D4AF37]/20 group-hover:bg-[#D4AF37]/30 rounded transition">
+                      <Icon className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">Active</span>
+                  </div>
+                  <h3 className="font-semibold text-white text-sm">{feature.name}</h3>
+                  <p className="text-xs text-[#D4AF37]/70 mt-1">{feature.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {disabledFeatures.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-4">Unlock More Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {disabledFeatures.map(feature => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.name}
+                  className="backdrop-blur-md bg-[#0E1116]/30 border border-[#D4AF37]/10 rounded-lg p-4 opacity-60"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2 bg-[#D4AF37]/10 rounded">
+                      <Icon className="w-5 h-5 text-[#D4AF37]/50" />
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-[#D4AF37]/10 text-[#D4AF37]/50 rounded">
+                      {feature.badge}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-white/50 text-sm">{feature.name}</h3>
+                  <p className="text-xs text-[#D4AF37]/50 mt-1">{feature.description}</p>
+                  <a
+                    href="/settings/billing"
+                    className="mt-3 inline-block text-xs px-2 py-1 bg-[#D4AF37]/20 text-[#D4AF37]/70 rounded hover:bg-[#D4AF37]/30"
+                  >
+                    Upgrade Plan
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
