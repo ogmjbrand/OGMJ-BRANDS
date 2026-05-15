@@ -100,7 +100,7 @@ export default function AppointmentsPage() {
   if (loading && !businessId) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary" />
       </div>
     )
   }
@@ -121,19 +121,19 @@ export default function AppointmentsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary" />
         </div>
       ) : appointments.length === 0 ? (
-        <div className="text-center text-muted-foreground py-16">
+        <div className="py-16 text-center text-muted-foreground">
           <p className="text-lg font-medium">No appointments yet</p>
-          <p className="text-sm mt-1">Schedule your first appointment to get started.</p>
+          <p className="mt-1 text-sm">Schedule your first appointment to get started.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {appointments.map((appt) => (
             <div
               key={appt.id}
-              className="rounded-lg border bg-card p-4 shadow-sm space-y-1"
+              className="p-4 space-y-1 border rounded-lg shadow-sm bg-card"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">{appt.title}</h3>
