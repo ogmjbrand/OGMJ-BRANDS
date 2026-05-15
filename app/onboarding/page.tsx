@@ -115,7 +115,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
+      <div className="w-full max-w-2xl">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
+                <div className="flex items-start gap-3 p-4 border rounded-lg bg-red-500/10 border-red-500/20">
                   <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-red-400">{error}</p>
                 </div>
@@ -215,7 +215,7 @@ export default function OnboardingPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block mb-2 text-sm font-medium text-white">
                     Business Name *
                   </label>
                   <div className="relative">
@@ -232,7 +232,7 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">Industry</label>
+                    <label className="block mb-2 text-sm font-medium text-white">Industry</label>
                     <input
                       type="text"
                       value={industry}
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">Country</label>
+                    <label className="block mb-2 text-sm font-medium text-white">Country</label>
                     <input
                       type="text"
                       value={country}
@@ -255,7 +255,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="currency-select" className="block text-sm font-medium text-white mb-2">Currency</label>
+                  <label htmlFor="currency-select" className="block mb-2 text-sm font-medium text-white">Currency</label>
                   <select
                     id="currency-select"
                     value={currency}
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-6 text-center">
-                <p className="text-white font-semibold">Welcome to OGMJ BRANDS</p>
+                <p className="font-semibold text-white">Welcome to OGMJ BRANDS</p>
                 <p className="text-[#D4AF37]/70 text-sm mt-2">Access all features from your dashboard</p>
               </div>
 
