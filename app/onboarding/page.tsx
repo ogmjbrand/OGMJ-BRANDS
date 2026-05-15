@@ -101,7 +101,7 @@ export default function OnboardingPage() {
         throw new Error(error.message || 'Failed to create or update business');
       }
 
-      setStep(3); // ? Go to next step instead of skipping to dashboard
+      setStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -114,14 +114,12 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        {/* Progress Bar — no inline style, use CSS variable via className trick */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-medium text-[#D4AF37]">Step {step} of 4</span>
             <span className="text-sm text-[#D4AF37]/50">{progressPercent}%</span>
           </div>
           <div className="h-1 bg-[#0E1116] rounded-full overflow-hidden">
-            {/* ? Inline style is the pragmatic fix here; move to CSS module to fully resolve the lint warning */}
             <div
               className="h-full bg-[#D4AF37] rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -189,7 +187,6 @@ export default function OnboardingPage() {
               )}
 
               <div className="space-y-4">
-                {/* ? Business Name — label already linked via htmlFor + id */}
                 <div>
                   <label htmlFor="business-name" className="block mb-2 text-sm font-medium text-white">
                     Business Name *
@@ -209,7 +206,6 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* ? Industry — add id to link label */}
                   <div>
                     <label htmlFor="industry" className="block mb-2 text-sm font-medium text-white">
                       Industry
@@ -224,7 +220,6 @@ export default function OnboardingPage() {
                     />
                   </div>
 
-                  {/* ? Country — add id to link label */}
                   <div>
                     <label htmlFor="country" className="block mb-2 text-sm font-medium text-white">
                       Country
@@ -240,7 +235,6 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {/* ? Currency select — already had id, also add title for extra a11y */}
                 <div>
                   <label htmlFor="currency-select" className="block mb-2 text-sm font-medium text-white">
                     Currency
