@@ -93,6 +93,24 @@ const marketplace = [
   },
 ]
 
+const imagery = [
+  {
+    title: 'Concept system art',
+    description: 'Cinematic visuals that make the business OS feel thoughtful, premium, and expansive.',
+    src: '/window.svg',
+  },
+  {
+    title: 'Global command layer',
+    description: 'Interface imagery that reflects enterprise launch control and growth scale.',
+    src: '/globe.svg',
+  },
+  {
+    title: 'Operations documentation',
+    description: 'Aesthetic imagery for workflows, dashboards, and premium launch narratives.',
+    src: '/file.svg',
+  },
+]
+
 const journey = [
   { title: 'Idea', detail: 'Strategy, vision and positioning for premium founders.' },
   { title: 'Registration', detail: 'Entity setup, compliance, and launch infrastructure.' },
@@ -176,7 +194,7 @@ export default function Home() {
           </nav>
 
           <Link
-            href="/auth"
+            href="/login"
             className="inline-flex items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-semibold text-black shadow-gold-glow transition duration-300 hover:shadow-gold-glow-lg"
           >
             Get Started
@@ -205,7 +223,7 @@ export default function Home() {
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
-                href="/auth"
+                href="/login"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-gold to-amber-400 px-8 py-4 text-base font-semibold text-black shadow-gold-glow transition duration-300 hover:scale-[1.01] hover:shadow-gold-glow-lg"
               >
                 Start your premium suite
@@ -449,7 +467,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="services" className="border-t border-white/10 px-6 py-20 sm:py-28">
+      <section id="services" className="border-t border-white/10 px-6 py-28 sm:py-36">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
             <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Premium service ecosystem</p>
@@ -481,7 +499,7 @@ export default function Home() {
         </div>
       </section>
       
-      <section id="marketplace" className="border-t border-white/10 px-6 py-24 sm:py-32">
+      <section id="marketplace" className="border-t border-white/10 px-6 py-28 sm:py-36">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-16 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div className="space-y-6">
@@ -504,6 +522,9 @@ export default function Home() {
                 return (
                   <motion.div
                     key={item.title}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.35 }}
                     whileHover={{ y: -6 }}
                     transition={{ type: 'spring', stiffness: 220, damping: 18 }}
                     className="group rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/20 backdrop-blur-xl"
@@ -521,6 +542,41 @@ export default function Home() {
                 )
               })}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="imagery" className="border-t border-white/10 px-6 py-28 sm:py-36">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Aesthetic imagery</p>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Visual storytelling for every ecosystem moment</h2>
+            <p className="mt-6 text-lg leading-8 text-slate-300">
+              Curated interface imagery and premium concept art reinforce the feeling of an OS that moves from idea to brand, launch, automation, and growth.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {imagery.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                whileHover={{ y: -6 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0B1119]/95 p-6 shadow-2xl shadow-black/30"
+              >
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-[#D4AF37]/10 to-transparent" />
+                <div className="relative h-64 overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#06090E]">
+                  <Image src={item.src} alt={item.title} fill className="object-contain p-8" />
+                </div>
+                <div className="relative mt-6">
+                  <p className="text-sm uppercase tracking-[0.28em] text-slate-400">{item.title}</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">{item.description}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -601,7 +657,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="contact" className="relative px-6 pb-24 pt-12 sm:pb-28">
+      <section id="contact" className="relative px-6 py-28 sm:py-32">
         <div className="absolute inset-x-0 bottom-0 top-0 -z-10 bg-[radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.12),transparent_22%),radial-gradient(circle_at_top_right,rgba(212,175,55,0.14),transparent_24%)]" />
         <div className="mx-auto max-w-5xl rounded-[3rem] border border-white/10 bg-white/5 p-10 shadow-2xl shadow-black/20 backdrop-blur-xl">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
@@ -610,7 +666,7 @@ export default function Home() {
               <h2 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Work with a global partner built for scale, speed, and luxury.</h2>
             </div>
             <Link
-              href="/auth"
+              href="/login"
               className="inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-gold to-amber-400 px-8 py-4 text-base font-semibold text-black shadow-gold-glow transition duration-300 hover:scale-[1.01]"
             >
               Start your enterprise experience

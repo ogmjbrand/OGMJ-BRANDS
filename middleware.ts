@@ -29,6 +29,17 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
   const path = url.pathname
 
+  // ── Legacy auth redirects: support /auth/login and /auth/signup ─────────────
+  if (path === '/auth/login') {
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (path === '/auth/signup') {
+    url.pathname = '/signup'
+    return NextResponse.redirect(url)
+  }
+
   // ── Auth routes: redirect logged-in users away ──────────────────────────────
   const authRoutes = ['/login', '/signup', '/auth']
   if (user && authRoutes.some(r => path.startsWith(r))) {
@@ -41,7 +52,7 @@ export async function middleware(req: NextRequest) {
   const isProtected = protectedRoutes.some(r => path.startsWith(r))
 
   if (!user && isProtected) {
-    url.pathname = '/auth'
+    url.pathname = '/login'
     url.searchParams.set('redirectTo', path)
     return NextResponse.redirect(url)
   }
