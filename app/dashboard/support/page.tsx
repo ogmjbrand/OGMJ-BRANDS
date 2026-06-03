@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Plus, Search, AlertCircle } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { getSupportTickets } from '@/lib/services/support.service';
+import { getSupportTickets, createSupportTicket } from '@/lib/services/support.service';
 import type { SupportTicket } from '@/lib/services/support.service';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export default function SupportPage() {
   const { currentBusiness } = useBusinessContext();
@@ -14,6 +16,13 @@ export default function SupportPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState('');
+  const [newTicketDescription, setNewTicketDescription] = useState('');
+  const [newTicketPriority, setNewTicketPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [newTicketCategory, setNewTicketCategory] = useState('General');
+  const [creatingTicket, setCreatingTicket] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function loadTickets() {
     if (!currentBusiness) {
@@ -47,6 +56,38 @@ export default function SupportPage() {
     loadTickets();
   }, [currentBusiness, statusFilter, priorityFilter]);
 
+  async function handleCreateTicket(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentBusiness) {
+      setFormError('Please select a business before creating a ticket.');
+      return;
+    }
+
+    setCreatingTicket(true);
+    setFormError(null);
+
+    const result = await createSupportTicket(currentBusiness.id, {
+      subject: newTicketSubject,
+      description: newTicketDescription,
+      priority: newTicketPriority,
+      category: newTicketCategory,
+    });
+
+    if (!result.success) {
+      setFormError(result.error?.message || 'Failed to create ticket.');
+      setCreatingTicket(false);
+      return;
+    }
+
+    setNewTicketSubject('');
+    setNewTicketDescription('');
+    setNewTicketPriority('medium');
+    setNewTicketCategory('General');
+    setIsDialogOpen(false);
+    setCreatingTicket(false);
+    loadTickets();
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
@@ -79,13 +120,15 @@ export default function SupportPage() {
     }
   };
 
-  const filteredTickets = tickets.filter(
-    (t) =>
+  const filteredTickets = tickets.filter((t) => {
+    const contactName = [t.contact?.firstName, t.contact?.lastName].filter(Boolean).join(' ').toLowerCase();
+    return (
       t.subject.toLowerCase().includes(search.toLowerCase()) ||
       t.ticketNumber.toLowerCase().includes(search.toLowerCase()) ||
-      (t.contact?.firstName + ' ' + t.contact?.lastName).toLowerCase().includes(search.toLowerCase()) ||
+      contactName.includes(search.toLowerCase()) ||
       t.contact?.email?.toLowerCase().includes(search.toLowerCase())
-  );
+    );
+  });
 
   const stats = {
     open: tickets.filter(t => t.status === 'open').length,
@@ -130,10 +173,79 @@ export default function SupportPage() {
           <h1 className="text-4xl font-bold text-white">Support Tickets</h1>
           <p className="text-[#D4AF37]/70 mt-2">Manage your support requests</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition">
-          <Plus className="w-5 h-5" />
-          New Ticket
-        </button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 bg-[#D4AF37] text-[#07070A] rounded-lg px-4 py-2 font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
+              <Plus className="w-5 h-5" />
+              New Ticket
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create new support ticket</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateTicket} className="space-y-4 pt-2">
+              <div className="space-y-4">
+                {formError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                    {formError}
+                  </div>
+                )}
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Subject
+                  <input
+                    type="text"
+                    value={newTicketSubject}
+                    onChange={(e) => setNewTicketSubject(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="Enter the ticket title"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Description
+                  <textarea
+                    value={newTicketDescription}
+                    onChange={(e) => setNewTicketDescription(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    rows={5}
+                    placeholder="Describe the issue, request, or question."
+                  />
+                </label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    Priority
+                    <select
+                      value={newTicketPriority}
+                      onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')}
+                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    Category
+                    <input
+                      type="text"
+                      value={newTicketCategory}
+                      onChange={(e) => setNewTicketCategory(e.target.value)}
+                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                      placeholder="e.g. Billing, Product, Technical"
+                    />
+                  </label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={creatingTicket}>
+                  {creatingTicket ? 'Creating...' : 'Create ticket'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats */}

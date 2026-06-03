@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     }) || [];
 
     return createSuccessResponse({
-      items: transformedTickets,
+      tickets: transformedTickets,
       total: count || 0,
       limit,
       offset,
