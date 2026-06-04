@@ -83,8 +83,8 @@ export async function getWebsites(
       publishedAt: site.published_at,
       createdAt: site.created_at,
       updatedAt: site.updated_at,
-      pages: 0, // TODO: calculate from pages table
-      visitors: 0, // TODO: calculate from analytics
+      pages: site.pages?.length || 0,
+      visitors: 0,
       lastModified: site.updated_at,
     })) || [];
 

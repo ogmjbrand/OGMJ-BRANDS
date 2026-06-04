@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { getWebsites, getPages, createPage, deletePage, publishPage, type Website, type Page } from '@/lib/services/builder.service';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { getWebsites, getPages, createWebsite, createPage, deletePage, publishPage, type Website, type Page } from '@/lib/services/builder.service';
 
 export default function BuilderPage() {
   const { currentBusiness } = useBusinessContext();
@@ -12,6 +14,11 @@ export default function BuilderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set());
+  const [isCreateWebsiteOpen, setIsCreateWebsiteOpen] = useState(false);
+  const [newWebsiteName, setNewWebsiteName] = useState('');
+  const [newWebsiteSlug, setNewWebsiteSlug] = useState('');
+  const [newWebsiteDescription, setNewWebsiteDescription] = useState('');
+  const [creatingWebsite, setCreatingWebsite] = useState(false);
   const [creatingPage, setCreatingPage] = useState<string | null>(null);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
@@ -73,6 +80,38 @@ export default function BuilderPage() {
     } catch (err) {
       alert('Failed to create page');
       console.error(err);
+    }
+  }
+
+  async function handleCreateWebsite(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentBusiness) return;
+    if (!newWebsiteName.trim() || !newWebsiteSlug.trim()) return;
+
+    setCreatingWebsite(true);
+
+    try {
+      const result = await createWebsite(currentBusiness.id, {
+        businessId: currentBusiness.id,
+        name: newWebsiteName.trim(),
+        slug: newWebsiteSlug.trim(),
+        description: newWebsiteDescription.trim() || undefined,
+      });
+
+      if (result.success && result.data) {
+        setWebsites((prev) => [result.data!, ...prev]);
+        setNewWebsiteName('');
+        setNewWebsiteSlug('');
+        setNewWebsiteDescription('');
+        setIsCreateWebsiteOpen(false);
+      } else {
+        alert(result.error?.message || 'Failed to create website');
+      }
+    } catch (err) {
+      alert('Failed to create website');
+      console.error(err);
+    } finally {
+      setCreatingWebsite(false);
     }
   }
 
@@ -177,10 +216,60 @@ export default function BuilderPage() {
           <h1 className="text-4xl font-bold text-white">Website Builder</h1>
           <p className="text-[#D4AF37]/70 mt-2">Create and manage your websites</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition">
-          <Plus className="w-5 h-5" />
-          New Website
-        </button>
+        <Dialog open={isCreateWebsiteOpen} onOpenChange={setIsCreateWebsiteOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
+              <Plus className="w-5 h-5" />
+              New Website
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create a new website</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateWebsite} className="space-y-4 pt-2">
+              <div className="grid gap-4">
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Website Name
+                  <input
+                    type="text"
+                    value={newWebsiteName}
+                    onChange={(e) => setNewWebsiteName(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="Brand site, storefront, landing page"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Website Slug
+                  <input
+                    type="text"
+                    value={newWebsiteSlug}
+                    onChange={(e) => setNewWebsiteSlug(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="example-site"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Description
+                  <textarea
+                    value={newWebsiteDescription}
+                    onChange={(e) => setNewWebsiteDescription(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="One sentence summary of the website"
+                  />
+                </label>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={creatingWebsite}>
+                  {creatingWebsite ? 'Creating...' : 'Create Website'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Info Banner */}
@@ -217,6 +306,9 @@ export default function BuilderPage() {
                       <h3 className="text-xl font-semibold text-white">{website.name}</h3>
                       <p className="text-sm text-[#D4AF37]/70">
                         {website.domain || website.customDomain || 'No domain assigned'}
+                      </p>
+                      <p className="text-xs text-[#D4AF37]/50 mt-2">
+                        {website.pages} page{website.pages === 1 ? '' : 's'} • Last updated {new Date(website.lastModified || website.updatedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -354,13 +446,19 @@ export default function BuilderPage() {
 
         {/* Create New Website Card */}
         <div className="border-2 border-dashed border-[#D4AF37]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#D4AF37]/40 transition cursor-pointer group">
-          <Plus className="w-12 h-12 text-[#D4AF37]/50 group-hover:text-[#D4AF37] transition mb-3" />
-          <p className="font-semibold text-white group-hover:text-[#D4AF37] transition">
-            Create New Website
-          </p>
-          <p className="text-sm text-[#D4AF37]/50 mt-1">
-            Start with a blank site or template
-          </p>
+          <Dialog open={isCreateWebsiteOpen} onOpenChange={setIsCreateWebsiteOpen}>
+            <DialogTrigger asChild>
+              <button className="w-full h-full p-8 flex flex-col items-center justify-center gap-3 text-white">
+                <Plus className="w-12 h-12 text-[#D4AF37]/50 group-hover:text-[#D4AF37] transition" />
+                <p className="font-semibold text-white group-hover:text-[#D4AF37] transition">
+                  Create New Website
+                </p>
+                <p className="text-sm text-[#D4AF37]/50 mt-1">
+                  Start with a blank site or template
+                </p>
+              </button>
+            </DialogTrigger>
+          </Dialog>
         </div>
       </div>
 

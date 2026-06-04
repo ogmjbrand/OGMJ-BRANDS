@@ -170,7 +170,7 @@ export async function getVideo(videoId: string): Promise<APIResponse<Video>> {
 
 export async function createVideo(
   businessId: string,
-  input: CreateVideoInput
+  input: Omit<CreateVideoInput, 'businessId'>
 ): Promise<APIResponse<Video>> {
   try {
     const response = await fetch('/api/videos', {

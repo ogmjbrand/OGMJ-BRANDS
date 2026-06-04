@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Access denied', 403);
     }
 
-    // Get websites for the business
+    // Get websites for the business, including page count
     const { data: websites, error } = await supabase
       .from('websites')
       .select(`
@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
         template_id,
         published_at,
         created_at,
-        updated_at
+        updated_at,
+        pages(id)
       `)
       .eq('business_id', businessId)
       .order('created_at', { ascending: false });

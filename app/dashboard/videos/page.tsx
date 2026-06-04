@@ -1,16 +1,32 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Upload, Play, MoreHorizontal, Zap, AlertCircle } from 'lucide-react';
+import { Upload, Play, MoreHorizontal, Zap, AlertCircle, Trash2, RefreshCcw } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { getVideos } from '@/lib/services/videos.service';
+import {
+  getVideos,
+  createVideo,
+  deleteVideo,
+  startVideoProcessing,
+} from '@/lib/services/videos.service';
 import type { Video } from '@/lib/services/videos.service';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export default function VideosPage() {
   const { currentBusiness } = useBusinessContext();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoDescription, setNewVideoDescription] = useState('');
+  const [newVideoSourceUrl, setNewVideoSourceUrl] = useState('');
+  const [newVideoDuration, setNewVideoDuration] = useState('');
+  const [newVideoFileSize, setNewVideoFileSize] = useState('');
+  const [creatingVideo, setCreatingVideo] = useState(false);
+  const [videoFormError, setVideoFormError] = useState<string | null>(null);
+  const [operationVideoId, setOperationVideoId] = useState<string | null>(null);
 
   async function loadVideos() {
     if (!currentBusiness) {
@@ -41,6 +57,60 @@ export default function VideosPage() {
   useEffect(() => {
     loadVideos();
   }, [currentBusiness]);
+
+  async function handleCreateVideo(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentBusiness) return;
+    if (!newVideoTitle.trim()) {
+      setVideoFormError('Video title is required.');
+      return;
+    }
+
+    setCreatingVideo(true);
+    setVideoFormError(null);
+
+    const result = await createVideo(currentBusiness.id, {
+      title: newVideoTitle.trim(),
+      description: newVideoDescription.trim() || undefined,
+      sourceUrl: newVideoSourceUrl.trim() || undefined,
+      durationSeconds: newVideoDuration ? parseInt(newVideoDuration, 10) : undefined,
+      fileSizeBytes: newVideoFileSize ? parseInt(newVideoFileSize, 10) : undefined,
+    });
+
+    if (!result.success) {
+      setVideoFormError(result.error?.message || 'Failed to create video.');
+      setCreatingVideo(false);
+      return;
+    }
+
+    setNewVideoTitle('');
+    setNewVideoDescription('');
+    setNewVideoSourceUrl('');
+    setNewVideoDuration('');
+    setNewVideoFileSize('');
+    setIsDialogOpen(false);
+    setCreatingVideo(false);
+    loadVideos();
+  }
+
+  async function handleDeleteVideo(videoId: string) {
+    if (!confirm('Delete this video?')) return;
+    setOperationVideoId(videoId);
+    const result = await deleteVideo(videoId);
+    if (result.success) {
+      setVideos((prev) => prev.filter((video) => video.id !== videoId));
+    }
+    setOperationVideoId(null);
+  }
+
+  async function handleProcessVideo(videoId: string) {
+    setOperationVideoId(videoId);
+    const result = await startVideoProcessing(videoId);
+    if (result.success) {
+      loadVideos();
+    }
+    setOperationVideoId(null);
+  }
 
   const formatDuration = (seconds?: number) => {
     if (!seconds) return '0:00';
@@ -92,10 +162,88 @@ export default function VideosPage() {
           <h1 className="text-4xl font-bold text-white">Videos</h1>
           <p className="text-[#D4AF37]/70 mt-2">Create viral video content automatically</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition">
-          <Upload className="w-5 h-5" />
-          Upload Video
-        </button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
+              <Upload className="w-5 h-5" />
+              Upload Video
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Upload new video</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateVideo} className="space-y-4 pt-2">
+              {videoFormError && (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                  {videoFormError}
+                </div>
+              )}
+              <div className="grid gap-4">
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Title
+                  <input
+                    type="text"
+                    value={newVideoTitle}
+                    onChange={(e) => setNewVideoTitle(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="Enter video title"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  Description
+                  <textarea
+                    value={newVideoDescription}
+                    onChange={(e) => setNewVideoDescription(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="Video description"
+                  />
+                </label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    Source URL
+                    <input
+                      type="url"
+                      value={newVideoSourceUrl}
+                      onChange={(e) => setNewVideoSourceUrl(e.target.value)}
+                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                      placeholder="https://"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    Duration (seconds)
+                    <input
+                      type="number"
+                      min={0}
+                      value={newVideoDuration}
+                      onChange={(e) => setNewVideoDuration(e.target.value)}
+                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                      placeholder="120"
+                    />
+                  </label>
+                </div>
+                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  File size (bytes)
+                  <input
+                    type="number"
+                    min={0}
+                    value={newVideoFileSize}
+                    onChange={(e) => setNewVideoFileSize(e.target.value)}
+                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    placeholder="42000000"
+                  />
+                </label>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={creatingVideo}>
+                  {creatingVideo ? 'Uploading...' : 'Create video'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats */}
@@ -190,12 +338,22 @@ export default function VideosPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    <button className="flex-1 px-3 py-1.5 bg-[#D4AF37]/20 text-[#D4AF37] rounded text-sm font-medium hover:bg-[#D4AF37]/30 transition">
-                      View
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <button
+                      onClick={() => handleProcessVideo(video.id)}
+                      disabled={video.status === 'processing' || operationVideoId === video.id}
+                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#D4AF37]/20 text-[#D4AF37] rounded text-sm font-medium hover:bg-[#D4AF37]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {operationVideoId === video.id ? 'Working…' : 'Process'}
                     </button>
-                    <button className="flex-1 px-3 py-1.5 bg-[#D4AF37]/10 text-[#D4AF37]/50 rounded text-sm font-medium hover:bg-[#D4AF37]/20 transition">
+                    <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#D4AF37]/10 text-[#D4AF37]/50 rounded text-sm font-medium hover:bg-[#D4AF37]/20 transition">
                       Clip
+                    </button>
+                    <button
+                      onClick={() => handleDeleteVideo(video.id)}
+                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-red-500/10 text-red-400 rounded text-sm font-medium hover:bg-red-500/20 transition"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
