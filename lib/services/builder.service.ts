@@ -70,8 +70,7 @@ export async function getWebsites(
       };
     }
 
-    // Transform data to match service interface
-    const websites = result.data?.map((site: any) => ({
+    const websites = result.data?.websites?.map((site: any) => ({
       id: site.id,
       name: site.name,
       slug: site.slug,
@@ -149,6 +148,85 @@ export async function createWebsite(
   }
 }
 
+export async function updateWebsite(
+  websiteId: string,
+  input: UpdateWebsiteInput
+): Promise<APIResponse<Website>> {
+  try {
+    const response = await fetch(`/api/builder/sites/${websiteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          message: result.error || 'Failed to update website',
+          code: response.status.toString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'An error occurred',
+        code: 'NETWORK_ERROR',
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+export async function deleteWebsite(
+  websiteId: string
+): Promise<APIResponse<{ success: boolean }>> {
+  try {
+    const response = await fetch(`/api/builder/sites/${websiteId}`, {
+      method: 'DELETE',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          message: result.error || 'Failed to delete website',
+          code: response.status.toString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    return {
+      success: true,
+      data: { success: true },
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'An error occurred',
+        code: 'NETWORK_ERROR',
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
 // ================================
 // PAGE TYPES
 // ================================
@@ -171,6 +249,7 @@ export interface Page {
 }
 
 export interface CreatePageInput {
+  businessId: string;
   websiteId: string;
   title: string;
   slug: string;
@@ -212,9 +291,9 @@ export interface CreateTemplateInput {
 // PAGE FUNCTIONS
 // ================================
 
-export async function getPages(websiteId: string): Promise<APIResponse<Page[]>> {
+export async function getPages(businessId: string, websiteId: string): Promise<APIResponse<Page[]>> {
   try {
-    const response = await fetch(`/api/builder/pages?websiteId=${websiteId}`, {
+    const response = await fetch(`/api/builder/pages?businessId=${businessId}&websiteId=${websiteId}`, {
       method: 'GET',
     });
 
@@ -233,7 +312,7 @@ export async function getPages(websiteId: string): Promise<APIResponse<Page[]>> 
 
     return {
       success: true,
-      data: result.data || [],
+      data: result.data?.pages || [],
       timestamp: new Date().toISOString(),
     };
   } catch (error) {

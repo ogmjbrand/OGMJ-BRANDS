@@ -5,7 +5,7 @@ import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, 
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { getWebsites, getPages, createWebsite, createPage, deletePage, publishPage, type Website, type Page } from '@/lib/services/builder.service';
+import { getWebsites, getPages, createWebsite, updateWebsite, deleteWebsite, createPage, updatePage, deletePage, publishPage, type Website, type Page } from '@/lib/services/builder.service';
 
 export default function BuilderPage() {
   const { currentBusiness } = useBusinessContext();
@@ -15,13 +15,17 @@ export default function BuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedWebsites, setExpandedWebsites] = useState<Set<string>>(new Set());
   const [isCreateWebsiteOpen, setIsCreateWebsiteOpen] = useState(false);
+  const [editWebsiteId, setEditWebsiteId] = useState<string | null>(null);
   const [newWebsiteName, setNewWebsiteName] = useState('');
   const [newWebsiteSlug, setNewWebsiteSlug] = useState('');
   const [newWebsiteDescription, setNewWebsiteDescription] = useState('');
   const [creatingWebsite, setCreatingWebsite] = useState(false);
+  const [websiteActionError, setWebsiteActionError] = useState<string | null>(null);
   const [creatingPage, setCreatingPage] = useState<string | null>(null);
+  const [editPageId, setEditPageId] = useState<string | null>(null);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
+  const [pageActionError, setPageActionError] = useState<string | null>(null);
 
   async function loadWebsites() {
     if (!currentBusiness) {
@@ -39,7 +43,7 @@ export default function BuilderPage() {
         // Load pages for all websites
         const pagesData: Record<string, Page[]> = {};
         for (const website of result.data) {
-          const pagesResult = await getPages(website.id);
+          const pagesResult = await getPages(currentBusiness.id, website.id);
           if (pagesResult.success && pagesResult.data) {
             pagesData[website.id] = pagesResult.data;
           }
@@ -56,29 +60,53 @@ export default function BuilderPage() {
     }
   }
 
-  async function handleCreatePage(websiteId: string) {
+  async function handleSavePage(websiteId: string) {
     if (!newPageTitle.trim() || !newPageSlug.trim()) return;
+    setPageActionError(null);
 
     try {
-      const result = await createPage({
-        websiteId,
-        title: newPageTitle.trim(),
-        slug: newPageSlug.trim(),
-      });
+      if (editPageId) {
+        const result = await updatePage(editPageId, {
+          title: newPageTitle.trim(),
+          slug: newPageSlug.trim(),
+        });
 
-      if (result.success && result.data) {
-        setPages(prev => ({
-          ...prev,
-          [websiteId]: [...(prev[websiteId] || []), result.data!],
-        }));
-        setNewPageTitle('');
-        setNewPageSlug('');
-        setCreatingPage(null);
+        if (result.success && result.data) {
+          setPages((prev) => ({
+            ...prev,
+            [websiteId]: prev[websiteId].map((page) =>
+              page.id === editPageId ? result.data! : page
+            ),
+          }));
+          setEditPageId(null);
+          setNewPageTitle('');
+          setNewPageSlug('');
+          setCreatingPage(null);
+        } else {
+          setPageActionError(result.error?.message || 'Failed to update page');
+        }
       } else {
-        alert(result.error?.message || 'Failed to create page');
+        const result = await createPage({
+          businessId: currentBusiness?.id || '',
+          websiteId,
+          title: newPageTitle.trim(),
+          slug: newPageSlug.trim(),
+        });
+
+        if (result.success && result.data) {
+          setPages((prev) => ({
+            ...prev,
+            [websiteId]: [...(prev[websiteId] || []), result.data!],
+          }));
+          setNewPageTitle('');
+          setNewPageSlug('');
+          setCreatingPage(null);
+        } else {
+          setPageActionError(result.error?.message || 'Failed to create page');
+        }
       }
     } catch (err) {
-      alert('Failed to create page');
+      setPageActionError('Failed to save page');
       console.error(err);
     }
   }
@@ -89,6 +117,7 @@ export default function BuilderPage() {
     if (!newWebsiteName.trim() || !newWebsiteSlug.trim()) return;
 
     setCreatingWebsite(true);
+    setWebsiteActionError(null);
 
     try {
       const result = await createWebsite(currentBusiness.id, {
@@ -105,13 +134,90 @@ export default function BuilderPage() {
         setNewWebsiteDescription('');
         setIsCreateWebsiteOpen(false);
       } else {
-        alert(result.error?.message || 'Failed to create website');
+        setWebsiteActionError(result.error?.message || 'Failed to create website');
       }
     } catch (err) {
-      alert('Failed to create website');
+      setWebsiteActionError('Failed to create website');
       console.error(err);
     } finally {
       setCreatingWebsite(false);
+    }
+  }
+
+  async function handleEditWebsite(website: Website) {
+    setEditWebsiteId(website.id);
+    setNewWebsiteName(website.name || '');
+    setNewWebsiteSlug(website.slug || '');
+    setNewWebsiteDescription(website.description || '');
+    setIsCreateWebsiteOpen(true);
+  }
+
+  async function handleEditPage(page: Page, websiteId: string) {
+    setEditPageId(page.id);
+    setNewPageTitle(page.title || '');
+    setNewPageSlug(page.slug || '');
+    setCreatingPage(websiteId);
+    setPageActionError(null);
+  }
+
+  async function handleCancelPageEdit() {
+    setEditPageId(null);
+    setNewPageTitle('');
+    setNewPageSlug('');
+    setPageActionError(null);
+  }
+
+  async function handleUpdateWebsite(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editWebsiteId) return;
+    if (!newWebsiteName.trim() || !newWebsiteSlug.trim()) return;
+
+    setCreatingWebsite(true);
+    setWebsiteActionError(null);
+
+    try {
+      const result = await updateWebsite(editWebsiteId, {
+        name: newWebsiteName.trim(),
+        slug: newWebsiteSlug.trim(),
+        description: newWebsiteDescription.trim() || undefined,
+      });
+
+      if (result.success && result.data) {
+        setWebsites((prev) => prev.map((site) => (site.id === editWebsiteId ? result.data! : site)));
+        setEditWebsiteId(null);
+        setNewWebsiteName('');
+        setNewWebsiteSlug('');
+        setNewWebsiteDescription('');
+        setIsCreateWebsiteOpen(false);
+      } else {
+        setWebsiteActionError(result.error?.message || 'Failed to update website');
+      }
+    } catch (err) {
+      setWebsiteActionError('Failed to update website');
+      console.error(err);
+    } finally {
+      setCreatingWebsite(false);
+    }
+  }
+
+  async function handleDeleteWebsite(websiteId: string) {
+    if (!confirm('Delete this website and all its pages?')) return;
+
+    try {
+      const result = await deleteWebsite(websiteId);
+      if (result.success) {
+        setWebsites((prev) => prev.filter((site) => site.id !== websiteId));
+        setPages((prev) => {
+          const next = { ...prev };
+          delete next[websiteId];
+          return next;
+        });
+      } else {
+        alert(result.error?.message || 'Failed to delete website');
+      }
+    } catch (err) {
+      alert('Failed to delete website');
+      console.error(err);
     }
   }
 
@@ -121,10 +227,16 @@ export default function BuilderPage() {
     try {
       const result = await deletePage(pageId);
       if (result.success) {
-        setPages(prev => ({
+        setPages((prev) => ({
           ...prev,
-          [websiteId]: prev[websiteId].filter(p => p.id !== pageId),
+          [websiteId]: prev[websiteId].filter((p) => p.id !== pageId),
         }));
+        if (editPageId === pageId) {
+          setEditPageId(null);
+          setNewPageTitle('');
+          setNewPageSlug('');
+          setPageActionError(null);
+        }
       } else {
         alert(result.error?.message || 'Failed to delete page');
       }
@@ -138,9 +250,9 @@ export default function BuilderPage() {
     try {
       const result = await publishPage(pageId);
       if (result.success && result.data) {
-        setPages(prev => ({
+        setPages((prev) => ({
           ...prev,
-          [websiteId]: prev[websiteId].map(p => p.id === pageId ? result.data! : p),
+          [websiteId]: prev[websiteId].map((p) => (p.id === pageId ? result.data! : p)),
         }));
       } else {
         alert(result.error?.message || 'Failed to publish page');
@@ -216,7 +328,16 @@ export default function BuilderPage() {
           <h1 className="text-4xl font-bold text-white">Website Builder</h1>
           <p className="text-[#D4AF37]/70 mt-2">Create and manage your websites</p>
         </div>
-        <Dialog open={isCreateWebsiteOpen} onOpenChange={setIsCreateWebsiteOpen}>
+        <Dialog open={isCreateWebsiteOpen} onOpenChange={(open) => {
+          setIsCreateWebsiteOpen(open);
+          if (!open) {
+            setEditWebsiteId(null);
+            setNewWebsiteName('');
+            setNewWebsiteSlug('');
+            setNewWebsiteDescription('');
+            setWebsiteActionError(null);
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
               <Plus className="w-5 h-5" />
@@ -225,10 +346,15 @@ export default function BuilderPage() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create a new website</DialogTitle>
+              <DialogTitle>{editWebsiteId ? 'Edit website' : 'Create a new website'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateWebsite} className="space-y-4 pt-2">
+            <form onSubmit={editWebsiteId ? handleUpdateWebsite : handleCreateWebsite} className="space-y-4 pt-2">
               <div className="grid gap-4">
+                {websiteActionError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                    {websiteActionError}
+                  </div>
+                )}
                 <label className="space-y-2 text-sm text-[#D4AF37]/70">
                   Website Name
                   <input
@@ -264,7 +390,7 @@ export default function BuilderPage() {
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={creatingWebsite}>
-                  {creatingWebsite ? 'Creating...' : 'Create Website'}
+                  {creatingWebsite ? (editWebsiteId ? 'Saving...' : 'Creating...') : editWebsiteId ? 'Save Changes' : 'Create Website'}
                 </Button>
               </DialogFooter>
             </form>
@@ -321,6 +447,20 @@ export default function BuilderPage() {
                       {website.status}
                     </span>
                     <button
+                      title="Edit website"
+                      onClick={() => handleEditWebsite(website)}
+                      className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      title="Delete website"
+                      onClick={() => handleDeleteWebsite(website.id)}
+                      className="p-2 text-red-400/70 hover:text-red-400 hover:bg-red-400/10 rounded transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button
                       title="Show pages"
                       onClick={() => toggleWebsiteExpansion(website.id)}
                       className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
@@ -364,18 +504,22 @@ export default function BuilderPage() {
                           className="px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded text-white placeholder-[#D4AF37]/50 focus:border-[#D4AF37] focus:outline-none"
                         />
                       </div>
+                      {pageActionError && (
+                        <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                          {pageActionError}
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleCreatePage(website.id)}
+                          onClick={() => handleSavePage(website.id)}
                           className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded text-sm font-medium hover:bg-[#D4AF37]/90 transition"
                         >
-                          Create Page
+                          {editPageId ? 'Save Page' : 'Create Page'}
                         </button>
                         <button
                           onClick={() => {
                             setCreatingPage(null);
-                            setNewPageTitle('');
-                            setNewPageSlug('');
+                            handleCancelPageEdit();
                           }}
                           className="px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37]/70 rounded text-sm font-medium hover:bg-[#D4AF37]/20 transition"
                         >
@@ -420,6 +564,7 @@ export default function BuilderPage() {
                                 <ExternalLink className="w-3 h-3" />
                               </button>
                               <button
+                                onClick={() => handleEditPage(page, website.id)}
                                 className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
                                 title="Edit Page"
                               >
