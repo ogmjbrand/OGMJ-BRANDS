@@ -453,6 +453,13 @@ export default function BuilderPage() {
                     >
                       <Edit className="w-4 h-4" />
                     </button>
+                    <Link
+                      href={`/dashboard/builder/${website.id}`}
+                      className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
+                      title="View website details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
                     <button
                       title="Delete website"
                       onClick={() => handleDeleteWebsite(website.id)}
