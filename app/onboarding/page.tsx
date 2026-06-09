@@ -1,339 +1,302 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Building, ArrowRight, AlertCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import React, { useEffect, useState } from 'react';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Users, DollarSign, ShoppingCart, Activity, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package } from 'lucide-react';
+import { useBusinessContext } from '@/lib/context/BusinessContext';
+import { listContacts, listDeals } from '@/lib/services/crm';
+import { getVideos } from '@/lib/services/videos.service';
+import { getWebsites } from '@/lib/services/builder.service';
 
-export default function OnboardingPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [businessName, setBusinessName] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [country, setCountry] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [loading, setLoading] = useState(false);
+interface DashboardMetrics {
+  totalContacts: number;
+  activeDeals: number;
+  totalRevenue: number;
+  conversionRate: number;
+  revenueData: any[];
+  pipelineData: any[];
+  topDeals: any[];
+  videoCount: number;
+  websiteCount: number;
+}
+
+const COLORS = ['#D4AF37', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B'];
+
+function SkeletonBox({ className }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-[#D4AF37]/10 rounded-lg ${className}`} />
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  loading,
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
+  loading: boolean;
+}) {
+  return (
+    <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-5 flex items-center gap-4">
+      <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-6 h-6 text-[#D4AF37]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-[#D4AF37]/60">{label}</p>
+        {loading ? (
+          <SkeletonBox className="h-7 w-24 mt-1" />
+        ) : (
+          <p className="text-2xl font-bold text-white mt-0.5">{value}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { currentBusiness } = useBusinessContext();
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (step === 2) {
-      checkExistingBusiness();
-    }
-  }, [step]);
+    if (!currentBusiness) return;
 
-  const checkExistingBusiness = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const { data: existing } = await supabase
-        .from('businesses')
-        .select('name, industry, country, currency')
-        .eq('created_by', user.id)
-        .maybeSingle();
-
-      if (existing) {
-        setBusinessName(existing.name || '');
-        setIndustry(existing.industry || '');
-        setCountry(existing.country || '');
-        setCurrency(existing.currency || 'USD');
-      }
-    } catch (error) {
-      console.error('Error checking existing business:', error);
-    }
-  };
-
-  const handleCreateBusiness = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    // Show page immediately, load data in background
     setLoading(true);
 
-    if (!businessName.trim()) {
-      setError('Business name is required');
-      setLoading(false);
-      return;
+    async function loadMetrics() {
+      if (!currentBusiness) return;
+      const businessId = currentBusiness.id;
+
+      try {
+        // Load contacts and deals first (most important)
+        const [contactsResult, dealsResult] = await Promise.all([
+          listContacts(businessId, { pageSize: 10 }),
+          listDeals(businessId, { pageSize: 10 }),
+        ]);
+
+        const contactsList = contactsResult.success && contactsResult.data ? contactsResult.data.items : [];
+        const dealsList = dealsResult.success && dealsResult.data ? dealsResult.data.items : [];
+
+        const totalContacts = contactsList.length;
+        const activeDeals = dealsList.filter((d: any) => d.status !== 'won' && d.status !== 'lost').length;
+        const totalRevenue = dealsList.reduce((sum: number, d: any) => sum + (d.value || 0), 0);
+        const wonDeals = dealsList.filter((d: any) => d.status === 'won').length;
+        const conversionRate = dealsList.length > 0 ? Math.round((wonDeals / dealsList.length) * 100) : 0;
+
+        const revenueData = [
+          { month: 'Jan', revenue: 0 },
+          { month: 'Feb', revenue: 0 },
+          { month: 'Mar', revenue: 0 },
+          { month: 'Apr', revenue: 0 },
+          { month: 'May', revenue: 0 },
+          { month: 'Jun', revenue: totalRevenue },
+        ];
+
+        const stages = ['prospecting', 'qualification', 'proposal', 'negotiation', 'decision'];
+        const pipelineData = stages.map(stage => ({
+          name: stage.charAt(0).toUpperCase() + stage.slice(1),
+          value: dealsList.filter((d: any) => d.stage === stage).length || 0,
+          revenue: dealsList.filter((d: any) => d.stage === stage).reduce((sum: number, d: any) => sum + (d.value || 0), 0) || 0,
+        }));
+
+        const topDeals = [...dealsList]
+          .sort((a: any, b: any) => (b.value || 0) - (a.value || 0))
+          .slice(0, 5)
+          .map((deal: any) => ({
+            title: deal.title,
+            value: deal.value,
+            status: deal.status,
+            stage: deal.stage,
+          }));
+
+        // Set main metrics immediately
+        setMetrics({
+          totalContacts,
+          activeDeals,
+          totalRevenue,
+          conversionRate,
+          revenueData,
+          pipelineData,
+          topDeals,
+          videoCount: 0,
+          websiteCount: 0,
+        });
+        setLoading(false);
+
+        // Load secondary data in background (non-blocking)
+        Promise.all([
+          getVideos(businessId),
+          getWebsites(businessId),
+        ]).then(([videosResult, websitesResult]) => {
+          const videoCount = videosResult.success && videosResult.data ? videosResult.data.videos.length : 0;
+          const websiteCount = websitesResult.success && websitesResult.data ? websitesResult.data.length : 0;
+          setMetrics(prev => prev ? { ...prev, videoCount, websiteCount } : prev);
+        });
+
+      } catch (err) {
+        setError('Failed to load dashboard data');
+        setLoading(false);
+      }
     }
 
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+    loadMetrics();
+  }, [currentBusiness]);
 
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      // Check if business already exists for this user
-      const { data: existing } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('created_by', user.id)
-        .maybeSingle();
-
-      let bizError = null;
-
-      if (existing?.id) {
-        // Update existing business
-        const { error: updateError } = await supabase
-          .from('businesses')
-          .update({
-            name: businessName,
-            industry,
-            country,
-            currency,
-          })
-          .eq('id', existing.id);
-        bizError = updateError;
-      } else {
-        // Insert new business
-        const { error: insertError } = await supabase
-          .from('businesses')
-          .insert({
-            created_by: user.id,
-            name: businessName,
-            industry,
-            country,
-            currency,
-          });
-        bizError = insertError;
-      }
-
-      if (bizError) {
-        throw new Error(bizError.message || 'Failed to create or update business');
-      }
-
-      setStep(3);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const progressPercent = Math.round((step / 4) * 100);
+  if (!currentBusiness) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-[#D4AF37]/50 mx-auto mb-3" />
+          <p className="text-[#D4AF37]/70">No business selected</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-[#D4AF37]">Step {step} of 4</span>
-            <span className="text-sm text-[#D4AF37]/50">{progressPercent}%</span>
-          </div>
-          <div className="h-1 bg-[#0E1116] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#D4AF37] rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-              role="progressbar"
-              aria-valuenow={progressPercent}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Onboarding progress"
-            />
-          </div>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-[#D4AF37]/60 text-sm mt-1">{currentBusiness.name}</p>
+        </div>
+        <div className="flex items-center gap-2 text-[#D4AF37]/50 text-sm">
+          <Activity className="w-4 h-4" />
+          <span>Live</span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Metric Cards — show immediately */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          icon={Users}
+          label="Total Contacts"
+          value={metrics?.totalContacts ?? 0}
+          loading={loading}
+        />
+        <MetricCard
+          icon={ShoppingCart}
+          label="Active Deals"
+          value={metrics?.activeDeals ?? 0}
+          loading={loading}
+        />
+        <MetricCard
+          icon={DollarSign}
+          label="Total Revenue"
+          value={metrics ? `$${metrics.totalRevenue.toLocaleString()}` : '$0'}
+          loading={loading}
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="Conversion Rate"
+          value={metrics ? `${metrics.conversionRate}%` : '0%'}
+          loading={loading}
+        />
+      </div>
+
+      {/* Secondary metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard icon={Zap} label="Videos" value={metrics?.videoCount ?? '...'} loading={loading} />
+        <MetricCard icon={Package} label="Websites" value={metrics?.websiteCount ?? '...'} loading={loading} />
+        <MetricCard icon={Mail} label="Campaigns" value={0} loading={loading} />
+        <MetricCard icon={MessageCircle} label="Messages" value={0} loading={loading} />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-5">
+          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[#D4AF37]" />
+            Revenue Trend
+          </h2>
+          {loading ? (
+            <SkeletonBox className="h-48" />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={metrics?.revenueData || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37/10" />
+                <XAxis dataKey="month" stroke="#D4AF37" tick={{ fill: '#D4AF3799', fontSize: 12 }} />
+                <YAxis stroke="#D4AF37" tick={{ fill: '#D4AF3799', fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0E1116', border: '1px solid #D4AF3733', borderRadius: 8 }}
+                  labelStyle={{ color: '#D4AF37' }}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={2} dot={{ fill: '#D4AF37' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        <div className="backdrop-blur-md bg-[#0E1116]/80 border border-[#D4AF37]/10 rounded-2xl p-8">
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-white">Welcome to OGMJ BRANDS</h1>
-                <p className="text-[#D4AF37]/70 mt-2">Let&apos;s set up your business account</p>
-              </div>
-
-              <div className="space-y-4">
-                {[
-                  { n: 1, title: 'Create your business', sub: 'Set up your workspace' },
-                  { n: 2, title: 'Add team members', sub: 'Invite your colleagues' },
-                  { n: 3, title: 'Set up payments', sub: 'Choose your billing plan' },
-                  { n: 4, title: "You're all set!", sub: 'Start building your growth' },
-                ].map(({ n, title, sub }) => (
-                  <div
-                    key={n}
-                    className={`flex items-start gap-4 p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/10 ${n !== 1 ? 'opacity-50' : ''}`}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 text-[#D4AF37] text-sm font-bold">
-                      {n}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white">{title}</h3>
-                      <p className="text-sm text-[#D4AF37]/50 mt-1">{sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setStep(2)}
-                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-3 rounded-lg transition"
-              >
-                Get Started
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <form onSubmit={handleCreateBusiness} className="space-y-6" noValidate>
-              <div>
-                <h2 className="text-2xl font-bold text-white">Create Your Business</h2>
-                <p className="text-[#D4AF37]/70 mt-1">Tell us about your business</p>
-              </div>
-
-              {error && (
-                <div className="flex items-start gap-3 p-4 border rounded-lg bg-red-500/10 border-red-500/20" role="alert">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <p className="text-sm text-red-400">{error}</p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="business-name" className="block mb-2 text-sm font-medium text-white">
-                    Business Name *
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-3 h-5 w-5 text-[#D4AF37]/50" aria-hidden="true" />
-                    <input
-                      id="business-name"
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="Your business name"
-                      aria-required="true"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="industry" className="block mb-2 text-sm font-medium text-white">
-                      Industry
-                    </label>
-                    <input
-                      id="industry"
-                      type="text"
-                      value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
-                      placeholder="e.g., Tech, Marketing"
-                      className="w-full px-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="country" className="block mb-2 text-sm font-medium text-white">
-                      Country
-                    </label>
-                    <input
-                      id="country"
-                      type="text"
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      placeholder="e.g., Nigeria"
-                      className="w-full px-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="currency-select" className="block mb-2 text-sm font-medium text-white">
-                    Currency
-                  </label>
-                  <select
-                    id="currency-select"
-                    title="Select currency"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]/60 transition"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="NGN">NGN</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="flex-1 bg-[#07070A] hover:bg-[#07070A]/80 border border-[#D4AF37]/20 text-white font-semibold py-2.5 rounded-lg transition"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 text-[#07070A] font-semibold py-2.5 rounded-lg transition"
-                >
-                  {loading ? 'Creating...' : 'Create Business'}
-                  {!loading && <ArrowRight className="w-5 h-5" aria-hidden="true" />}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Add Team Members</h2>
-                <p className="text-[#D4AF37]/70 mt-1">Invite your colleagues to collaborate</p>
-              </div>
-
-              <div className="bg-[#07070A] border border-[#D4AF37]/20 rounded-lg p-6 text-center">
-                <p className="text-[#D4AF37]/70">You can add team members later from your dashboard settings</p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="flex-1 bg-[#07070A] hover:bg-[#07070A]/80 border border-[#D4AF37]/20 text-white font-semibold py-2.5 rounded-lg transition"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(4)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-2.5 rounded-lg transition"
-                >
-                  Continue
-                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-3xl font-bold text-white">You&apos;re All Set!</h2>
-                <p className="text-[#D4AF37]/70 mt-2">Your workspace is ready. Let&apos;s start building your growth.</p>
-              </div>
-
-              <div className="bg-gradient-to-r from-[#D4AF37]/10 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg p-6 text-center">
-                <p className="font-semibold text-white">Welcome to OGMJ BRANDS</p>
-                <p className="text-[#D4AF37]/70 text-sm mt-2">Access all features from your dashboard</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => router.push('/dashboard')}
-                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#07070A] font-semibold py-3 rounded-lg transition"
-              >
-                Go to Dashboard
-                <ArrowRight className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
+        {/* Pipeline Chart */}
+        <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-5">
+          <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-[#D4AF37]" />
+            Pipeline by Stage
+          </h2>
+          {loading ? (
+            <SkeletonBox className="h-48" />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={metrics?.pipelineData || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#D4AF3710" />
+                <XAxis dataKey="name" stroke="#D4AF37" tick={{ fill: '#D4AF3799', fontSize: 11 }} />
+                <YAxis stroke="#D4AF37" tick={{ fill: '#D4AF3799', fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0E1116', border: '1px solid #D4AF3733', borderRadius: 8 }}
+                  labelStyle={{ color: '#D4AF37' }}
+                />
+                <Bar dataKey="value" fill="#D4AF37" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      {/* Top Deals */}
+      <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-5">
+        <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+          Top Deals
+        </h2>
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <SkeletonBox key={i} className="h-12" />)}
+          </div>
+        ) : metrics?.topDeals && metrics.topDeals.length > 0 ? (
+          <div className="space-y-3">
+            {metrics.topDeals.map((deal: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-[#07070A] rounded-lg border border-[#D4AF37]/10">
+                <div>
+                  <p className="text-white text-sm font-medium">{deal.title || 'Untitled Deal'}</p>
+                  <p className="text-[#D4AF37]/50 text-xs mt-0.5 capitalize">{deal.stage || 'No stage'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[#D4AF37] font-semibold">${(deal.value || 0).toLocaleString()}</p>
+                  <p className="text-xs text-[#D4AF37]/50 capitalize mt-0.5">{deal.status || 'active'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-[#D4AF37]/40">
+            <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-40" />
+            <p className="text-sm">No deals yet. Add your first deal to get started.</p>
+          </div>
+        )}
       </div>
     </div>
   );
