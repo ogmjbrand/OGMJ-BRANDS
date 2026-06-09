@@ -31,18 +31,11 @@ export default function OnboardingPage() {
         return;
       }
 
-      type ExistingBusinessData = {
-        name?: string | null;
-        industry?: string | null;
-        country?: string | null;
-        currency?: string | null;
-      };
-
-      const { data: existing } = (await supabase
+      const { data: existing } = await supabase
         .from('businesses')
         .select('name, industry, country, currency')
         .eq('created_by', user.id)
-        .single()) as { data: ExistingBusinessData | null };
+        .maybeSingle();
 
       if (existing) {
         setBusinessName(existing.name || '');
@@ -75,30 +68,43 @@ export default function OnboardingPage() {
         return;
       }
 
-      type CreateBusinessInput = {
-        created_by: string;
-        name: string;
-        industry?: string;
-        country?: string;
-        currency?: string;
-      };
+      // Check if business already exists for this user
+      const { data: existing } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('created_by', user.id)
+        .maybeSingle();
 
-      const businessInput: CreateBusinessInput = {
-        created_by: user.id,
-        name: businessName,
-        industry,
-        country,
-        currency,
-      };
+      let bizError = null;
 
-      const { error } = (await (supabase
-        .from('businesses') as any)
-        .upsert(businessInput, { onConflict: 'created_by' })
-        .select()
-        .single()) as { data: any; error: any };
+      if (existing?.id) {
+        // Update existing business
+        const { error: updateError } = await supabase
+          .from('businesses')
+          .update({
+            name: businessName,
+            industry,
+            country,
+            currency,
+          })
+          .eq('id', existing.id);
+        bizError = updateError;
+      } else {
+        // Insert new business
+        const { error: insertError } = await supabase
+          .from('businesses')
+          .insert({
+            created_by: user.id,
+            name: businessName,
+            industry,
+            country,
+            currency,
+          });
+        bizError = insertError;
+      }
 
-      if (error) {
-        throw new Error(error.message || 'Failed to create or update business');
+      if (bizError) {
+        throw new Error(bizError.message || 'Failed to create or update business');
       }
 
       setStep(3);
@@ -332,4 +338,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-
