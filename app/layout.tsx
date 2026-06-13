@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import './inline-styles.css'
 import PageTransition from '@/components/PageTransition'
@@ -21,6 +21,9 @@ export const metadata: Metadata = {
       },
     ],
   },
+}
+
+export const viewport: Viewport = {
   themeColor: '#04060A',
 }
 
