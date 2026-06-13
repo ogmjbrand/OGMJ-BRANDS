@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, DollarSign, ShoppingCart, Activity, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package } from 'lucide-react';
-import { useBusinessContext } from '@/lib/context/BusinessContext';
+import { BusinessProvider, useBusinessContext } from '@/lib/context/BusinessContext';
 import { listContacts, listDeals } from '@/lib/services/crm';
 import { getVideos } from '@/lib/services/videos.service';
 import { getWebsites } from '@/lib/services/builder.service';
@@ -56,7 +56,7 @@ function MetricCard({
   );
 }
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { currentBusiness } = useBusinessContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -299,5 +299,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <BusinessProvider>
+      <DashboardPageContent />
+    </BusinessProvider>
   );
 }

@@ -17,6 +17,7 @@ import MarketingHeader from '@/components/marketing/MarketingHeader'
 import MarketingFooter from '@/components/marketing/MarketingFooter'
 import FAQSection from '@/components/marketing/FAQSection'
 import ProductPreview from '@/components/marketing/ProductPreview'
+import CtaSection from '@/components/landing/CtaSection'
 import {
   SERVICE_PACKAGES,
   TESTIMONIALS,
@@ -244,6 +245,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <CtaSection />
 
         {/* Roadmap */}
         <section id="roadmap" className="px-6 py-20 sm:py-28">
