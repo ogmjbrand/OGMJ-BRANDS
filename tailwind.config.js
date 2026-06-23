@@ -9,6 +9,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        obsidian: {
+          DEFAULT: '#07070A',
+          soft: '#0E1116',
+          panel: '#131313',
+          elevated: '#1C1B1B',
+          high: '#2A2A2A',
+        },
+        emerald: {
+          DEFAULT: '#10B981',
+          bright: '#00E479',
+          neon: '#00FF88',
+          deep: '#003919',
+          glow: 'rgba(16, 185, 129, 0.15)',
+        },
+        surface: {
+          glass: 'rgba(255, 255, 255, 0.04)',
+          border: 'rgba(255, 255, 255, 0.1)',
+          bright: '#3A3939',
+          variant: '#353534',
+        },
+        content: {
+          DEFAULT: '#E5E2E1',
+          muted: '#B9CBB9',
+          inverse: '#313030',
+        },
         landing: {
           surface: 'rgba(255,255,255,0.10)',
           'surface-hover': 'rgba(255,255,255,0.16)',
@@ -38,7 +63,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'Segoe UI', 'sans-serif'],
+        sans: ['DM Sans', 'Inter', 'Segoe UI', 'sans-serif'],
+        body: ['DM Sans', 'Inter', 'Segoe UI', 'sans-serif'],
+        display: ['Syne', 'DM Sans', 'Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {

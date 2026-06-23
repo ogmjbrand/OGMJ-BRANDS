@@ -1,0 +1,28 @@
+
+> ogmj-brands@1.0.0 dev
+> next dev -p 3001
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 8.8s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1771ms (465 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 29.5s (1637 modules)
+ GET / 200 in 5496ms
+ ✓ Compiled in 1892ms (809 modules)
+ GET / 200 in 145ms
+ GET / 200 in 88ms
+ GET / 200 in 127ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 2.2s (847 modules)
+ GET /favicon.ico 200 in 2771ms
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 26.3s (2464 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1859ms (2426 modules)
+ ✓ Compiled in 17.4s (2627 modules)
+ ✓ Compiled in 13s (2627 modules)
