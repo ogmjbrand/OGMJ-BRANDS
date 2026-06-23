@@ -12,8 +12,11 @@ import {
   Bot,
   BrainCircuit,
   Building2,
+  CalendarDays,
   CheckCircle2,
   CircleUserRound,
+  Code2,
+  CreditCard,
   Cpu,
   FileText,
   Gauge,
@@ -22,16 +25,19 @@ import {
   Handshake,
   Layers3,
   Megaphone,
+  MessageSquare,
   Network,
   Rocket,
   Scale,
   Search,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
   Store,
   TrendingUp,
   UsersRound,
   Workflow,
+  PenTool,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -78,6 +84,29 @@ interface CommandSignal {
   icon: LucideIcon
 }
 
+interface BuilderFeature {
+  title: string
+  description: string
+  icon: LucideIcon
+}
+
+interface LaunchPhase {
+  phase: string
+  title: string
+  description: string
+}
+
+interface ConciergeCommand {
+  prompt: string
+  outcome: string
+}
+
+interface IntegrationRail {
+  title: string
+  description: string
+  icon: LucideIcon
+}
+
 interface FooterColumn {
   title: string
   links: NavItem[]
@@ -96,6 +125,10 @@ interface PageContent {
   divisions: SystemDivision[]
   marketplace: MarketplaceItem[]
   commandSignals: CommandSignal[]
+  builderFeatures: BuilderFeature[]
+  launchPhases: LaunchPhase[]
+  conciergeCommands: ConciergeCommand[]
+  integrations: IntegrationRail[]
   footerColumns: FooterColumn[]
 }
 
@@ -210,6 +243,90 @@ const content: PageContent = {
     { label: 'Revenue system forecast', icon: BarChart3, state: 'Optimized' },
     { label: 'Workflow execution mesh', icon: Network, state: 'Live' },
     { label: 'Risk and compliance guardrails', icon: ShieldCheck, state: 'Protected' },
+  ],
+  builderFeatures: [
+    {
+      title: 'One-prompt website generation',
+      description: 'AI turns a business idea into copy, sections, hierarchy, SEO structure, and launch-ready pages.',
+      icon: Code2,
+    },
+    {
+      title: 'Funnel architecture',
+      description: 'Squeeze pages, tripwires, upsells, booking funnels, lead magnets, and conversion flow logic.',
+      icon: Workflow,
+    },
+    {
+      title: 'Brand kit application',
+      description: 'Colors, typography, logo placement, CTA tone, offer language, and visual rhythm stay unified.',
+      icon: PenTool,
+    },
+    {
+      title: 'Checkout-ready commerce',
+      description: 'Paystack, Flutterwave, Stripe, subscriptions, order bumps, service payments, and digital products.',
+      icon: ShoppingCart,
+    },
+  ],
+  launchPhases: [
+    {
+      phase: '01',
+      title: 'Diagnose',
+      description: 'OGMJ AI understands the business model, audience, offer, geography, payment needs, and growth goal.',
+    },
+    {
+      phase: '02',
+      title: 'Assemble',
+      description: 'The OS configures brand, CRM, funnel, service catalog, automation, documents, and finance paths.',
+    },
+    {
+      phase: '03',
+      title: 'Launch',
+      description: 'Publish the website, activate payment rails, route leads, start campaigns, and open the client portal.',
+    },
+    {
+      phase: '04',
+      title: 'Optimize',
+      description: 'Predictive analytics surfaces weak services, content gaps, upsells, pricing issues, and growth plays.',
+    },
+  ],
+  conciergeCommands: [
+    {
+      prompt: 'Build me a website for my catering business.',
+      outcome: 'Creates site structure, copy, menu sections, inquiry flow, WhatsApp CTA, and payment-ready packages.',
+    },
+    {
+      prompt: 'Register my business in Nigeria.',
+      outcome: 'Routes CAC setup, required documents, compliance steps, status tracking, and post-incorporation tasks.',
+    },
+    {
+      prompt: 'Generate a 30-day content calendar for Instagram.',
+      outcome: 'Builds hooks, captions, campaign themes, posting rhythm, repurposing notes, and performance targets.',
+    },
+    {
+      prompt: 'Identify which of my services is underperforming.',
+      outcome: 'Reads CRM, orders, revenue, ads, and conversion signals to suggest pricing, offer, or funnel changes.',
+    },
+  ],
+  integrations: [
+    {
+      title: 'African-first payments',
+      description: 'Paystack and Flutterwave are primary rails, with Stripe for international expansion.',
+      icon: CreditCard,
+    },
+    {
+      title: 'WhatsApp-native funnels',
+      description: 'Lead capture, broadcasts, follow-up sequences, order updates, and client communication.',
+      icon: MessageSquare,
+    },
+    {
+      title: 'Scheduled intelligence',
+      description: 'Daily, weekly, and monthly reports turn platform activity into executive operating rhythm.',
+      icon: CalendarDays,
+    },
+    {
+      title: 'Global localization',
+      description: 'Multi-currency, regional payment support, timezone handling, and emerging-market workflows.',
+      icon: Globe2,
+    },
   ],
   footerColumns: [
     {
@@ -626,6 +743,76 @@ function CommandCenterSection({ signals }: { signals: CommandSignal[] }) {
             </motion.ul>
           </div>
         </motion.article>
+      </div>
+    </section>
+  )
+}
+
+function BuilderSection({ features }: { features: BuilderFeature[] }) {
+  return (
+    <section id="builder" className="border-t border-surface-border bg-obsidian px-4 py-24 md:px-10 lg:py-32">
+      <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <motion.article
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={staggerChildren}
+          className="rounded-xl border border-surface-border bg-surface-glass p-4 shadow-2xl shadow-black/40 backdrop-blur-xl"
+        >
+          <motion.div variants={fadeInUp} className="overflow-hidden rounded-lg border border-surface-border bg-obsidian">
+            <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-bright">AI Builder</p>
+                <h3 className="mt-1 font-[family-name:var(--font-syne)] text-xl font-bold text-white">Website + Funnel Architect</h3>
+              </div>
+              <div className="flex gap-1.5">
+                <span className="size-2 rounded-full bg-gold" />
+                <span className="size-2 rounded-full bg-emerald-bright" />
+                <span className="size-2 rounded-full bg-content-muted" />
+              </div>
+            </div>
+
+            <div className="grid gap-4 p-5 md:grid-cols-[0.85fr_1.15fr]">
+              <section className="rounded-lg border border-surface-border bg-white/5 p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-content-muted">Prompt</p>
+                <p className="mt-4 text-sm leading-6 text-content">
+                  Build a premium landing page, WhatsApp funnel, checkout flow, and launch campaign for a coaching brand selling a monthly membership.
+                </p>
+              </section>
+
+              <section className="space-y-3 rounded-lg border border-surface-border bg-white/5 p-4">
+                {['Hero copy generated', 'Offer stack configured', 'Paystack checkout attached', 'WhatsApp nurture sequence ready'].map((item) => (
+                  <div key={item} className="flex items-center gap-3 rounded-md bg-obsidian-soft px-3 py-3">
+                    <CheckCircle2 className="size-4 text-emerald-bright" />
+                    <span className="text-sm font-semibold text-content-muted">{item}</span>
+                  </div>
+                ))}
+              </section>
+            </div>
+          </motion.div>
+        </motion.article>
+
+        <div>
+          <SectionHeader
+            label="Flagship Builder"
+            title="Do not just build a website. Build a system that sells."
+            description="The OGMJ AI Website and Funnel Builder converts business context into pages, copy, checkout, automation, CRM capture, and optimization loops."
+          />
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerChildren} className="mt-10 grid gap-4 sm:grid-cols-2">
+            {features.map((feature) => {
+              const Icon = feature.icon
+
+              return (
+                <motion.article key={feature.title} variants={fadeInUp} className="rounded-lg border border-surface-border bg-surface-glass p-5 backdrop-blur-xl">
+                  <Icon className="mb-4 size-6 text-gold" />
+                  <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-white">{feature.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-content-muted">{feature.description}</p>
+                </motion.article>
+              )
+            })}
+          </motion.div>
+        </div>
       </div>
     </section>
   )
