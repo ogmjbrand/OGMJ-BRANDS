@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CalendarDays, MessageCircle, Plus, Share2, Clock3 } from 'lucide-react';
+import { CalendarDays, MessageCircle, Plus, Share2, Clock3, Sparkles } from 'lucide-react';
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
 const initialPosts = [
   {
@@ -43,40 +44,39 @@ export default function SocialPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
-          <CalendarDays className="w-4 h-4" /> Social Scheduling
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <CalendarDays className="h-4 w-4" /> Social studio
+          </div>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep your content calendar polished, strategic and on time.</h1>
+          <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Create, schedule and review social moments from one premium workspace that feels built for scale.</p>
         </div>
-        <h1 className="text-4xl font-bold text-white mt-4">Social Planner</h1>
-        <p className="text-[#D4AF37]/70 mt-2 max-w-2xl">
-          Build and schedule social content directly from your dashboard.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
-        <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div>
-              <p className="text-sm text-[#D4AF37]/70 uppercase tracking-[0.2em]">Composer</p>
-              <h2 className="text-2xl font-semibold text-white mt-2">Create a new post</h2>
-            </div>
-            <Share2 className="w-5 h-5 text-[#D4AF37]" />
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard title="Scheduled posts" value={posts.length.toString()} description="Content currently queued" icon={CalendarDays} accent="gold" trend="Live" />
+        <MetricCard title="Brand coverage" value="4 channels" description="Consistent story delivery across channels" icon={Sparkles} accent="emerald" trend="Strong" />
+        <MetricCard title="Next publish" value={posts[0]?.publishDate ?? '—'} description="Your upcoming release window" icon={Clock3} accent="slate" trend="Ready" />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <SectionPanel title="Composer" subtitle="Create a new post for your upcoming campaign" actionLabel="Schedule" actionHref="/dashboard/social">
           <div className="space-y-4">
             <textarea
               rows={5}
               value={newMessage}
               onChange={(event) => setNewMessage(event.target.value)}
-              className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] p-4 text-white outline-none focus:border-[#D4AF37]"
+              className="w-full rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#07070A] p-4 text-sm text-white outline-none transition focus:border-[#D4AF37]"
               placeholder="Write the message for your next social post..."
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
               <label className="space-y-2 text-sm text-[#D4AF37]/70">
                 Channel
                 <select
                   value={newChannel}
                   onChange={(event) => setNewChannel(event.target.value)}
-                  className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
                 >
                   <option>Instagram</option>
                   <option>LinkedIn</option>
@@ -90,67 +90,54 @@ export default function SocialPage() {
                   type="date"
                   value={newDate}
                   onChange={(event) => setNewDate(event.target.value)}
-                  className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
                 />
               </label>
               <button
                 onClick={handleSchedulePost}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-[#07070A] hover:bg-[#D4AF37]/90 transition"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90"
               >
-                <Plus className="w-4 h-4" /> Schedule Post
+                <Plus className="h-4 w-4" /> Schedule
               </button>
             </div>
           </div>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock3 className="w-5 h-5 text-[#D4AF37]" />
-            <p className="text-sm font-medium text-white">Upcoming schedule</p>
-          </div>
-          <div className="space-y-4">
+        <SectionPanel title="Upcoming schedule" subtitle="The next posts already aligned to your calendar">
+          <div className="space-y-3">
             {posts.slice(0, 3).map((post) => (
-              <div key={post.id} className="rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] p-4">
+              <div key={post.id} className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-white font-semibold">{post.channel}</h3>
-                    <p className="text-sm text-[#D4AF37]/70">{post.publishDate}</p>
+                    <h3 className="text-sm font-semibold text-white">{post.channel}</h3>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">{post.publishDate}</p>
                   </div>
-                  <span className="rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-medium text-[#D4AF37]">
+                  <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#D4AF37]">
                     {post.status}
                   </span>
                 </div>
-                <p className="mt-3 text-sm text-[#D4AF37]/70">{post.content}</p>
+                <p className="mt-3 text-sm text-[#F8F9FA]/60">{post.content}</p>
               </div>
             ))}
           </div>
-        </div>
+        </SectionPanel>
       </div>
 
-      <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-semibold text-white">All Scheduled Posts</h2>
-            <p className="text-[#D4AF37]/70 text-sm">Manage your content calendar and stay on brand.</p>
-          </div>
-          <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
-        </div>
-        <div className="space-y-4">
+      <SectionPanel title="All scheduled posts" subtitle="A clear content calendar for every channel">
+        <div className="space-y-3">
           {posts.map((post) => (
-            <div key={post.id} className="rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] p-4">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm text-[#D4AF37]/70">{post.channel}</p>
-                  <p className="text-white font-medium">{post.content}</p>
-                </div>
-                <span className="rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
-                  {post.publishDate}
-                </span>
+            <div key={post.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">{post.channel}</p>
+                <p className="mt-1 text-sm text-[#F8F9FA]/60">{post.content}</p>
               </div>
+              <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
+                {post.publishDate}
+              </span>
             </div>
           ))}
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

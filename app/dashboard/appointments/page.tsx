@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { CalendarDays, Clock3, MapPin, Sparkles, Video } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Appointment {
   id: string
   title: string
@@ -24,7 +25,6 @@ interface Appointment {
   updated_at: string | null
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
   const supabase = createClient()
   const [businessId, setBusinessId] = useState<string | null>(null)
@@ -32,14 +32,12 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // ── 1. Resolve businessId from business_members (canonical table) ──────────
   useEffect(() => {
     async function fetchBusinessId() {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) return
 
-        // Use business_members (has business_id column, always in sync)
         const { data: membership, error: memberError } = await supabase
           .from('business_members')
           .select('business_id')
@@ -64,7 +62,6 @@ export default function AppointmentsPage() {
     fetchBusinessId()
   }, [])
 
-  // ── 2. Fetch appointments once businessId is resolved ──────────────────────
   useEffect(() => {
     if (!businessId) return
 
@@ -76,7 +73,7 @@ export default function AppointmentsPage() {
         const { data, error: fetchError } = await supabase
           .from('appointments')
           .select('*')
-          .eq('business_id', businessId!)
+          .eq('business_id', businessId)
           .order('start_time', { ascending: true })
 
         if (fetchError) {
@@ -96,74 +93,86 @@ export default function AppointmentsPage() {
     fetchAppointments()
   }, [businessId])
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  const upcomingCount = appointments.filter((appt) => new Date(appt.start_time) >= new Date()).length
+  const scheduledCount = appointments.filter((appt) => (appt.status ?? 'scheduled') === 'scheduled').length
+
   if (loading && !businessId) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="p-6 text-red-500">
+      <div className="rounded-[1.6rem] border border-red-500/20 bg-red-500/10 p-6 text-red-300">
         <p>Error loading appointments: {error}</p>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Appointments</h1>
+    <div className="space-y-8">
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <Sparkles className="h-4 w-4" /> Time and attention orchestration
+          </div>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep every meeting, touchpoint and follow-up moving smoothly.</h1>
+          <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Your calendar stays elegant, actionable and connected to the rest of your empire.</p>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-primary" />
-        </div>
-      ) : appointments.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">
-          <p className="text-lg font-medium">No appointments yet</p>
-          <p className="mt-1 text-sm">Schedule your first appointment to get started.</p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {appointments.map((appt) => (
-            <div
-              key={appt.id}
-              className="p-4 space-y-1 border rounded-lg shadow-sm bg-card"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{appt.title}</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-muted capitalize">
-                  {appt.status ?? 'scheduled'}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {new Date(appt.start_time).toLocaleString()} –{' '}
-                {new Date(appt.end_time).toLocaleTimeString()}
-              </p>
-              {appt.location && (
-                <p className="text-sm text-muted-foreground">📍 {appt.location}</p>
-              )}
-              {appt.meeting_url && (
-                <a
-                  href={appt.meeting_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Join Meeting
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard title="Total appointments" value={appointments.length.toString()} description="Scheduled meetings in your workspace" icon={CalendarDays} accent="gold" trend="Live" />
+        <MetricCard title="Upcoming" value={upcomingCount.toString()} description="Meetings still ahead on the calendar" icon={Clock3} accent="emerald" trend="Ready" />
+        <MetricCard title="Scheduled" value={scheduledCount.toString()} description="Open appointments awaiting attention" icon={CalendarDays} accent="slate" trend="Focus" />
+      </div>
+
+      <SectionPanel title="Appointment flow" subtitle="Review the meetings that shape your next moves">
+        {loading ? (
+          <div className="flex min-h-[200px] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-12 text-center">
+            <p className="text-lg font-medium text-white">No appointments yet</p>
+            <p className="mt-1 text-sm text-[#F8F9FA]/60">Schedule your first appointment to get started.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {appointments.map((appt) => {
+              const statusLabel = appt.status ?? 'scheduled'
+              return (
+                <div key={appt.id} className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-white">{appt.title}</h3>
+                      <p className="mt-1 text-sm text-[#F8F9FA]/60">{new Date(appt.start_time).toLocaleString()} — {new Date(appt.end_time).toLocaleTimeString()}</p>
+                    </div>
+                    <span className="rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-medium capitalize text-[#D4AF37]">
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-[#F8F9FA]/60">
+                    {appt.location ? (
+                      <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {appt.location}</span>
+                    ) : null}
+                    {appt.type ? <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" /> {appt.type}</span> : null}
+                  </div>
+                  {appt.meeting_url ? (
+                    <a href={appt.meeting_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#D4AF37]">
+                      <Video className="h-4 w-4" /> Join meeting
+                    </a>
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </SectionPanel>
     </div>
   )
 }
-
 

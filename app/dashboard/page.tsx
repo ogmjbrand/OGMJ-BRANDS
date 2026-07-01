@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, DollarSign, ShoppingCart, Activity, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Users, DollarSign, ShoppingCart, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package, Rocket, BrainCircuit, ShieldCheck, Workflow, Compass } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { useFeatureFlags } from '@/lib/hooks';
 import { listContacts, listDeals } from '@/lib/services/crm';
 import { getVideos } from '@/lib/services/videos.service';
 import { getWebsites } from '@/lib/services/builder.service';
+import { MetricCard, ModuleCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
 interface DashboardMetrics {
   totalContacts: number;
@@ -165,212 +166,116 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-[#D4AF37]/70">Welcome back to your business hub</p>
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+              <Rocket className="h-4 w-4" /> Executive Command Center
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Build your empire from one premium operating surface.</h1>
+            <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Track revenue, orchestrate growth, move deals, launch campaigns and keep every team aligned in real time.</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+            <p className="font-semibold text-white">Business health score</p>
+            <p className="mt-2">Excellent momentum with strong conversion signals and rising automation coverage.</p>
+          </div>
+        </div>
       </div>
 
-      {/* Feature Gating Section */}
       <FeatureGatingSection businessId={currentBusiness?.id || ''} />
 
-      {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            title: 'Invoices',
-            description: 'Create, view, and manage billing in one place.',
-            href: '/dashboard/invoices',
-            icon: <Sparkles className="w-5 h-5" />,
-          },
-          {
-            title: 'AI Assistant',
-            description: 'Generate growth copy, campaigns, and messaging fast.',
-            href: '/dashboard/ai',
-            icon: <Zap className="w-5 h-5" />,
-          },
-          {
-            title: 'Social Planner',
-            description: 'Schedule posts for socials and keep your calendar full.',
-            href: '/dashboard/social',
-            icon: <MessageCircle className="w-5 h-5" />,
-          },
-          {
-            title: 'Workflows',
-            description: 'Automate follow-ups, reminders, and revenue triggers.',
-            href: '/dashboard/workflows',
-            icon: <ShoppingCart className="w-5 h-5" />,
-          },
-        ].map((card) => (
-          <a
-            key={card.title}
-            href={card.href}
-            className="group rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6 transition hover:border-[#D4AF37]/40 hover:bg-[#11151E]"
-          >
-            <div className="inline-flex items-center justify-center rounded-2xl bg-[#D4AF37]/10 p-3 text-[#D4AF37]">
-              {card.icon}
-            </div>
-            <h2 className="mt-4 text-xl font-semibold text-white">{card.title}</h2>
-            <p className="mt-2 text-sm text-[#D4AF37]/70">{card.description}</p>
-          </a>
-        ))}
+        <MetricCard title="Total revenue" value={`₦${(metrics.totalRevenue / 1000000).toFixed(1)}M`} description={`From ${metrics.activeDeals} active deals`} icon={DollarSign} accent="gold" trend="+12%" />
+        <MetricCard title="Active deals" value={metrics.activeDeals.toString()} description="In proposal, negotiation or decision" icon={ShoppingCart} accent="emerald" trend="Healthy" />
+        <MetricCard title="Contacts in CRM" value={metrics.totalContacts.toString()} description="Tracked prospects and customers" icon={Users} accent="slate" trend="Live" />
+        <MetricCard title="Conversion rate" value={`${metrics.conversionRate}%`} description="Deals won versus total opportunities" icon={TrendingUp} accent="gold" trend="Strong" />
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Revenue */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[#D4AF37]/70 text-sm font-medium">Total Revenue</h3>
-            <DollarSign className="w-5 h-5 text-[#D4AF37]" />
-          </div>
-          <div className="text-3xl font-bold text-white mb-2">
-            ₦{(metrics.totalRevenue / 1000000).toFixed(1)}M
-          </div>
-          <p className="text-[#D4AF37]/50 text-sm">From {metrics.activeDeals} active deals</p>
-        </div>
-
-        {/* Active Deals */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[#D4AF37]/70 text-sm font-medium">Active Deals</h3>
-            <ShoppingCart className="w-5 h-5 text-[#D4AF37]" />
-          </div>
-          <div className="text-3xl font-bold text-white mb-2">{metrics.activeDeals}</div>
-          <p className="text-[#D4AF37]/50 text-sm">In negotiation or proposal</p>
-        </div>
-
-        {/* Total Contacts */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[#D4AF37]/70 text-sm font-medium">Total Contacts</h3>
-            <Users className="w-5 h-5 text-[#D4AF37]" />
-          </div>
-          <div className="text-3xl font-bold text-white mb-2">{metrics.totalContacts}</div>
-          <p className="text-[#D4AF37]/50 text-sm">In your CRM</p>
-        </div>
-
-        {/* Conversion Rate */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[#D4AF37]/70 text-sm font-medium">Conversion Rate</h3>
-            <TrendingUp className="w-5 h-5 text-[#D4AF37]" />
-          </div>
-          <div className="text-3xl font-bold text-white mb-2">{metrics.conversionRate}%</div>
-          <p className="text-[#D4AF37]/50 text-sm">Deals won vs total</p>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Trend */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Revenue Trend</h3>
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <SectionPanel title="Revenue intelligence" subtitle="Growth signals and pipeline momentum" actionLabel="Open analytics" actionHref="/dashboard/analytics">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={metrics.revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37/20" />
               <XAxis stroke="#D4AF37/50" />
               <YAxis stroke="#D4AF37/50" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#0E1116', border: '1px solid #D4AF37/30' }}
-                labelStyle={{ color: '#D4AF37' }}
-              />
-              <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={2} />
+              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
+              <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={2.8} dot={{ r: 3, fill: '#D4AF37' }} />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </SectionPanel>
 
-        {/* Pipeline by Stage */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Pipeline by Stage</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <SectionPanel title="Growth modules" subtitle="Every core operating layer at your fingertips">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ModuleCard title="AI assistant" description="Strategic prompts, campaigns and next steps" icon={BrainCircuit} href="/dashboard/ai" badge="AI" />
+            <ModuleCard title="CRM" description="Leads, deals and customer relationships" icon={Users} href="/dashboard/crm/contacts" badge="Live" />
+            <ModuleCard title="Builder" description="Launch pages, funnels and offers" icon={Compass} href="/dashboard/builder" badge="Launch" />
+            <ModuleCard title="Automation" description="Workflows, reminders and actions" icon={Workflow} href="/dashboard/workflows" badge="Flow" />
+          </div>
+        </SectionPanel>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <SectionPanel title="Pipeline by stage" subtitle="Convert momentum into predictable growth" actionLabel="Open CRM" actionHref="/dashboard/crm/deals">
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={metrics.pipelineData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37/20" />
               <XAxis stroke="#D4AF37/50" />
               <YAxis stroke="#D4AF37/50" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#0E1116', border: '1px solid #D4AF37/30' }}
-                labelStyle={{ color: '#D4AF37' }}
-              />
+              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
               <Bar dataKey="value" fill="#D4AF37" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </SectionPanel>
+
+        <SectionPanel title="Next-best actions" subtitle="Launch faster with one-click operating moves">
+          <div className="grid gap-3">
+            <a href="/dashboard/crm/contacts" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+              <p className="text-sm font-semibold text-white">Add a new contact</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">Capture new demand and assign a follow-up sequence instantly.</p>
+            </a>
+            <a href="/dashboard/invoices" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+              <p className="text-sm font-semibold text-white">Issue an invoice</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">Keep revenue moving and automate your billing flow.</p>
+            </a>
+            <a href="/dashboard/videos" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+              <p className="text-sm font-semibold text-white">Launch content</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">Publish a new video or asset into your brand studio.</p>
+            </a>
+          </div>
+        </SectionPanel>
       </div>
 
-      {/* Top Deals & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Deals */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Top Deals</h3>
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <SectionPanel title="Top deals" subtitle="Your highest-value opportunities">
           <div className="space-y-3">
             {metrics.topDeals.map((deal, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-[#0E1116] rounded-lg">
+              <div key={idx} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-3">
                 <div>
-                  <p className="text-white text-sm font-medium">{deal.title}</p>
-                  <p className="text-[#D4AF37]/50 text-xs">{deal.stage}</p>
+                  <p className="text-sm font-semibold text-white">{deal.title}</p>
+                  <p className="text-xs text-[#D4AF37]/60">{deal.stage}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">₦{(deal.value / 1000000).toFixed(1)}M</p>
-                  <p className={`text-xs ${deal.status === 'won' ? 'text-green-400' : 'text-[#D4AF37]/50'}`}>
-                    {deal.status}
-                  </p>
+                  <p className="text-sm font-semibold text-white">₦{(deal.value / 1000000).toFixed(1)}M</p>
+                  <p className={`text-xs ${deal.status === 'won' ? 'text-[#10B981]' : 'text-[#D4AF37]/60'}`}>{deal.status}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </SectionPanel>
 
-        {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+        <SectionPanel title="Operating pulse" subtitle="Key activity and momentum from your stack">
           <div className="space-y-3">
             {metrics.recentActivities.map((activity, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-[#0E1116] rounded-lg">
-                <span className="text-xl">{activity.icon}</span>
+              <div key={idx} className="flex items-center gap-3 rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-3">
+                <span className="text-lg">{activity.icon}</span>
                 <div className="flex-1">
-                  <p className="text-white text-sm font-medium">{activity.description}</p>
-                  <p className="text-[#D4AF37]/50 text-xs">{activity.time}</p>
+                  <p className="text-sm font-semibold text-white">{activity.description}</p>
+                  <p className="text-xs text-[#D4AF37]/60">{activity.time}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a
-            href="/dashboard/crm/contacts"
-            className="p-4 rounded-lg bg-[#0E1116] hover:bg-[#D4AF37]/10 transition text-center"
-          >
-            <p className="text-2xl mb-2">👥</p>
-            <p className="text-white text-sm font-medium">Add Contact</p>
-          </a>
-          <a
-            href="/dashboard/crm/deals"
-            className="p-4 rounded-lg bg-[#0E1116] hover:bg-[#D4AF37]/10 transition text-center"
-          >
-            <p className="text-2xl mb-2">💼</p>
-            <p className="text-white text-sm font-medium">Create Deal</p>
-          </a>
-          <a
-            href="/dashboard/invoices"
-            className="p-4 rounded-lg bg-[#0E1116] hover:bg-[#D4AF37]/10 transition text-center"
-          >
-            <p className="text-2xl mb-2">📄</p>
-            <p className="text-white text-sm font-medium">New Invoice</p>
-          </a>
-          <a
-            href="/dashboard/videos"
-            className="p-4 rounded-lg bg-[#0E1116] hover:bg-[#D4AF37]/10 transition text-center"
-          >
-            <p className="text-2xl mb-2">🎬</p>
-            <p className="text-white text-sm font-medium">Upload Video</p>
-          </a>
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

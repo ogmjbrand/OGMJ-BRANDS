@@ -1,45 +1,29 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CreditCard, Users, Shield, Bell, Check } from 'lucide-react';
+import { AlertCircle, CreditCard, Users, Shield, Bell, Check, Sparkles, Settings2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
-import type { Business, User } from '@/lib/types';
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
+import type { Business } from '@/lib/types';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'billing' | 'team' | 'security' | 'notifications'>('general');
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Form states
-  const [profileForm, setProfileForm] = useState({
-    fullName: '',
-    email: '',
-  });
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [notificationsForm, setNotificationsForm] = useState({
-    emailNotifications: true,
-    marketingUpdates: false,
-    paymentReminders: true,
-  });
+  const [profileForm, setProfileForm] = useState({ fullName: '', email: '' });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [notificationsForm, setNotificationsForm] = useState({ emailNotifications: true, marketingUpdates: false, paymentReminders: true });
 
   useEffect(() => {
     async function loadData() {
       try {
         const currentUser = await getCurrentUser();
-        setUser(currentUser);
-        setProfileForm({
-          fullName: currentUser?.user_metadata?.full_name || '',
-          email: currentUser?.email || '',
-        });
+        setProfileForm({ fullName: currentUser?.user_metadata?.full_name || '', email: currentUser?.email || '' });
 
         const userBusinesses = await listUserBusinesses();
         if (userBusinesses.success && userBusinesses.data) {
@@ -63,13 +47,10 @@ export default function SettingsPage() {
     setSuccess(null);
 
     try {
-      // Update user metadata
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      const { error } = await supabase.auth.updateUser({
-        data: { full_name: profileForm.fullName }
-      });
+      const { error } = await supabase.auth.updateUser({ data: { full_name: profileForm.fullName } });
 
       if (error) throw error;
 
@@ -97,9 +78,7 @@ export default function SettingsPage() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      const { error } = await supabase.auth.updateUser({
-        password: passwordForm.newPassword
-      });
+      const { error } = await supabase.auth.updateUser({ password: passwordForm.newPassword });
 
       if (error) throw error;
 
@@ -119,9 +98,7 @@ export default function SettingsPage() {
     setSuccess(null);
 
     try {
-      // Here you would save notification preferences to your database
-      // For now, just show success
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setSuccess('Notification preferences updated');
     } catch (err) {
       setError('Failed to update notifications');
@@ -130,39 +107,19 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-
-        const userBusinesses = await listUserBusinesses();
-        if (userBusinesses.success && userBusinesses.data) {
-          setBusinesses(userBusinesses.data);
-        }
-      } catch (error) {
-        console.error('Failed to load settings:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
-
   const tabs = [
-    { id: 'general', label: 'General', icon: '⚙️' },
-    { id: 'billing', label: 'Billing', icon: <CreditCard className="w-4 h-4" /> },
-    { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
-    { id: 'security', label: 'Security', icon: <Shield className="w-4 h-4" /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
+    { id: 'general', label: 'General', icon: <Settings2 className="h-4 w-4" /> },
+    { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
+    { id: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
+    { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" /> },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
   ];
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
+        <div className="space-y-4 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
           <p className="text-[#D4AF37]/70">Loading settings...</p>
         </div>
       </div>
@@ -171,283 +128,149 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold text-white">Settings</h1>
-        <p className="text-[#D4AF37]/70 mt-2">Manage your account and preferences</p>
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <Sparkles className="h-4 w-4" /> Control center
+          </div>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep your account, billing and team preferences tightly managed.</h1>
+          <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Fine-tune the operating details of your empire with a calm, premium experience.</p>
+        </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-4 border-b border-[#D4AF37]/10">
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard title="Account" value="Ready" description="Profile and access configured" icon={Settings2} accent="gold" trend="Live" />
+        <MetricCard title="Billing" value="Professional" description="Active plan in place" icon={CreditCard} accent="emerald" trend="Secure" />
+        <MetricCard title="Team" value={businesses.length.toString()} description="Businesses connected to your workspace" icon={Users} accent="slate" trend="Managed" />
+      </div>
+
+      <div className="flex flex-wrap gap-2 rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#0E1116]/90 p-2">
         {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-3 font-medium transition flex items-center gap-2 ${
-              activeTab === tab.id
-                ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]'
-                : 'text-[#D4AF37]/50 hover:text-[#D4AF37]/70'
-            }`}
-          >
-            {typeof tab.icon === 'string' ? tab.icon : tab.icon}
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id ? 'bg-[#D4AF37] text-[#07070A]' : 'text-[#D4AF37] hover:bg-[#D4AF37]/10'}`}>
+            {tab.icon}
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         {activeTab === 'general' && (
-          <form onSubmit={handleProfileUpdate} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-green-400">{success}</p>
-              </div>
-            )}
-
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Profile Information</h3>
+          <SectionPanel title="Profile information" subtitle="Keep your identity and account details current">
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              {error && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{error}</div>}
+              {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-[#D4AF37] mb-2">Full Name</label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={profileForm.fullName}
-                    onChange={(e) => setProfileForm(prev => ({ ...prev, fullName: e.target.value }))}
-                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
-                  />
+                  <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-[#D4AF37]">Full name</label>
+                  <input id="fullName" type="text" value={profileForm.fullName} onChange={(e) => setProfileForm((prev) => ({ ...prev, fullName: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-[#D4AF37] mb-2">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={profileForm.email}
-                    disabled
-                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-[#D4AF37]/50 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-[#D4AF37]/50 mt-1">Email cannot be changed</p>
+                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#D4AF37]">Email</label>
+                  <input id="email" type="email" value={profileForm.email} disabled className="w-full cursor-not-allowed rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-[#D4AF37]/50" />
+                  <p className="mt-1 text-xs text-[#D4AF37]/50">Email cannot be changed here.</p>
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
+              <button type="submit" disabled={saving} className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">
+                {saving ? 'Saving...' : 'Save changes'}
               </button>
-            </div>
-          </form>
+            </form>
+          </SectionPanel>
         )}
 
         {activeTab === 'billing' && (
           <div className="space-y-6">
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Current Plan</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/20">
-                  <p className="text-[#D4AF37] font-semibold">Professional Plan</p>
-                  <p className="text-sm text-[#D4AF37]/70 mt-1">$99/month • Next billing: May 17, 2026</p>
-                </div>
-                <button className="px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition font-medium">
-                  Change Plan
-                </button>
+            <SectionPanel title="Current plan" subtitle="Your current subscription and payment setup">
+              <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <p className="font-semibold text-white">Professional plan</p>
+                <p className="mt-1 text-sm text-[#F8F9FA]/60">$99/month • Next billing: May 17, 2026</p>
+                <button className="mt-4 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Change plan</button>
               </div>
-            </div>
-
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Payment Method</h3>
-              <div className="p-4 bg-[#07070A] rounded-lg border border-[#D4AF37]/20">
-                <p className="text-white font-medium">Visa •••• 4242</p>
-                <p className="text-sm text-[#D4AF37]/70 mt-1">Expires 12/26</p>
+            </SectionPanel>
+            <SectionPanel title="Payment method" subtitle="Your stored card and billing details">
+              <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <p className="font-semibold text-white">Visa •••• 4242</p>
+                <p className="mt-1 text-sm text-[#F8F9FA]/60">Expires 12/26</p>
+                <button className="mt-4 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Update payment method</button>
               </div>
-              <button className="mt-4 px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition font-medium">
-                Update Payment Method
-              </button>
-            </div>
+            </SectionPanel>
           </div>
         )}
 
         {activeTab === 'team' && (
-          <div className="space-y-6">
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-white">Team Members</h3>
-                <button className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 transition">
-                  Invite Member
-                </button>
-              </div>
-              <div className="space-y-3">
-                {businesses.length > 0 ? (
-                  businesses.map((business) => (
-                    <div key={business.id} className="p-3 bg-[#07070A] rounded-lg border border-[#D4AF37]/10">
-                      <p className="font-medium text-white">{business.name}</p>
-                      <p className="text-sm text-[#D4AF37]/50 mt-1">You are an admin</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[#D4AF37]/50">No team members yet</p>
-                )}
-              </div>
+          <SectionPanel title="Team workspace" subtitle="The businesses linked to your account">
+            <div className="space-y-3">
+              {businesses.length > 0 ? businesses.map((business) => (
+                <div key={business.id} className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                  <p className="font-semibold text-white">{business.name}</p>
+                  <p className="mt-1 text-sm text-[#F8F9FA]/60">You are an admin for this workspace.</p>
+                </div>
+              )) : <p className="text-sm text-[#D4AF37]/60">No connected businesses yet.</p>}
             </div>
-          </div>
+          </SectionPanel>
         )}
 
         {activeTab === 'security' && (
           <div className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-green-400">{success}</p>
-              </div>
-            )}
-
-            <form onSubmit={handlePasswordChange} className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Change Password</h3>
-              <div className="space-y-4">
+            <SectionPanel title="Change password" subtitle="Keep your account access secure and current">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                {error && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{error}</div>}
+                {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
                 <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">Current Password</label>
-                  <input
-                    id="currentPassword"
-                    type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
-                    required
-                  />
+                  <label htmlFor="currentPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">Current password</label>
+                  <input id="currentPassword" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
                 </div>
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">New Password</label>
-                  <input
-                    id="newPassword"
-                    type="password"
-                    value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
-                    required
-                  />
+                  <label htmlFor="newPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">New password</label>
+                  <input id="newPassword" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
                 </div>
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#D4AF37] mb-2">Confirm New Password</label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="w-full px-4 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
-                    required
-                  />
+                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">Confirm new password</label>
+                  <input id="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
                 </div>
-              </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
-              >
-                {saving ? 'Changing...' : 'Change Password'}
-              </button>
-            </form>
-
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Two-Factor Authentication</h3>
-              <p className="text-sm text-[#D4AF37]/70 mb-4">Add an extra layer of security to your account</p>
-              <button className="px-4 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded-lg hover:bg-[#D4AF37]/30 transition font-medium">
-                Enable 2FA
-              </button>
-            </div>
+                <button type="submit" disabled={saving} className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">{saving ? 'Changing...' : 'Change password'}</button>
+              </form>
+            </SectionPanel>
+            <SectionPanel title="Two-factor authentication" subtitle="Add another layer of protection to your account">
+              <button className="rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Enable 2FA</button>
+            </SectionPanel>
           </div>
         )}
 
         {activeTab === 'notifications' && (
-          <form onSubmit={handleNotificationsUpdate} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-green-400">{success}</p>
-              </div>
-            )}
-
-            <div className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <label htmlFor="emailNotifications" className="flex items-center gap-3 flex-1 cursor-pointer">
+          <SectionPanel title="Notification preferences" subtitle="Choose what should reach you and when">
+            <form onSubmit={handleNotificationsUpdate} className="space-y-4">
+              {error && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{error}</div>}
+              {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
+              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white">Email Notifications</p>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">Get updates about your deals and contacts</p>
+                    <p className="font-semibold text-white">Email notifications</p>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">Get updates about deals, contacts and account activity.</p>
                   </div>
-                </label>
-                <input
-                  id="emailNotifications"
-                  type="checkbox"
-                  checked={notificationsForm.emailNotifications}
-                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, emailNotifications: e.target.checked }))}
-                  className="w-5 h-5 flex-shrink-0"
-                  aria-label="Enable email notifications"
-                />
+                  <input id="emailNotifications" type="checkbox" checked={notificationsForm.emailNotifications} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, emailNotifications: e.target.checked }))} className="h-5 w-5" aria-label="Enable email notifications" />
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="marketingUpdates" className="flex items-center gap-3 flex-1 cursor-pointer">
+              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white">Marketing Updates</p>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">Learn about new features and tips</p>
+                    <p className="font-semibold text-white">Marketing updates</p>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">Insights about new features and product tips.</p>
                   </div>
-                </label>
-                <input
-                  id="marketingUpdates"
-                  type="checkbox"
-                  checked={notificationsForm.marketingUpdates}
-                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, marketingUpdates: e.target.checked }))}
-                  className="w-5 h-5 flex-shrink-0"
-                  aria-label="Enable marketing updates"
-                />
+                  <input id="marketingUpdates" type="checkbox" checked={notificationsForm.marketingUpdates} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, marketingUpdates: e.target.checked }))} className="h-5 w-5" aria-label="Enable marketing updates" />
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="paymentReminders" className="flex items-center gap-3 flex-1 cursor-pointer">
+              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white">Payment Reminders</p>
-                    <p className="text-sm text-[#D4AF37]/50 mt-1">Alerts before payment date</p>
+                    <p className="font-semibold text-white">Payment reminders</p>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">Alerts before payment dates and renewals.</p>
                   </div>
-                </label>
-                <input
-                  id="paymentReminders"
-                  type="checkbox"
-                  checked={notificationsForm.paymentReminders}
-                  onChange={(e) => setNotificationsForm(prev => ({ ...prev, paymentReminders: e.target.checked }))}
-                  className="w-5 h-5 flex-shrink-0"
-                  aria-label="Enable payment reminders"
-                />
+                  <input id="paymentReminders" type="checkbox" checked={notificationsForm.paymentReminders} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, paymentReminders: e.target.checked }))} className="h-5 w-5" aria-label="Enable payment reminders" />
+                </div>
               </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full mt-4 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 transition"
-              >
-                {saving ? 'Saving...' : 'Save Preferences'}
-              </button>
-            </div>
-          </form>
+              <button type="submit" disabled={saving} className="w-full rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">{saving ? 'Saving...' : 'Save preferences'}</button>
+            </form>
+          </SectionPanel>
         )}
       </div>
     </div>

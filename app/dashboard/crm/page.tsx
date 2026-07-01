@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Briefcase, Plus, Search } from 'lucide-react'
+import { Users, Briefcase, Plus, Search, Sparkles, ArrowUpRight } from 'lucide-react'
 import { useBusinessContext } from '@/lib/context/BusinessContext'
 import { listContacts, listDeals } from '@/lib/services/crm'
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards'
 
 export default function CrmPage() {
   const { currentBusiness } = useBusinessContext()
@@ -43,103 +44,71 @@ export default function CrmPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white">CRM</h1>
-          <p className="text-[#D4AF37]/70 mt-2">Manage your contacts and sales pipeline.</p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/dashboard/crm/contacts"
-            className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#07070A] hover:bg-[#D4AF37]/90 transition"
-          >
-            <Plus className="w-4 h-4" /> New Contact
-          </Link>
-          <Link
-            href="/dashboard/crm/deals"
-            className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#0E1116] px-5 py-3 text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10 transition"
-          >
-            <Plus className="w-4 h-4" /> New Deal
-          </Link>
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+              <Sparkles className="h-4 w-4" /> Relationship command center
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Manage your prospects, pipeline and momentum from one premium CRM surface.</h1>
+            <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Keep contacts, opportunities and next steps tightly connected so every conversation turns into action.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/dashboard/crm/contacts" className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90">
+              <Plus className="h-4 w-4" /> New contact
+            </Link>
+            <Link href="/dashboard/crm/deals" className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#0E1116]/80 px-5 py-3 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/10">
+              <Plus className="h-4 w-4" /> New deal
+            </Link>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+        <div className="rounded-[1.3rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
           {error}
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <OverviewCard
-          title="Contacts"
-          description="Your active CRM contacts"
-          value={loading ? '—' : contactCount.toString()}
-          icon={<Users className="w-5 h-5 text-[#D4AF37]" />}
-          href="/dashboard/crm/contacts"
-        />
-        <OverviewCard
-          title="Deals"
-          description="Opportunities in the pipeline"
-          value={loading ? '—' : dealCount.toString()}
-          icon={<Briefcase className="w-5 h-5 text-[#D4AF37]" />}
-          href="/dashboard/crm/deals"
-        />
-        <Card className="bg-[#0E1116] border-[#D4AF37]/10">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm text-[#D4AF37]/70">CRM search</p>
-              <p className="text-white text-lg font-semibold">Find contacts, leads, and deals</p>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <MetricCard title="Contacts" value={loading ? '—' : contactCount.toString()} description="Active relationships in your CRM" icon={Users} accent="gold" trend="Live" />
+        <MetricCard title="Deals" value={loading ? '—' : dealCount.toString()} description="Open opportunities in motion" icon={Briefcase} accent="emerald" trend="Healthy" />
+        <MetricCard title="Search & action" value="Fast" description="Jump into contacts or deals instantly" icon={Search} accent="slate" trend="Ready" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <SectionPanel title="CRM workspaces" subtitle="Move from relationship capture to opportunity management without friction">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link href="/dashboard/crm/contacts" className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 transition hover:border-[#D4AF37]/40">
+              <p className="text-sm font-semibold text-white">Contact hub</p>
+              <p className="mt-2 text-sm text-[#F8F9FA]/60">Review, search and organize the people that matter most.</p>
+              <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#D4AF37]">
+                Open contacts <ArrowUpRight className="h-4 w-4" />
+              </div>
+            </Link>
+            <Link href="/dashboard/crm/deals" className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 transition hover:border-[#D4AF37]/40">
+              <p className="text-sm font-semibold text-white">Pipeline board</p>
+              <p className="mt-2 text-sm text-[#F8F9FA]/60">Keep every deal visible, prioritized and moving forward.</p>
+              <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#D4AF37]">
+                Open deals <ArrowUpRight className="h-4 w-4" />
+              </div>
+            </Link>
+          </div>
+        </SectionPanel>
+
+        <SectionPanel title="Next best step" subtitle="What to do right now to keep momentum high">
+          <div className="space-y-3">
+            <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <p className="text-sm font-semibold text-white">Follow up on warm leads</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">Re-engage active prospects before the next launch window opens.</p>
             </div>
-            <Search className="w-5 h-5 text-[#D4AF37]" />
+            <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <p className="text-sm font-semibold text-white">Move one deal to proposal</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">Turn momentum into a decision with a single clear next action.</p>
+            </div>
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <Link href="/dashboard/crm/contacts" className="rounded-2xl border border-[#D4AF37]/10 bg-[#11151E] px-4 py-3 text-sm text-[#D4AF37] hover:border-[#D4AF37]/30 transition">
-              Search Contacts
-            </Link>
-            <Link href="/dashboard/crm/deals" className="rounded-2xl border border-[#D4AF37]/10 bg-[#11151E] px-4 py-3 text-sm text-[#D4AF37] hover:border-[#D4AF37]/30 transition">
-              Search Deals
-            </Link>
-          </div>
-        </Card>
+        </SectionPanel>
       </div>
     </div>
   )
-}
-
-function OverviewCard({
-  title,
-  description,
-  value,
-  icon,
-  href,
-}: {
-  title: string
-  description: string
-  value: string
-  icon: React.ReactNode
-  href: string
-}) {
-  return (
-    <Link href={href} className="group">
-      <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6 transition hover:border-[#D4AF37]/30">
-        <div className="flex items-center justify-between gap-3">
-          <div>{icon}</div>
-          <span className="rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">
-            View
-          </span>
-        </div>
-        <div className="mt-8">
-          <p className="text-sm text-[#D4AF37]/70">{description}</p>
-          <p className="mt-3 text-3xl font-bold text-white">{value}</p>
-          <p className="mt-4 text-sm text-[#D4AF37]/50">Manage your CRM details and pipeline.</p>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-function Card({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={`rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6 ${className || ''}`}>{children}</div>
 }

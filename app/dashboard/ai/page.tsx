@@ -1,21 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, Cpu, MessageSquare, Bolt, ArrowRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  Sparkles,
+  Cpu,
+  BrainCircuit,
+  MessageSquareText,
+  ShieldCheck,
+  TrendingUp,
+  Wand2,
+} from 'lucide-react';
+import { AgentCard, MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
-const useCases = [
-  {
-    title: 'Campaign Messaging',
-    description: 'Create high-converting launch copy for emails, socials, and ads.',
-  },
-  {
-    title: 'Brand Voice',
-    description: 'Generate consistent captions, brand statements, and microcopy.',
-  },
-  {
-    title: 'Growth Strategy',
-    description: 'Get AI-driven recommendations for funnels and customer journeys.',
-  },
+const agentCatalog = [
+  { name: 'CEO Agent', role: 'Executive command', focus: 'Prioritizes growth, revenue health and board-ready insight.', confidence: '92%', status: 'Live', icon: BrainCircuit },
+  { name: 'Brand Strategist', role: 'Identity systems', focus: 'Keeps messaging, voice and visual consistency sharp.', confidence: '90%', status: 'Live', icon: Sparkles },
+  { name: 'Marketing Agent', role: 'Funnel growth', focus: 'Builds campaigns, offers and lifecycle journeys.', confidence: '94%', status: 'Live', icon: TrendingUp },
+  { name: 'Content Agent', role: 'Asset production', focus: 'Generates briefs, scripts and content plans.', confidence: '91%', status: 'Live', icon: MessageSquareText },
+  { name: 'Compliance Agent', role: 'Risk control', focus: 'Reviews documents, standards and operating guardrails.', confidence: '89%', status: 'Live', icon: ShieldCheck },
+];
+
+const prompts = [
+  'Draft a launch plan for a premium service rollout.',
+  'Create an investor update with KPI highlights.',
+  'Suggest a 7-day CRM automation sequence.',
 ];
 
 export default function AIPage() {
@@ -23,101 +31,96 @@ export default function AIPage() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const quickStats = useMemo(() => [
+    { title: 'Active agents', value: '10', description: 'Autonomous execution layers active', icon: Cpu, accent: 'gold' as const, trend: '+3 this week' },
+    { title: 'Automation coverage', value: '82%', description: 'Key motions already orchestrated', icon: Sparkles, accent: 'emerald' as const, trend: 'Healthy' },
+    { title: 'Decision confidence', value: '94%', description: 'Recommended actions with measurable intent', icon: BrainCircuit, accent: 'slate' as const, trend: 'Rising' },
+  ], []);
+
   async function handleRunAI() {
     if (!prompt.trim()) return;
     setLoading(true);
     setResult(null);
 
     await new Promise((resolve) => setTimeout(resolve, 700));
-    setResult(
-      `AI-generated recommendation for: "${prompt.trim()}"\n\n1. Capture attention with a strong hook.\n2. Keep the message simple and benefit-driven.\n3. Include a clear CTA that emphasizes the outcome.`
-    );
+    setResult(`Empire AI output for: "${prompt.trim()}"
+
+1. Start by sequencing the highest-converting offer.
+2. Auto-generate the launch messaging and assets.
+3. Assign the next best action to the right agent.
+4. Track the impact in the executive command center.`);
     setLoading(false);
   }
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
-            <Sparkles className="w-4 h-4" /> AI Growth Studio
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+              <Sparkles className="h-4 w-4" /> AI Orchestration Layer
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">From idea to empire, with intelligence at every layer.</h1>
+            <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Coordinate your CEO, strategy, growth, content, finance and compliance agents from one premium operating surface.</p>
           </div>
-          <h1 className="text-4xl font-bold text-white mt-4">AI Assistant</h1>
-          <p className="text-[#D4AF37]/70 mt-2 max-w-2xl">
-            Amplify your marketing, content and campaign operations with AI insights built for founders.
-          </p>
+          <div className="rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+            <p className="font-semibold text-white">Live orchestration</p>
+            <p className="mt-2">Every decision is connected to your CRM, content, finance and growth stack.</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {useCases.map((item) => (
-          <div key={item.title} className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Cpu className="w-6 h-6 text-[#D4AF37]" />
-              <ArrowRight className="w-4 h-4 text-[#D4AF37]" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-            <p className="text-[#D4AF37]/70 text-sm">{item.description}</p>
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {quickStats.map((item) => (
+          <MetricCard key={item.title} {...item} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-        <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">AI Prompt Builder</h2>
-          <p className="text-[#D4AF37]/70 mb-6">Enter the goal you want the assistant to solve and get a polished output instantly.</p>
+      <div className="grid gap-6 xl:grid-cols-[1.45fr_0.9fr]">
+        <SectionPanel title="AI command prompt" subtitle="Direct your empire agents with one focused request" actionLabel="Launch studio" actionHref="/dashboard/ai">
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Write a launch email for an audience of busy e-commerce founders..."
-            className="min-h-[180px] w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] p-4 text-white outline-none focus:border-[#D4AF37]"
+            placeholder="Ask the empire layer to draft a launch, investor update, campaign plan or automation sequence..."
+            className="min-h-[220px] w-full rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#07070A] p-4 text-sm text-white outline-none ring-0 transition focus:border-[#D4AF37]"
           />
-          <button
-            onClick={handleRunAI}
-            disabled={loading}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? 'Generating...' : 'Generate AI Insight'}
-          </button>
-        </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {prompts.map((item) => (
+              <button key={item} onClick={() => setPrompt(item)} className="rounded-full border border-[#D4AF37]/10 bg-[#11151E] px-4 py-2 text-sm text-[#F8F9FA]/70 transition hover:border-[#D4AF37]/40 hover:text-white">
+                {item}
+              </button>
+            ))}
+            <button
+              onClick={handleRunAI}
+              disabled={loading}
+              className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Wand2 className="h-4 w-4" />
+              {loading ? 'Generating...' : 'Generate plan'}
+            </button>
+          </div>
+        </SectionPanel>
 
-        <div className="space-y-6 rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-          <div className="rounded-3xl bg-[#11151E] p-4">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="w-5 h-5 text-[#D4AF37]" />
-              <p className="text-sm font-medium text-white">Instant Prompt Templates</p>
-            </div>
-            <ul className="mt-4 space-y-3 text-[#D4AF37]/70 text-sm">
-              <li>• Launch announcement</li>
-              <li>• Customer nurture flow</li>
-              <li>• Video script outline</li>
-              <li>• Social post series</li>
-            </ul>
+        <SectionPanel title="Agent network" subtitle="Autonomous execution with shared context">
+          <div className="space-y-3">
+            {agentCatalog.map((agent) => (
+              <AgentCard key={agent.name} {...agent} />
+            ))}
           </div>
-          <div className="rounded-3xl bg-[#11151E] p-4">
-            <div className="flex items-center gap-3">
-              <Bolt className="w-5 h-5 text-[#D4AF37]" />
-              <p className="text-sm font-medium text-white">Ready for execution</p>
-            </div>
-            <p className="mt-3 text-sm text-[#D4AF37]/70">
-              Use the output to onboard campaigns, launch emails, or creative workflows instantly.
-            </p>
-          </div>
-        </div>
+        </SectionPanel>
       </div>
 
-      <div className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">AI Output</h2>
+      <SectionPanel title="Orchestration output" subtitle="Every result is designed to be immediate, actionable and investor-grade">
         {result ? (
-          <div className="whitespace-pre-wrap rounded-3xl bg-[#07070A] p-6 text-sm leading-6 text-[#D4AF37]/70">
+          <div className="whitespace-pre-wrap rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#07070A] p-5 text-sm leading-7 text-[#F8F9FA]/80">
             {result}
           </div>
         ) : (
-          <div className="rounded-3xl border border-[#D4AF37]/10 p-6 text-[#D4AF37]/60">
-            <p>Run a prompt to preview AI recommendations.</p>
+          <div className="rounded-[1.4rem] border border-dashed border-[#D4AF37]/20 bg-[#11151E]/70 p-5 text-sm text-[#F8F9FA]/60">
+            Run a prompt to generate a strategic response that can flow directly into your content, CRM and growth systems.
           </div>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

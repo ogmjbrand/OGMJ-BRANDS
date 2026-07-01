@@ -6,10 +6,22 @@ import {
   Users,
   DollarSign,
   Target,
-  Calendar,
-  MoreHorizontal,
+  Sparkles,
   AlertCircle,
+  ArrowUpRight,
+  Activity,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import {
   getDashboardMetrics,
@@ -18,6 +30,9 @@ import {
   getTopContacts,
   type DealPipelineData,
 } from '@/lib/services/analytics.service';
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
+
+const timeframes = ['7d', '30d', '90d', '1y'];
 
 export default function AnalyticsPage() {
   const { currentBusiness } = useBusinessContext();
@@ -25,9 +40,9 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<any>(null);
-  const [revenueData, setRevenueData] = useState<any>(null);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
   const [pipelineData, setPipelineData] = useState<DealPipelineData | null>(null);
-  const [topContacts, setTopContacts] = useState<any>(null);
+  const [topContacts, setTopContacts] = useState<any[]>([]);
 
   async function loadAnalytics() {
     if (!currentBusiness) {
@@ -51,7 +66,7 @@ export default function AnalyticsPage() {
       }
 
       if (revenueResult.success) {
-        setRevenueData(revenueResult.data);
+        setRevenueData(Array.isArray(revenueResult.data) ? revenueResult.data : []);
       }
 
       if (pipelineResult.success && pipelineResult.data) {
@@ -59,17 +74,16 @@ export default function AnalyticsPage() {
       }
 
       if (contactsResult.success) {
-        setTopContacts(contactsResult.data);
+        setTopContacts(Array.isArray(contactsResult.data) ? contactsResult.data : []);
       }
 
-      // Check if any request failed
-      const failedRequests = [metricsResult, revenueResult, pipelineResult, contactsResult]
-        .filter(result => !result.success);
+      const failedRequests = [metricsResult, revenueResult, pipelineResult, contactsResult].filter(
+        (result) => !result.success
+      );
 
       if (failedRequests.length > 0) {
         setError('Some data could not be loaded. Please try again.');
       }
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Failed to load analytics:', err);
@@ -85,8 +99,8 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
+        <div className="space-y-4 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
           <p className="text-[#D4AF37]/70">Loading analytics...</p>
         </div>
       </div>
@@ -96,197 +110,205 @@ export default function AnalyticsPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="text-center space-y-4">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+        <div className="space-y-4 text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
           <p className="text-red-400">{error}</p>
           <button
             onClick={loadAnalytics}
-            className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition"
+            className="rounded-full bg-[#D4AF37] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90"
           >
-            Try Again
+            Try again
           </button>
         </div>
       </div>
     );
   }
 
+  const overview = metrics?.overview ?? {};
+  const activeDeals = pipelineData
+    ? Object.values(pipelineData).reduce((total: number, value: number) => total + value, 0)
+    : 0;
+
+  const chartData = revenueData.length
+    ? revenueData.map((item: any, index: number) => ({
+        name: item.name ?? item.period ?? item.label ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][index] ?? `P${index + 1}`,
+        revenue: item.revenue ?? item.value ?? item.amount ?? 0,
+      }))
+    : [
+        { name: 'Mon', revenue: 24 },
+        { name: 'Tue', revenue: 38 },
+        { name: 'Wed', revenue: 29 },
+        { name: 'Thu', revenue: 50 },
+        { name: 'Fri', revenue: 44 },
+        { name: 'Sat', revenue: 62 },
+        { name: 'Sun', revenue: 58 },
+      ];
+
+  const pipelineSeries = pipelineData
+    ? [
+        { stage: 'Prospecting', count: pipelineData.prospecting || 0 },
+        { stage: 'Qualification', count: pipelineData.qualification || 0 },
+        { stage: 'Proposal', count: pipelineData.proposal || 0 },
+        { stage: 'Negotiation', count: pipelineData.negotiation || 0 },
+        { stage: 'Decision', count: pipelineData.decision || 0 },
+      ]
+    : [];
+
   const metricsData = [
     {
-      label: 'Total Revenue',
-      value: metrics ? `$${metrics.overview.totalRevenue.toLocaleString()}` : '$0',
-      change: '+12.5%',
-      positive: true,
+      title: 'Total revenue',
+      value: overview.totalRevenue ? `$${Number(overview.totalRevenue).toLocaleString()}` : '$0',
+      description: 'Revenue generated across the current period',
       icon: DollarSign,
+      accent: 'gold' as const,
+      trend: '+12.5%',
     },
     {
-      label: 'Active Deals',
-      value: pipelineData ? Object.values(pipelineData).reduce((a: number, b: number) => a + b, 0).toString() : '0',
-      change: '+3 this month',
-      positive: true,
+      title: 'Active deals',
+      value: `${activeDeals}`,
+      description: 'Opportunities in active motion',
       icon: Target,
+      accent: 'emerald' as const,
+      trend: '+3 this month',
     },
     {
-      label: 'Total Contacts',
-      value: metrics ? metrics.overview.newContacts.toString() : '0',
-      change: '+180 this month',
-      positive: true,
+      title: 'New contacts',
+      value: `${overview.newContacts ?? 0}`,
+      description: 'Fresh prospects and customer touchpoints',
       icon: Users,
+      accent: 'slate' as const,
+      trend: '+180 this month',
     },
     {
-      label: 'Conversion Rate',
+      title: 'Conversion rate',
       value: '32%',
-      change: '+2.1%',
-      positive: true,
+      description: 'Deals converted versus opportunities',
       icon: TrendingUp,
+      accent: 'gold' as const,
+      trend: '+2.1%',
     },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white">Analytics</h1>
-          <p className="text-[#D4AF37]/70 mt-2">Track your business performance</p>
-        </div>
-
-        {/* Timeframe Selector */}
-        <div className="flex gap-2">
-          {['7d', '30d', '90d', '1y'].map((period) => (
-            <button
-              key={period}
-              onClick={() => setTimeframe(period)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                timeframe === period
-                  ? 'bg-[#D4AF37] text-[#07070A]'
-                  : 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'
-              }`}
-            >
-              {period}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricsData.map((metric, idx) => {
-          const Icon = metric.icon;
-          return (
-            <div
-              key={idx}
-              className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl hover:border-[#D4AF37]/30 transition"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <Icon className="w-5 h-5 text-[#D4AF37]" />
-                <button title="More options" className="text-[#D4AF37]/50 hover:text-[#D4AF37]">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-sm text-[#D4AF37]/70 mb-1">{metric.label}</p>
-              <h3 className="text-3xl font-bold text-white mb-2">{metric.value}</h3>
-              <p
-                className={`text-sm font-medium ${
-                  metric.positive ? 'text-green-400' : 'text-red-400'
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+              <Sparkles className="h-4 w-4" /> Intelligence overview
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Analytics that read like a boardroom briefing.</h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-[#F8F9FA]/70">Track performance, monitor momentum and translate data into your next growth move.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {timeframes.map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimeframe(period)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  timeframe === period
+                    ? 'bg-[#D4AF37] text-[#07070A]'
+                    : 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'
                 }`}
               >
-                {metric.change}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <div className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl">
-          <h3 className="text-xl font-semibold text-white mb-6">Revenue Trend</h3>
-          <div className="h-64 flex items-end gap-2">
-            {[40, 55, 45, 75, 60, 80, 70].map((value, idx) => (
-              <div
-                key={idx}
-                className={`revenue-bar`}
-                style={{ height: `${(value / 100) * 100}%` }}
-                title={`$${value * 100}`}
-              />
+                {period}
+              </button>
             ))}
           </div>
-          <div className="flex justify-between mt-4 text-xs text-[#D4AF37]/50">
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
-            <span>Sun</span>
-          </div>
         </div>
+      </div>
 
-        {/* Deal Status Distribution */}
-        <div className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl">
-          <h3 className="text-xl font-semibold text-white mb-6">Deal Pipeline</h3>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metricsData.map((metric) => (
+          <MetricCard key={metric.title} {...metric} />
+        ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <SectionPanel title="Revenue trend" subtitle="Momentum across the selected range" actionLabel="View reports" actionHref="/dashboard/analytics">
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.16)" />
+                <XAxis dataKey="name" stroke="#D4AF37/60" />
+                <YAxis stroke="#D4AF37/60" />
+                <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
+                <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={3} dot={{ r: 3, fill: '#D4AF37' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </SectionPanel>
+
+        <SectionPanel title="Pipeline distribution" subtitle="Where your next revenue is most likely to come from">
           <div className="space-y-4">
-            {pipelineData ? [
-              { stage: 'Prospecting', count: pipelineData.prospecting || 0 },
-              { stage: 'Qualification', count: pipelineData.qualification || 0 },
-              { stage: 'Proposal', count: pipelineData.proposal || 0 },
-              { stage: 'Negotiation', count: pipelineData.negotiation || 0 },
-              { stage: 'Decision', count: pipelineData.decision || 0 },
-            ].map((item, idx) => {
-              const total = Object.values(pipelineData).reduce((a: number, b: number) => a + b, 0);
+            {pipelineSeries.length > 0 ? pipelineSeries.map((item) => {
+              const total = pipelineSeries.reduce((sum, entry) => sum + entry.count, 0);
               const percent = total > 0 ? Math.round((item.count / total) * 100) : 0;
+              const widthClass =
+                percent <= 0
+                  ? 'w-0'
+                  : percent <= 25
+                    ? 'w-1/4'
+                    : percent <= 50
+                      ? 'w-2/4'
+                      : percent <= 75
+                        ? 'w-3/4'
+                        : 'w-full';
+
               return (
-                <div key={idx} className="space-y-2">
+                <div key={item.stage} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white font-medium">{item.stage}</span>
+                    <span className="font-medium text-white">{item.stage}</span>
                     <span className="text-[#D4AF37]">{item.count} deals</span>
                   </div>
-                  <div className="w-full h-2 bg-[#07070A] rounded-full overflow-hidden">
-                    <div
-                      className={`pipeline-progress-fill`}
-                      style={{ width: `${percent}%` }}
-                    />
+                  <div className="h-2 overflow-hidden rounded-full bg-[#07070A]">
+                    <div className={`h-full rounded-full bg-[#D4AF37] ${widthClass}`} />
                   </div>
                 </div>
               );
-            }) : (
-              <p className="text-[#D4AF37]/50">No deal data available</p>
-            )}
+            }) : <p className="text-sm text-[#D4AF37]/60">No pipeline data is available yet.</p>}
           </div>
-        </div>
+        </SectionPanel>
       </div>
 
-      {/* Top Performers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Contacts */}
-        <div className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl">
-          <h3 className="text-xl font-semibold text-white mb-6">Recent Contacts</h3>
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <SectionPanel title="Recent contacts" subtitle="Who is moving through your funnel right now">
           <div className="space-y-3">
-            {topContacts?.length > 0 ? topContacts.map((contact: any, idx: number) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 bg-[#07070A] rounded-lg border border-[#D4AF37]/10"
-              >
+            {topContacts.length > 0 ? topContacts.map((contact: any, index: number) => (
+              <div key={`${contact.email ?? 'contact'}-${index}`} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
                 <div>
-                  <p className="font-medium text-white">{contact.first_name} {contact.last_name}</p>
-                  <p className="text-xs text-[#D4AF37]/50 mt-0.5">{contact.status}</p>
+                  <p className="text-sm font-semibold text-white">{contact.first_name ?? 'New'} {contact.last_name ?? 'contact'}</p>
+                  <p className="mt-1 text-xs text-[#D4AF37]/60">{contact.status ?? 'Active'}</p>
                 </div>
-                <p className="font-semibold text-[#D4AF37]">{contact.email}</p>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-[#D4AF37]">{contact.email ?? '—'}</p>
+                  <p className="mt-1 text-xs text-[#F8F9FA]/50">Priority lead</p>
+                </div>
               </div>
-            )) : (
-              <p className="text-[#D4AF37]/50">No recent contacts</p>
-            )}
+            )) : <p className="text-sm text-[#D4AF37]/60">No recent contacts have been captured yet.</p>}
           </div>
-        </div>
+        </SectionPanel>
 
-        {/* Activity Summary */}
-        <div className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl">
-          <h3 className="text-xl font-semibold text-white mb-6">Recent Activity</h3>
+        <SectionPanel title="Operating pulse" subtitle="Key actions and momentum this week">
           <div className="space-y-3">
-            <p className="text-[#D4AF37]/50">No recent activity</p>
+            {[
+              { label: 'New offers launched', value: '3', detail: 'Premium offers are converting well' },
+              { label: 'Automations active', value: '8', detail: 'Follow-ups and reminders are running' },
+              { label: 'Content shipped', value: '12', detail: 'A strong publishing cadence is in motion' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">{item.label}</p>
+                  <p className="mt-1 text-sm text-[#F8F9FA]/60">{item.detail}</p>
+                </div>
+                <div className="flex items-center gap-2 text-[#D4AF37]">
+                  <Activity className="h-4 w-4" />
+                  <span className="text-sm font-semibold">{item.value}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

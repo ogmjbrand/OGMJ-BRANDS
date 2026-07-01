@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, MoreVertical, Eye, Download, Send, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Edit2, Sparkles, Receipt, CircleDollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { listInvoices, deleteInvoice, getInvoiceStats } from '@/lib/services/invoices.service';
+import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
 interface Invoice {
   id: string;
@@ -83,163 +84,114 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Invoices</h1>
-          <p className="text-[#D4AF37]/70">Manage and track client invoices</p>
+      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+              <Sparkles className="h-4 w-4" /> Revenue operations
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Invoice management that keeps cash flow visible and confident.</h1>
+            <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Create, review and monitor invoices with the same polish as the rest of your empire operations.</p>
+          </div>
+          <button onClick={() => router.push('/dashboard/invoices/new')} className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90">
+            <Plus className="h-4 w-4" /> New invoice
+          </button>
         </div>
-        <button
-          onClick={() => router.push('/dashboard/invoices/new')}
-          className="flex items-center gap-2 bg-[#D4AF37] text-black px-6 py-3 rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition"
-        >
-          <Plus className="w-5 h-5" />
-          New Invoice
-        </button>
       </div>
 
-      {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-            <p className="text-[#D4AF37]/70 text-sm font-medium mb-2">Total Invoices</p>
-            <p className="text-3xl font-bold text-white">{stats.total_invoices}</p>
-          </div>
-          <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6">
-            <p className="text-[#D4AF37]/70 text-sm font-medium mb-2">Total Revenue</p>
-            <p className="text-3xl font-bold text-white">₦{(stats.total_revenue / 1000000).toFixed(1)}M</p>
-          </div>
-          <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-green-500/20 rounded-xl p-6">
-            <p className="text-green-400/70 text-sm font-medium mb-2">Paid</p>
-            <p className="text-3xl font-bold text-green-300">₦{(stats.paid_revenue / 1000000).toFixed(1)}M</p>
-          </div>
-          <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-red-500/20 rounded-xl p-6">
-            <p className="text-red-400/70 text-sm font-medium mb-2">Outstanding</p>
-            <p className="text-3xl font-bold text-red-300">₦{(stats.outstanding / 1000000).toFixed(1)}M</p>
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard title="Total invoices" value={stats.total_invoices.toString()} description="All invoices in your records" icon={Receipt} accent="gold" trend="Live" />
+          <MetricCard title="Total revenue" value={`₦${(stats.total_revenue / 1000000).toFixed(1)}M`} description="Invoice value created" icon={CircleDollarSign} accent="emerald" trend="Tracked" />
+          <MetricCard title="Paid" value={`₦${(stats.paid_revenue / 1000000).toFixed(1)}M`} description="Revenue already collected" icon={CircleDollarSign} accent="slate" trend="Healthy" />
+          <MetricCard title="Outstanding" value={`₦${(stats.outstanding / 1000000).toFixed(1)}M`} description="Pending collection balance" icon={CircleDollarSign} accent="gold" trend="Watch" />
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="flex gap-3 border-b border-[#D4AF37]/10">
-        {['all', 'draft', 'sent', 'paid', 'overdue'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={`px-4 py-3 font-medium transition ${
-              filter === status
-                ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]'
-                : 'text-[#D4AF37]/50 hover:text-[#D4AF37]'
-            }`}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </button>
-        ))}
-      </div>
+      <SectionPanel title="Invoice overview" subtitle="Filter by status and stay on top of collection health">
+        <div className="flex flex-wrap gap-2 border-b border-[#D4AF37]/10 pb-3">
+          {['all', 'draft', 'sent', 'paid', 'overdue'].map((status) => (
+            <button key={status} onClick={() => setFilter(status)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === status ? 'bg-[#D4AF37] text-[#07070A]' : 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'}`}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
 
-      {/* Invoices Table */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
-        </div>
-      ) : invoices.length === 0 ? (
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-12 text-center">
-          <p className="text-[#D4AF37]/70 mb-4">No invoices found</p>
-          <button
-            onClick={() => router.push('/dashboard/invoices/new')}
-            className="text-[#D4AF37] hover:text-white transition font-medium"
-          >
-            Create your first invoice →
-          </button>
-        </div>
-      ) : (
-        <div className="bg-gradient-to-br from-[#1A1F3A] to-[#0E1116] border border-[#D4AF37]/20 rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="border-b border-[#D4AF37]/10">
-              <tr>
-                <th className="px-6 py-4 text-left text-[#D4AF37]/70 text-sm font-medium">Invoice</th>
-                <th className="px-6 py-4 text-left text-[#D4AF37]/70 text-sm font-medium">Amount</th>
-                <th className="px-6 py-4 text-left text-[#D4AF37]/70 text-sm font-medium">Status</th>
-                <th className="px-6 py-4 text-left text-[#D4AF37]/70 text-sm font-medium">Due Date</th>
-                <th className="px-6 py-4 text-right text-[#D4AF37]/70 text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="border-b border-[#D4AF37]/5 hover:bg-[#0E1116]/50 transition">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-white">{invoice.invoice_number}</p>
-                      <p className="text-[#D4AF37]/50 text-sm">
-                        {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-white">₦{(invoice.total_amount / 1000000).toFixed(1)}M</p>
-                      <p className="text-[#D4AF37]/50 text-sm">
-                        Paid: ₦{(invoice.paid_amount / 1000000).toFixed(1)}M
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[invoice.status] || statusColors.draft}`}>
-                      {invoice.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-[#D4AF37]/70 text-sm">
-                    {new Date(invoice.due_date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}
-                        className="p-2 hover:bg-[#D4AF37]/10 rounded transition"
-                        title="View"
-                      >
-                        <Eye className="w-4 h-4 text-[#D4AF37]" />
-                      </button>
-                      <button
-                        onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}
-                        className="p-2 hover:bg-[#D4AF37]/10 rounded transition"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-4 h-4 text-[#D4AF37]" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(invoice.id)}
-                        className="p-2 hover:bg-red-500/10 rounded transition"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="py-12 text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-12 text-center">
+            <p className="mb-4 text-[#D4AF37]/70">No invoices found</p>
+            <button onClick={() => router.push('/dashboard/invoices/new')} className="font-medium text-[#D4AF37] transition hover:text-white">
+              Create your first invoice →
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E]">
+            <table className="w-full">
+              <thead className="border-b border-[#D4AF37]/10 bg-[#07070A]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Invoice</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Due date</th>
+                  <th className="px-6 py-4 text-right text-sm font-medium text-[#D4AF37]/70">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {invoices.map((invoice) => (
+                  <tr key={invoice.id} className="border-b border-[#D4AF37]/5 transition hover:bg-[#0E1116]/50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-white">{invoice.invoice_number}</p>
+                        <p className="text-sm text-[#D4AF37]/50">{new Date(invoice.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-white">₦{(invoice.total_amount / 1000000).toFixed(1)}M</p>
+                        <p className="text-sm text-[#D4AF37]/50">Paid: ₦{(invoice.paid_amount / 1000000).toFixed(1)}M</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[invoice.status] || statusColors.draft}`}>
+                        {invoice.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#D4AF37]/70">{new Date(invoice.due_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)} className="rounded p-2 transition hover:bg-[#D4AF37]/10" title="View">
+                          <Eye className="h-4 w-4 text-[#D4AF37]" />
+                        </button>
+                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)} className="rounded p-2 transition hover:bg-[#D4AF37]/10" title="Edit">
+                          <Edit2 className="h-4 w-4 text-[#D4AF37]" />
+                        </button>
+                        <button onClick={() => setDeleteConfirm(invoice.id)} className="rounded p-2 transition hover:bg-red-500/10" title="Delete">
+                          <Trash2 className="h-4 w-4 text-red-400" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionPanel>
 
-      {/* Delete Confirmation */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6 max-w-sm">
-            <p className="text-white font-semibold mb-4">Delete invoice?</p>
-            <p className="text-[#D4AF37]/70 text-sm mb-6">This action cannot be undone.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-sm rounded-[1.35rem] border border-[#D4AF37]/20 bg-[#0E1116] p-6">
+            <p className="mb-4 font-semibold text-white">Delete invoice?</p>
+            <p className="mb-6 text-sm text-[#D4AF37]/70">This action cannot be undone.</p>
             <div className="flex gap-4">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 border border-[#D4AF37]/20 rounded-lg text-[#D4AF37] hover:bg-[#D4AF37]/10 transition"
-              >
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-lg border border-[#D4AF37]/20 px-4 py-2 text-[#D4AF37] transition hover:bg-[#D4AF37]/10">
                 Cancel
               </button>
-              <button
-                onClick={() => handleDeleteInvoice(deleteConfirm)}
-                className="flex-1 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition"
-              >
+              <button onClick={() => handleDeleteInvoice(deleteConfirm)} className="flex-1 rounded-lg border border-red-500/30 bg-red-500/20 px-4 py-2 text-red-300 transition hover:bg-red-500/30">
                 Delete
               </button>
             </div>
