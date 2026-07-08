@@ -385,7 +385,7 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
                   <h3 className="font-semibold text-white/50 text-sm">{feature.name}</h3>
                   <p className="text-xs text-[#D4AF37]/50 mt-1">{feature.description}</p>
                   <a
-                    href="/settings/billing"
+                    href="/dashboard/settings/billing"
                     className="mt-3 inline-block text-xs px-2 py-1 bg-[#D4AF37]/20 text-[#D4AF37]/70 rounded hover:bg-[#D4AF37]/30"
                   >
                     Upgrade Plan

@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface FeatureFlag {
-  feature_name: string
-  enabled: boolean
-  plan_id?: string
+  key: string
+  is_enabled: boolean | null
+  enabled_for_plans: string[] | null
+  enabled_for_businesses: string[] | null
 }
 
 export function useFeatureFlags(businessId: string) {
@@ -16,16 +17,22 @@ export function useFeatureFlags(businessId: string) {
   const [planId, setPlanId] = useState<string>('free')
 
   const fetchFeatureFlags = useCallback(async () => {
+    if (!businessId) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
       const supabase = createClient()
 
-      // Get business subscription
+      // Get the business's active subscription plan
       const { data: subscriptionData, error: subError } = await supabase
         .from('subscriptions')
         .select('plan_id')
         .eq('business_id', businessId)
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -34,17 +41,21 @@ export function useFeatureFlags(businessId: string) {
       const currentPlanId = subscriptionData?.[0]?.plan_id || 'free'
       setPlanId(currentPlanId)
 
-      // Get plan features from feature flags table
+      // feature_flags is keyed by `key` with is_enabled + plan/business scoping arrays
       const { data: featureData, error: featuresError } = await supabase
         .from('feature_flags')
-        .select('feature_name, enabled')
-        .eq('plan_id', currentPlanId)
+        .select('key, is_enabled, enabled_for_plans, enabled_for_businesses')
 
       if (featuresError) throw featuresError
 
       const featureMap: Record<string, boolean> = {}
       featureData?.forEach((f: FeatureFlag) => {
-        featureMap[f.feature_name] = f.enabled
+        const plans = f.enabled_for_plans ?? []
+        const businesses = f.enabled_for_businesses ?? []
+        const scoped = plans.length > 0 || businesses.length > 0
+        featureMap[f.key] =
+          Boolean(f.is_enabled) &&
+          (!scoped || plans.includes(currentPlanId) || businesses.includes(businessId))
       })
 
       setFeatures(featureMap)
