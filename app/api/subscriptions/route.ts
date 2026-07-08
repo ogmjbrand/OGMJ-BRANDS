@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       .eq('business_id', businessId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw error;
@@ -93,13 +93,25 @@ export async function POST(request: NextRequest) {
       throw new ApiError('Plan not found', 404);
     }
 
+    // Paid plans must go through the Paystack flow
+    // (/api/payments/initialize → /api/payments/verify); this endpoint only
+    // provisions free plans directly.
+    const priceNgn = Number((plan as any).price_ngn) || 0;
+    if (priceNgn > 0) {
+      throw new ApiError(
+        'This plan requires payment. Use the payment flow to subscribe.',
+        402
+      );
+    }
+
     const now = new Date();
     const subscriptionPayload = {
       business_id: businessId,
       plan_id: planId,
       status: 'active',
+      provider: 'internal',
       currency: (plan as any).currency || 'NGN',
-      amount: (plan as any).price,
+      amount: 0,
       billing_period: (plan as any).billing_period,
       current_period_start: now.toISOString().slice(0, 10),
       current_period_end: calculateEndDate((plan as any).billing_period),

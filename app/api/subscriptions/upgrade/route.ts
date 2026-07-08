@@ -41,8 +41,11 @@ function calculateProratedAmount(currentPlan: any, newPlan: any, currentPeriodEn
 
   if (totalDays <= 0) return 0;
 
-  const currentDailyRate = currentPlan.price / (currentPlan.billing_period === 'yearly' ? 365 : 30);
-  const newDailyRate = newPlan.price / (newPlan.billing_period === 'yearly' ? 365 : 30);
+  // Canonical price column is price_ngn (price_usd for USD plans)
+  const currentPrice = Number(currentPlan.price_ngn) || 0;
+  const newPrice = Number(newPlan.price_ngn) || 0;
+  const currentDailyRate = currentPrice / (currentPlan.billing_period === 'yearly' ? 365 : 30);
+  const newDailyRate = newPrice / (newPlan.billing_period === 'yearly' ? 365 : 30);
 
   return Math.max(0, (newDailyRate - currentDailyRate) * totalDays);
 }
@@ -99,10 +102,20 @@ export async function POST(request: NextRequest) {
       currentSubscription.current_period_end
     );
 
+    // Upgrades that cost money must go through the Paystack flow
+    // (/api/payments/initialize with the new plan). Only free changes
+    // (downgrades / equal price) are applied directly here.
+    if (proratedAmount > 0) {
+      throw new ApiError(
+        'This upgrade requires payment. Use the payment flow with the new plan.',
+        402
+      );
+    }
+
     // Update subscription
     const updatePayload = {
       plan_id: newPlanId,
-      amount: newPlan.price,
+      amount: Number(newPlan.price_ngn) || 0,
       billing_period: newPlan.billing_period,
       currency: newPlan.currency || 'NGN',
       updated_at: new Date().toISOString(),
@@ -132,7 +145,9 @@ export async function POST(request: NextRequest) {
       upgradeDetails: {
         fromPlan: currentSubscription.subscription_plans.name,
         toPlan: newPlan.name,
-        priceDifference: newPlan.price - currentSubscription.subscription_plans.price,
+        priceDifference:
+          (Number(newPlan.price_ngn) || 0) -
+          (Number(currentSubscription.subscription_plans.price_ngn) || 0),
       },
     }, 'Subscription upgraded successfully');
   } catch (error) {
