@@ -1,0 +1,43 @@
+{
+  "name": "ogmj-brands",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@supabase/ssr": "^0.3.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
+    "lucide-react": "^0.378.0",
+    "next": "14.2.35",
+    "radix-ui": "^1.4.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "recharts": "^2.10.3",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.19",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5"
+  }
+}
+
+
