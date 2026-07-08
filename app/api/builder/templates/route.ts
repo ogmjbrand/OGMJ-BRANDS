@@ -3,6 +3,10 @@ import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { NextRequest } from 'next/server';
 import { createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/utils/api';
 
+// Canonical templates table is a platform-level catalog:
+// id, name, category, preview_image, schema, is_active, created_at.
+// There is no per-business scoping.
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -11,48 +15,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const businessId = searchParams.get('businessId');
     const category = searchParams.get('category');
-    const isPublic = searchParams.get('public') === 'true';
 
     const supabase = await createServerClient();
 
     let query = supabase
       .from('templates')
-      .select(`
-        id,
-        name,
-        description,
-        category,
-        thumbnail_url,
-        preview_url,
-        config,
-        is_public,
-        business_id,
-        created_at,
-        updated_at
-      `);
-
-    if (businessId) {
-      // Verify business access
-      const { data: accessCheck } = await supabase
-        .from('business_users')
-        .select('role')
-        .eq('business_id', businessId)
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .single();
-
-      if (!accessCheck) {
-        return createErrorResponse('Access denied', 403);
-      }
-
-      // Get both public templates and business-specific templates
-      query = query.or(`is_public.eq.true,business_id.eq.${businessId}`);
-    } else {
-      // If no business ID, only return public templates
-      query = query.eq('is_public', true);
-    }
+      .select('id, name, category, preview_image, schema, is_active, created_at')
+      .eq('is_active', true);
 
     if (category) {
       query = query.eq('category', category);
@@ -82,40 +52,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, name, description, category, config, thumbnailUrl, previewUrl, isPublic } = body;
+    const { name, category, config, thumbnailUrl } = body;
 
-    if (!businessId || !name || !config) {
-      return createErrorResponse('Business ID, name, and config are required', 400);
+    if (!name || !config) {
+      return createErrorResponse('Name and config are required', 400);
     }
 
     const supabase = await createServerClient();
 
-    // Verify business access
-    const { data: accessCheck } = await supabase
-      .from('business_users')
-      .select('role')
-      .eq('business_id', businessId)
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .single();
-
-    if (!accessCheck) {
-      return createErrorResponse('Access denied', 403);
-    }
-
-    // Create template
+    // Templates are platform-level; RLS restricts writes to platform admins.
     const { data: template, error } = await supabase
       .from('templates')
       .insert({
-        business_id: businessId,
         name,
-        description,
         category,
-        config,
-        thumbnail_url: thumbnailUrl,
-        preview_url: previewUrl,
-        is_public: isPublic || false,
-        created_by: user.id,
+        schema: config,
+        preview_image: thumbnailUrl,
+        is_active: true,
       } as any)
       .select()
       .single();
@@ -129,5 +82,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
-
-

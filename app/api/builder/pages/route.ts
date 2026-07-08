@@ -33,20 +33,21 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Access denied', 403);
     }
 
+    // web_pages is the canonical page table for the websites lineage;
+    // sections live inside the content jsonb, meta inside seo jsonb.
     let query = supabase
-      .from('pages')
+      .from('web_pages')
       .select(`
         id,
         website_id,
         title,
         slug,
-        path,
-        layout_id,
-        sections,
-        meta_title,
-        meta_description,
-        og_image,
+        type,
+        content,
+        seo,
+        settings,
         status,
+        version,
         published_at,
         created_at,
         updated_at
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, websiteId, title, slug, path, sections, layoutId } = body;
+    const { businessId, websiteId, title, slug, sections, layoutId } = body;
 
     if (!businessId || !websiteId || !title || !slug) {
       return createErrorResponse('Business ID, website ID, title, and slug are required', 400);
@@ -116,28 +117,26 @@ export async function POST(request: NextRequest) {
 
     // Check if slug is unique for this website
     const { data: existingPage } = await supabase
-      .from('pages')
+      .from('web_pages')
       .select('id')
       .eq('website_id', websiteId)
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
     if (existingPage) {
       return createErrorResponse('Page slug already exists for this website', 409);
     }
 
-    // Create page
-    const { data: page, error } = await supabase
-      .from('pages')
+    // Create page — sections live in the content jsonb; layout in settings
+    const { data: page, error } = await (supabase as any)
+      .from('web_pages')
       .insert({
         business_id: businessId,
         website_id: websiteId,
         title,
         slug,
-        path: path || `/${slug}`,
-        layout_id: layoutId,
-        sections: sections || [],
-        created_by: user.id,
+        content: { sections: sections || [] },
+        settings: layoutId ? { layout_id: layoutId } : {},
       })
       .select()
       .single();

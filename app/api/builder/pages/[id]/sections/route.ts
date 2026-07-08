@@ -16,10 +16,10 @@ export async function GET(
     const { id: pageId } = await params;
     const supabase = await createServerClient();
 
-    // Get page to verify access and get sections
+    // Sections live inside web_pages.content (jsonb)
     const { data: page, error } = await supabase
-      .from('pages')
-      .select('business_id, sections')
+      .from('web_pages')
+      .select('business_id, content')
       .eq('id', pageId)
       .single();
 
@@ -40,9 +40,10 @@ export async function GET(
       return createErrorResponse('Access denied', 403);
     }
 
+    const sections = ((page as any).content?.sections as any[]) || [];
     return createSuccessResponse({
-      sections: (page as any).sections || [],
-      total: ((page as any).sections as any[])?.length || 0,
+      sections,
+      total: sections.length,
     });
   } catch (error) {
     return handleApiError(error);
@@ -69,10 +70,10 @@ export async function PUT(
 
     const supabase = await createServerClient();
 
-    // Get current page to verify access
+    // Get current page to verify access (content holds the sections)
     const { data: currentPage } = await supabase
-      .from('pages')
-      .select('business_id')
+      .from('web_pages')
+      .select('business_id, content')
       .eq('id', pageId)
       .single();
 
@@ -93,22 +94,31 @@ export async function PUT(
       return createErrorResponse('Access denied', 403);
     }
 
-    // Update page sections
+    // Merge sections into the content jsonb, preserving other keys
+    const content = {
+      ...(((currentPage as any).content as Record<string, unknown>) || {}),
+      sections,
+    };
+
     const { data: page, error } = await supabase
-      .from('pages')
+      .from('web_pages')
       .update({
-        sections,
+        content,
         updated_at: new Date().toISOString(),
       } as any)
       .eq('id', pageId)
-      .select('id, sections, updated_at')
+      .select('id, content, updated_at')
       .single();
 
     if (error) {
       return createErrorResponse('Failed to update page sections', 500);
     }
 
-    return createSuccessResponse(page);
+    return createSuccessResponse({
+      id: (page as any).id,
+      sections: ((page as any).content?.sections as any[]) || [],
+      updated_at: (page as any).updated_at,
+    });
   } catch (error) {
     return handleApiError(error);
   }

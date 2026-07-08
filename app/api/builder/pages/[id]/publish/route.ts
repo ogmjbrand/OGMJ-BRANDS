@@ -18,7 +18,7 @@ export async function POST(
 
     // Get current page to verify access
     const { data: currentPage } = await supabase
-      .from('pages')
+      .from('web_pages')
       .select('business_id, status')
       .eq('id', pageId)
       .single();
@@ -41,8 +41,8 @@ export async function POST(
     }
 
     // Update page status to published and set published_at
-    const { data: page, error } = await supabase
-      .from('pages')
+    const { data: page, error } = await (supabase as any)
+      .from('web_pages')
       .update({
         status: 'published',
         published_at: new Date().toISOString(),

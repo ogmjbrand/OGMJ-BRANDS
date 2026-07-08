@@ -23,10 +23,7 @@ export async function GET(
         id,
         business_id,
         name,
-        slug,
         description,
-        domain,
-        custom_domain,
         ssl_certificate,
         status,
         template_id,
@@ -35,10 +32,11 @@ export async function GET(
         analytics_id,
         favicon_url,
         metadata,
+        settings,
         published_at,
         created_at,
         updated_at,
-        created_by
+        owner_id
       `)
       .eq('id', websiteId)
       .single();
@@ -104,13 +102,22 @@ export async function PUT(
       return createErrorResponse('Access denied', 403);
     }
 
-    // Update website
+    // Update website — whitelist canonical columns so unknown keys from the
+    // client cannot 400 the whole request
+    const allowed = [
+      'name', 'description', 'status', 'template_id', 'seo_title',
+      'seo_description', 'analytics_id', 'favicon_url', 'metadata',
+      'settings', 'seo', 'published_at',
+    ];
+    const updateData: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (body[key] !== undefined) updateData[key] = body[key];
+    }
+    updateData.updated_at = new Date().toISOString();
+
     const { data: website, error } = await supabase
       .from('websites')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString(),
-      } as any)
+      .update(updateData as any)
       .eq('id', websiteId)
       .select()
       .single();

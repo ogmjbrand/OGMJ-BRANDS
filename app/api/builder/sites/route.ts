@@ -32,22 +32,23 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Access denied', 403);
     }
 
-    // Get websites for the business, including page count
+    // Canonical websites columns (no slug/domain — custom_domains is a
+    // separate table); page count via the web_pages FK embed.
     const { data: websites, error } = await supabase
       .from('websites')
       .select(`
         id,
         name,
-        slug,
         description,
-        domain,
-        custom_domain,
         status,
         template_id,
+        seo_title,
+        seo_description,
+        favicon_url,
         published_at,
         created_at,
         updated_at,
-        pages(id)
+        web_pages(id)
       `)
       .eq('business_id', businessId)
       .order('created_at', { ascending: false });
@@ -73,10 +74,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, name, slug, description, templateId } = body;
+    const { businessId, name, description, templateId } = body;
 
-    if (!businessId || !name || !slug) {
-      return createErrorResponse('Business ID, name, and slug are required', 400);
+    if (!businessId || !name) {
+      return createErrorResponse('Business ID and name are required', 400);
     }
 
     const supabase = await createServerClient();
@@ -94,28 +95,16 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Access denied', 403);
     }
 
-    // Check if slug is unique for this business
-    const { data: existingWebsite } = await supabase
-      .from('websites')
-      .select('id')
-      .eq('business_id', businessId)
-      .eq('slug', slug)
-      .single();
-
-    if (existingWebsite) {
-      return createErrorResponse('Website slug already exists', 409);
-    }
-
-    // Create website
+    // Create website (owner_id is NOT NULL in the canonical schema;
+    // websites has no slug or created_by column)
     const { data: website, error } = await supabase
       .from('websites')
       .insert({
         business_id: businessId,
         name,
-        slug,
         description,
         template_id: templateId,
-        created_by: user.id,
+        owner_id: user.id,
       } as any)
       .select()
       .single();

@@ -16,26 +16,25 @@ export async function GET(
     const { id: pageId } = await params;
     const supabase = await createServerClient();
 
-    // Get page with business access verification
+    // Get page with business access verification (web_pages is the
+    // canonical page table; sections live in content, meta in seo)
     const { data: page, error } = await supabase
-      .from('pages')
+      .from('web_pages')
       .select(`
         id,
         website_id,
         business_id,
         title,
         slug,
-        path,
-        layout_id,
-        sections,
-        meta_title,
-        meta_description,
-        og_image,
+        type,
+        content,
+        seo,
+        settings,
         status,
+        version,
         published_at,
         created_at,
-        updated_at,
-        created_by
+        updated_at
       `)
       .eq('id', pageId)
       .single();
@@ -79,7 +78,7 @@ export async function PUT(
 
     // Get current page to verify access
     const { data: currentPage } = await supabase
-      .from('pages')
+      .from('web_pages')
       .select('business_id')
       .eq('id', pageId)
       .single();
@@ -101,13 +100,21 @@ export async function PUT(
       return createErrorResponse('Access denied', 403);
     }
 
-    // Update page
+    // Update page — whitelist canonical columns so unknown keys from the
+    // client cannot 400 the whole request
+    const allowed = [
+      'title', 'slug', 'type', 'content', 'seo', 'settings', 'status',
+      'parent_id', 'published_at',
+    ];
+    const updateData: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (body[key] !== undefined) updateData[key] = body[key];
+    }
+    updateData.updated_at = new Date().toISOString();
+
     const { data: page, error } = await supabase
-      .from('pages')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString(),
-      } as any)
+      .from('web_pages')
+      .update(updateData as any)
       .eq('id', pageId)
       .select()
       .single();
@@ -137,7 +144,7 @@ export async function DELETE(
 
     // Get current page to verify access
     const { data: currentPage } = await supabase
-      .from('pages')
+      .from('web_pages')
       .select('business_id')
       .eq('id', pageId)
       .single();
@@ -161,7 +168,7 @@ export async function DELETE(
 
     // Delete page
     const { error } = await supabase
-      .from('pages')
+      .from('web_pages')
       .delete()
       .eq('id', pageId);
 
