@@ -2,7 +2,21 @@
 
 **Project:** `czpfsfiatehldcavsvsw`
 **Generated:** 2026-07-08 (read-only export via Supabase MCP)
-**Status:** Local baseline created. Remote reconciliation is **documented, not executed** (see safety note).
+**Status:** ✅ **Path A executed 2026-07-08** — the remote
+`supabase_migrations.schema_migrations` table now contains the single entry
+`20260101000000 remote_baseline`. The 45 prior entries were removed
+(tracking only — no schema object was created, altered, or dropped; verified
+119 public tables before and after). A restore script with all 45 removed
+rows is at `_archive_obsolete_repo_migrations/schema_migrations_snapshot_2026-07-08.sql`.
+
+Executed after verifying: production build clean (84 pages), local dev
+server boots with working middleware redirects, API auth gates returning
+401 JSON, and live Supabase auth connectivity.
+
+Still recommended before relying on `supabase db reset` for local dev:
+Path C (replay the baseline on a shadow DB and `supabase db diff --linked`),
+and adding the `auth.users` trigger binding for `handle_new_user` to the
+baseline (auth-schema objects are not captured in the public-schema export).
 
 ---
 
