@@ -11,28 +11,26 @@ export async function GET() {
 
     const supabase = await createServerClient();
 
-    // Get user profile data from auth.users
-    const { data: profile, error } = await supabase.auth.admin.getUserById(user.id);
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
+    // auth.admin requires the service-role key; use the session user plus
+    // the canonical profiles row instead.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, avatar_url, phone, updated_at')
+      .eq('id', user.id)
+      .maybeSingle();
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          id: profile.user?.id,
-          email: profile.user?.email,
-          fullName: profile.user?.user_metadata?.full_name,
-          avatarUrl: profile.user?.user_metadata?.avatar_url,
-          phone: profile.user?.phone,
-          emailConfirmed: profile.user?.email_confirmed_at ? true : false,
-          createdAt: profile.user?.created_at,
-          updatedAt: profile.user?.updated_at,
+          id: user.id,
+          email: user.email,
+          fullName: (profile as any)?.name ?? user.user_metadata?.full_name,
+          avatarUrl: (profile as any)?.avatar_url ?? user.user_metadata?.avatar_url,
+          phone: (profile as any)?.phone ?? user.phone,
+          emailConfirmed: user.email_confirmed_at ? true : false,
+          createdAt: user.created_at,
+          updatedAt: (profile as any)?.updated_at ?? user.updated_at,
         },
       },
       { status: 200 }
@@ -58,18 +56,38 @@ export async function PUT(request: NextRequest) {
 
     const supabase = await createServerClient();
 
-    // Update user metadata
-    const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
-      user_metadata: {
+    // Update the user's own auth metadata (allowed with the session; the
+    // admin API would require the service-role key).
+    const { error: authError } = await supabase.auth.updateUser({
+      data: {
         full_name: fullName,
         avatar_url: avatarUrl,
       },
-      phone: phone,
     });
 
-    if (error) {
+    if (authError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: authError.message },
+        { status: 400 }
+      );
+    }
+
+    // Persist to the canonical profiles row (name/avatar/phone live there)
+    const { data: profile, error: profileError } = await (supabase as any)
+      .from('profiles')
+      .update({
+        name: fullName,
+        avatar_url: avatarUrl,
+        phone,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (profileError) {
+      return NextResponse.json(
+        { error: profileError.message },
         { status: 400 }
       );
     }
@@ -78,13 +96,13 @@ export async function PUT(request: NextRequest) {
       {
         success: true,
         data: {
-          id: data.user?.id,
-          email: data.user?.email,
-          fullName: data.user?.user_metadata?.full_name,
-          avatarUrl: data.user?.user_metadata?.avatar_url,
-          phone: data.user?.phone,
-          emailConfirmed: data.user?.email_confirmed_at ? true : false,
-          updatedAt: data.user?.updated_at,
+          id: user.id,
+          email: user.email,
+          fullName: profile?.name,
+          avatarUrl: profile?.avatar_url,
+          phone: profile?.phone,
+          emailConfirmed: user.email_confirmed_at ? true : false,
+          updatedAt: profile?.updated_at,
         },
         message: 'Profile updated successfully',
       },

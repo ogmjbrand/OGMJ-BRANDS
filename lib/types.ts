@@ -755,18 +755,14 @@ export interface CreateDealInput {
   metadata?: Record<string, any>;
 }
 
+// Extends the CreateBusinessInput declared above (TS interface merging).
+// slug is optional: handle_business_upsert generates a unique one in the DB.
 export interface CreateBusinessInput {
-  name: string;
-  slug: string;
+  slug?: string;
   domain?: string;
   custom_domain?: string;
   logo_url?: string;
   brand_color?: string;
-  currency?: Currency;
-  timezone?: string;
-  country?: string;
-  industry?: string;
-  team_size?: number;
   phone?: string;
   metadata?: Record<string, any>;
 }

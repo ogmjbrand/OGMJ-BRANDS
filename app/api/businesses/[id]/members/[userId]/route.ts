@@ -23,9 +23,10 @@ export async function PATCH(
     const body = await request.json();
     const { role } = body;
 
-    if (!role || !['admin', 'editor', 'manager', 'viewer', 'member'].includes(role)) {
+    // Must match the business_role enum; owner is assigned only by the DB
+    if (!role || !['admin', 'manager', 'member'].includes(role)) {
       return NextResponse.json(
-        { error: 'Valid role required' },
+        { error: 'Valid role required (admin, manager or member)' },
         { status: 400 }
       );
     }
@@ -41,36 +42,40 @@ export async function PATCH(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    // Cannot change your own role if you're the only admin
-    if (targetUserId === user.id) {
-      const { count: adminCount } = await supabase
-        .from('business_users')
-        .select('*', { count: 'exact', head: true })
-        .eq('business_id', businessId)
-        .eq('role', 'admin')
-        .eq('status', 'active');
+    // The owner's role cannot be changed through this endpoint
+    const { data: targetMember } = await supabase
+      .from('business_members')
+      .select('role')
+      .eq('business_id', businessId)
+      .eq('user_id', targetUserId)
+      .maybeSingle();
 
-      if (adminCount && adminCount <= 1) {
-        return NextResponse.json(
-          { error: 'Cannot change role. You are the only admin.' },
-          { status: 400 }
-        );
-      }
+    if (!targetMember) {
+      return NextResponse.json(
+        { error: 'Member not found' },
+        { status: 404 }
+      );
     }
 
+    if ((targetMember as any).role === 'owner') {
+      return NextResponse.json(
+        { error: 'The business owner role cannot be changed' },
+        { status: 400 }
+      );
+    }
+
+    // Update business_members — the canonical membership table that RLS
+    // checks; a trigger syncs business_users from it.
     const { data, error } = await (supabase as any)
-      .from('business_users')
-      .update({
-        role,
-        updated_at: new Date().toISOString(),
-      })
+      .from('business_members')
+      .update({ role })
       .eq('business_id', businessId)
       .eq('user_id', targetUserId)
       .select()
@@ -129,32 +134,39 @@ export async function DELETE(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    // Cannot remove yourself if you're the only admin
-    if (targetUserId === user.id) {
-      const { count: adminCount } = await supabase
-        .from('business_users')
-        .select('*', { count: 'exact', head: true })
-        .eq('business_id', businessId)
-        .eq('role', 'admin')
-        .eq('status', 'active');
+    // The owner cannot be removed from their own business
+    const { data: targetMember } = await supabase
+      .from('business_members')
+      .select('role')
+      .eq('business_id', businessId)
+      .eq('user_id', targetUserId)
+      .maybeSingle();
 
-      if (adminCount && adminCount <= 1) {
-        return NextResponse.json(
-          { error: 'Cannot remove yourself. You are the only admin.' },
-          { status: 400 }
-        );
-      }
+    if (!targetMember) {
+      return NextResponse.json(
+        { error: 'Member not found' },
+        { status: 404 }
+      );
     }
 
+    if ((targetMember as any).role === 'owner') {
+      return NextResponse.json(
+        { error: 'The business owner cannot be removed' },
+        { status: 400 }
+      );
+    }
+
+    // Delete from business_members — the canonical membership table that RLS
+    // checks; the sync trigger marks business_users inactive.
     const { error } = await supabase
-      .from('business_users')
+      .from('business_members')
       .delete()
       .eq('business_id', businessId)
       .eq('user_id', targetUserId);

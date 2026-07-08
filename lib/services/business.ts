@@ -31,24 +31,20 @@ export async function createBusiness(
       };
     }
 
-    // Generate slug
-    const slug = input.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    // Create business
+    // Create business. DB triggers handle the rest: handle_business_upsert
+    // generates a unique slug and syncs name/business_name; on_business_created
+    // adds the owner to business_members (synced to business_users), plus
+    // onboarding_progress, default pipeline, and workspace.
     const { data: business, error: businessError } = await (supabase as any)
       .from("businesses")
       .insert({
         name: input.name,
-        slug,
         industry: input.industry,
         country: input.country,
         team_size: input.team_size,
         currency: input.currency || "NGN",
         timezone: input.timezone || "UTC",
+        owner_id: user.id,
         created_by: user.id,
       })
       .select()
@@ -56,21 +52,6 @@ export async function createBusiness(
 
     if (businessError) {
       throw businessError;
-    }
-
-    // Add creator as admin
-    const { error: memberError } = await (supabase as any)
-      .from("business_users")
-      .insert({
-        business_id: business.id,
-        user_id: user.id,
-        role: "admin",
-        status: "active",
-        joined_at: new Date().toISOString(),
-      });
-
-    if (memberError) {
-      throw memberError;
     }
 
     // Record audit log
@@ -203,7 +184,7 @@ export async function updateBusiness(
       .eq("user_id", user.id)
       .single();
 
-    if (!businessUser || (businessUser as any).role !== "admin") {
+    if (!businessUser || !["owner", "admin"].includes((businessUser as any).role)) {
       return {
         success: false,
         error: { code: "FORBIDDEN", message: "Only admins can update business" },
@@ -276,7 +257,7 @@ export async function deleteBusiness(businessId: string): Promise<APIResponse<nu
       .eq("user_id", user.id)
       .single();
 
-    if (!businessUser || (businessUser as any).role !== "admin") {
+    if (!businessUser || !["owner", "admin"].includes((businessUser as any).role)) {
       return {
         success: false,
         error: { code: "FORBIDDEN", message: "Only admins can delete business" },
@@ -329,9 +310,11 @@ export async function listBusinessMembers(
   try {
     const supabase = createClient();
 
+    // business_users FKs point at auth.users (not embeddable via PostgREST),
+    // so fetch profiles separately for email/name.
     const { data, error } = await supabase
       .from("business_users")
-      .select("*, auth.users(email)")
+      .select("*")
       .eq("business_id", businessId)
       .eq("status", "active");
 
@@ -339,9 +322,27 @@ export async function listBusinessMembers(
       throw error;
     }
 
+    const userIds = (data ?? []).map((m: any) => m.user_id).filter(Boolean);
+    let profilesById: Record<string, { email?: string; name?: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email, name")
+        .in("id", userIds);
+      profilesById = Object.fromEntries(
+        (profiles ?? []).map((p: any) => [p.id, { email: p.email, name: p.name }])
+      );
+    }
+
+    const members = (data ?? []).map((m: any) => ({
+      ...m,
+      email: profilesById[m.user_id]?.email,
+      name: profilesById[m.user_id]?.name,
+    }));
+
     return {
       success: true,
-      data: data as any,
+      data: members as any,
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
@@ -361,7 +362,8 @@ export async function listBusinessMembers(
 export async function inviteUser(
   businessId: string,
   email: string,
-  role: "admin" | "editor" | "viewer" | "manager" | "member" = "member"
+  // Must match the business_role enum (minus owner, which is never invited)
+  role: "admin" | "manager" | "member" = "member"
 ): Promise<APIResponse<{ token: string }>> {
   try {
     const supabase = createClient();
@@ -383,7 +385,7 @@ export async function inviteUser(
       .eq("user_id", user.id)
       .single();
 
-    if (!businessUser || (businessUser as any).role !== "admin") {
+    if (!businessUser || !["owner", "admin"].includes((businessUser as any).role)) {
       return {
         success: false,
         error: { code: "FORBIDDEN", message: "Only admins can invite users" },
@@ -392,9 +394,9 @@ export async function inviteUser(
     }
 
     // Generate invitation token
-    const token = Math.random().toString(36).substring(2, 15);
+    const token = crypto.randomUUID();
 
-    // Create invitation
+    // Create invitation (invited_by is NOT NULL in the canonical schema)
     const { data, error } = await (supabase as any)
       .from("invitations")
       .insert({
@@ -403,6 +405,7 @@ export async function inviteUser(
         role,
         token,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        invited_by: user.id,
         created_by: user.id,
       })
       .select()
@@ -461,7 +464,15 @@ export async function acceptInvitation(token: string): Promise<APIResponse<Busin
       };
     }
 
-    // Check if expired
+    // Check if already redeemed or expired
+    if ((invitation as any).redeemed_at) {
+      return {
+        success: false,
+        error: { code: "INVALID_TOKEN", message: "Invitation has already been used" },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     if (new Date((invitation as any).expires_at) < new Date()) {
       return {
         success: false,
@@ -470,15 +481,21 @@ export async function acceptInvitation(token: string): Promise<APIResponse<Busin
       };
     }
 
-    // Add user to business
+    // Add user to business_members (canonical membership table; a trigger
+    // syncs business_users from it). Map the invitation role into the
+    // business_role enum, falling back to member for unknown values.
+    const validRoles = ["admin", "manager", "member"];
+    const role = validRoles.includes((invitation as any).role)
+      ? (invitation as any).role
+      : "member";
+
     const { data, error } = await (supabase as any)
-      .from("business_users")
+      .from("business_members")
       .insert({
         business_id: (invitation as any).business_id,
         user_id: user.id,
-        role: (invitation as any).role,
-        status: "active",
-        joined_at: new Date().toISOString(),
+        role,
+        invited_by: (invitation as any).invited_by,
       })
       .select()
       .single();
@@ -493,6 +510,8 @@ export async function acceptInvitation(token: string): Promise<APIResponse<Busin
       .update({
         redeemed_at: new Date().toISOString(),
         redeemed_by: user.id,
+        accepted_at: new Date().toISOString(),
+        status: "accepted",
       })
       .eq("id", (invitation as any).id);
 

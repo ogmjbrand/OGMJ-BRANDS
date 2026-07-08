@@ -38,6 +38,8 @@ export async function GET(
       );
     }
 
+    // business_users FKs auth.users, which PostgREST cannot embed;
+    // fetch profiles separately for member emails/names.
     const { data, error } = await supabase
       .from('businesses')
       .select(`
@@ -47,12 +49,7 @@ export async function GET(
           user_id,
           role,
           status,
-          joined_at,
-          auth.users (
-            id,
-            email,
-            raw_user_meta_data
-          )
+          joined_at
         )
       `)
       .eq('id', businessId)
@@ -69,6 +66,21 @@ export async function GET(
         { error: error.message },
         { status: 400 }
       );
+    }
+
+    const memberIds = ((data as any)?.business_users ?? [])
+      .map((m: any) => m.user_id)
+      .filter(Boolean);
+    if (memberIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, name, avatar_url')
+        .in('id', memberIds);
+      const profilesById = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+      (data as any).business_users = (data as any).business_users.map((m: any) => ({
+        ...m,
+        profile: profilesById[m.user_id] ?? null,
+      }));
     }
 
     return NextResponse.json(
@@ -137,33 +149,26 @@ export async function PUT(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    // Generate new slug if name changed
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .substring(0, 50);
-
+    // Slug stays stable across renames (generated once by the DB trigger);
+    // undefined fields are dropped from the JSON payload, not clobbered.
     const { data, error } = await (supabase as any)
       .from('businesses')
       .update({
         name,
-        slug,
         industry,
         country,
-        currency: currency || 'USD',
-        timezone: timezone || 'UTC',
+        currency,
+        timezone,
         team_size: teamSize,
         phone,
-        brand_color: brandColor || '#D4AF37',
+        brand_color: brandColor,
         logo_url: logoUrl,
         custom_domain: customDomain,
         updated_at: new Date().toISOString(),
@@ -216,15 +221,10 @@ export async function PATCH(
     const body = await request.json();
     const updateData: any = {};
 
-    // Only include fields that are provided
+    // Only include fields that are provided. Slug is not regenerated on
+    // rename — it was made unique by the DB trigger and links depend on it.
     if (body.name !== undefined) {
       updateData.name = body.name;
-      updateData.slug = body.name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .substring(0, 50);
     }
     if (body.industry !== undefined) updateData.industry = body.industry;
     if (body.country !== undefined) updateData.country = body.country;
@@ -249,7 +249,7 @@ export async function PATCH(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -315,25 +315,10 @@ export async function DELETE(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
-      );
-    }
-
-    // Check if this is the only admin
-    const { count: adminCount } = await supabase
-      .from('business_users')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_id', businessId)
-      .eq('role', 'admin')
-      .eq('status', 'active');
-
-    if (adminCount && adminCount <= 1) {
-      return NextResponse.json(
-        { error: 'Cannot delete business with only one admin. Add another admin first.' },
-        { status: 400 }
       );
     }
 

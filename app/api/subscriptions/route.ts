@@ -16,7 +16,7 @@ async function verifyBusinessAdmin(supabase: any, userId: string, businessId: st
     throw new ApiError('Access denied', 403);
   }
 
-  if (data.role !== 'admin') {
+  if (!['owner', 'admin'].includes(data.role)) {
     throw new ApiError('Admin access required', 403);
   }
 

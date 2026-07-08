@@ -121,33 +121,26 @@ export async function PUT(request: NextRequest) {
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    // Generate new slug if name changed
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .substring(0, 50);
-
+    // Slug stays stable across renames (generated once by the DB trigger);
+    // undefined fields are dropped from the JSON payload, not clobbered.
     const { data, error } = await (supabase as any)
       .from('businesses')
       .update({
         name,
-        slug,
         industry,
         country,
-        currency: currency || 'USD',
-        timezone: timezone || 'UTC',
+        currency,
+        timezone,
         team_size: teamSize,
         phone,
-        brand_color: brandColor || '#D4AF37',
+        brand_color: brandColor,
         logo_url: logoUrl,
         custom_domain: customDomain,
         updated_at: new Date().toISOString(),

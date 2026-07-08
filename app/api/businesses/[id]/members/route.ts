@@ -38,21 +38,11 @@ export async function GET(
       );
     }
 
+    // business_users FKs auth.users, which PostgREST cannot embed;
+    // fetch profiles separately for member emails/names.
     const { data, error } = await supabase
       .from('business_users')
-      .select(`
-        id,
-        role,
-        status,
-        invited_at,
-        joined_at,
-        invited_by,
-        auth.users (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('id, user_id, role, status, invited_at, joined_at, invited_by')
       .eq('business_id', businessId)
       .order('joined_at', { ascending: false });
 
@@ -63,10 +53,25 @@ export async function GET(
       );
     }
 
+    const memberIds = (data ?? []).map((m: any) => m.user_id).filter(Boolean);
+    let profilesById: Record<string, any> = {};
+    if (memberIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, name, avatar_url')
+        .in('id', memberIds);
+      profilesById = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+    }
+
+    const members = (data ?? []).map((m: any) => ({
+      ...m,
+      profile: profilesById[m.user_id] ?? null,
+    }));
+
     return NextResponse.json(
       {
         success: true,
-        data,
+        data: members,
       },
       { status: 200 }
     );
@@ -107,6 +112,14 @@ export async function POST(
       );
     }
 
+    // Must match the business_role enum (owner is never invited)
+    if (!['admin', 'manager', 'member'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Valid role required (admin, manager or member)' },
+        { status: 400 }
+      );
+    }
+
     const supabase = await createServerClient();
 
     // Verify user has admin access to this business
@@ -118,16 +131,12 @@ export async function POST(
       .eq('status', 'active')
       .single();
 
-    if (!(userRole as any) || (userRole as any).role !== 'admin') {
+    if (!(userRole as any) || !['owner', 'admin'].includes((userRole as any).role)) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
-
-    // For now, we'll create invitations without checking if user exists
-    // The invitation system will handle user registration separately
-    let targetUserId = null;
 
     // Check if there's already a pending invitation for this email
     const { data: existingInvitation } = await supabase
@@ -156,6 +165,7 @@ export async function POST(
         role,
         token,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        invited_by: user.id,
         created_by: user.id,
       })
       .select()
@@ -168,8 +178,7 @@ export async function POST(
       );
     }
 
-    // TODO: Send invitation email
-    console.log(`Invitation created for ${email} with token ${token}`);
+    // TODO: Send invitation email (do not log the token — it grants access)
 
     return NextResponse.json(
       {
