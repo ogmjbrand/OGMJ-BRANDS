@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 
 export async function GET(request: NextRequest) {
   try {

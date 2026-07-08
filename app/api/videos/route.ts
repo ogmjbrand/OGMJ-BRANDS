@@ -1,5 +1,5 @@
 import { createServerClient } from '@/lib/supabase/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { NextRequest } from 'next/server';
 import { createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/utils/api';
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyEmail } from '@/lib/auth';
+import { createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,11 +19,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await verifyEmail(token, type as 'signup' | 'recovery');
+    const supabase = await createServerClient();
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: type as 'signup' | 'recovery',
+    });
 
-    if (!result.success) {
+    if (error) {
       return NextResponse.json(
-        { error: result.error },
+        { error: error.message },
         { status: 400 }
       );
     }

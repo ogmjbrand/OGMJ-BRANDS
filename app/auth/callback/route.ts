@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
 
   if (code) {
@@ -25,10 +25,22 @@ export async function GET(request: Request) {
       }
     )
 
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+    }
+
+    // The middleware onboarding gate redirects users without a business.
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const isLocalEnv = process.env.NODE_ENV === 'development'
+    if (!isLocalEnv && forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}/dashboard`)
+    }
+    return NextResponse.redirect(`${origin}/dashboard`)
   }
 
-  return NextResponse.redirect('https://ogmjbrands.com/onboarding')
+  return NextResponse.redirect(`${origin}/login`)
 }
 
 

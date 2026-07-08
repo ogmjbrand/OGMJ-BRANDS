@@ -32,6 +32,11 @@ export async function getCurrentUserServer(): Promise<User | null> {
     console.log("🔐 [SERVER AUTH] User found:", data.user.email);
     return data.user;
   } catch (error) {
+    // Next.js throws DYNAMIC_SERVER_USAGE when cookies() is used during static
+    // generation; it must propagate so the route is marked dynamic.
+    if (error instanceof Error && (error as { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") {
+      throw error;
+    }
     console.error("🔐 [SERVER AUTH] Unexpected error getting current user:", error);
     return null;
   }

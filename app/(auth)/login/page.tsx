@@ -23,9 +23,7 @@ export default function LoginPage() {
 
     // Validate inputs
     if (!email || !password) {
-      console.warn("⚠️ Email or password is empty");
       setError("Email and password are required");
-      alert("Please enter both email and password");
       return;
     }
 
@@ -42,36 +40,30 @@ export default function LoginPage() {
       if (result.error) {
         console.error("❌ SIGN IN ERROR:", result.error);
         setError(result.error);
-        alert("Sign-in failed: " + result.error);
         return;
       }
 
-      console.log("🎉 Sign in successful");
-      alert("Sign in successful! Redirecting to dashboard...");
-
-      // Small delay to allow session to be established
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
       // Verify session is set
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("🔐 [LOGIN] Session after sign in:", !!session, session?.user?.email);
 
       if (!session) {
         console.error("❌ [LOGIN] No session found after sign in!");
         setError("Sign in failed - no session created");
-        alert("Sign in failed - please try again");
         setLoading(false);
         return;
       }
 
-      console.log("🔐 [LOGIN] Redirecting to dashboard with valid session");
-      // Use router.push instead of window.location to preserve session state
-      router.push("/dashboard");
+      // Honor the middleware's redirectTo param; only allow same-origin paths.
+      const redirectTo = new URLSearchParams(window.location.search).get("redirectTo");
+      const target =
+        redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : "/dashboard";
+      router.push(target);
     } catch (err) {
       console.error("❌ UNEXPECTED ERROR:", err);
       const errorMsg = err instanceof Error ? err.message : "Login failed";
       setError(errorMsg);
-      alert("Unexpected sign-in error: " + errorMsg);
     } finally {
       setLoading(false);
     }

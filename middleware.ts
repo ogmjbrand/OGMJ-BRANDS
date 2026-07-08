@@ -59,14 +59,14 @@ export async function middleware(req: NextRequest) {
 
   // ── Onboarding gate: if user has no business, send to onboarding ─────────────
   // (only enforced when going to /dashboard, not /onboarding itself)
+  // my_businesses covers both owned businesses and team memberships.
   if (user && path.startsWith('/dashboard')) {
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id, onboarding_completed')
-      .eq('created_by', user.id)
-      .maybeSingle()
+    const { data: businesses } = await supabase
+      .from('my_businesses')
+      .select('id')
+      .limit(1)
 
-    if (!business) {
+    if (!businesses || businesses.length === 0) {
       url.pathname = '/onboarding'
       return NextResponse.redirect(url)
     }
