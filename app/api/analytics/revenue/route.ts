@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       .select('amount, type, created_at, currency')
       .eq('business_id', businessId)
       .eq('status', 'completed')
-      .in('type', ['payment', 'subscription'])
+      .in('type', ['payment', 'subscription', 'subscription_charge'])
       .gte('created_at', startDate);
 
     // Get revenue from won deals
