@@ -118,7 +118,7 @@ export async function PUT(
         title,
         description,
         value,
-        currency: currency || 'USD',
+        currency,
         stage,
         probability,
         expected_close_date: expectedCloseDate,

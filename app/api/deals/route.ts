@@ -89,6 +89,38 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServerClient();
 
+    // pipeline_id and stage_id are NOT NULL in the canonical schema;
+    // resolve the business's default pipeline and its first stage.
+    const { data: pipeline } = await supabase
+      .from('pipelines')
+      .select('id')
+      .eq('business_id', businessId)
+      .order('is_default', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!pipeline) {
+      return NextResponse.json(
+        { error: 'No pipeline exists for this business' },
+        { status: 400 }
+      );
+    }
+
+    const { data: firstStage } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('pipeline_id', (pipeline as any).id)
+      .order('position', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!firstStage) {
+      return NextResponse.json(
+        { error: 'The pipeline has no stages' },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await (supabase as any)
       .from('deals')
       .insert({
@@ -98,6 +130,8 @@ export async function POST(request: NextRequest) {
         value,
         currency: currency || 'USD',
         stage,
+        pipeline_id: (pipeline as any).id,
+        stage_id: (firstStage as any).id,
         status: 'open',
         probability: 25,
         expected_close_date: expectedCloseDate,

@@ -26,6 +26,7 @@ export function useLeads(businessId: string) {
       const supabase = createClient()
 
       // Get leads with contact info
+      // Canonical column is `score`; aliased to lead_score for the UI
       const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select(`
@@ -34,7 +35,7 @@ export function useLeads(businessId: string) {
           contact_id,
           status,
           temperature,
-          lead_score,
+          lead_score:score,
           created_at,
           updated_at,
           contact:contacts(
@@ -47,7 +48,7 @@ export function useLeads(businessId: string) {
           )
         `)
         .eq('business_id', businessId)
-        .order('lead_score', { ascending: false })
+        .order('score', { ascending: false })
 
       if (leadsError) throw leadsError
 

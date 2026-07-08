@@ -97,11 +97,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServerClient();
 
+    // first_name and owner_id are NOT NULL in the canonical schema
     const { data, error } = await (supabase as any)
       .from('contacts')
       .insert({
         business_id: businessId,
-        first_name: firstName,
+        first_name: firstName || email.split('@')[0],
         last_name: lastName,
         email,
         phone,
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         status: 'lead',
         lead_score: 0,
+        owner_id: user.id,
         created_by: user.id,
       })
       .select()

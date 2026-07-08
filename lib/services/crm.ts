@@ -36,11 +36,15 @@ export async function createContact(
       };
     }
 
+    // first_name and owner_id are NOT NULL in the canonical schema
     const { data, error } = await (supabase as any)
       .from("contacts")
       .insert({
         ...input,
+        first_name:
+          input.first_name || input.email?.split("@")[0] || "Unknown",
         business_id: businessId,
+        owner_id: user.id,
         created_by: user.id,
       })
       .select()
@@ -240,10 +244,48 @@ export async function createDeal(
     const supabase = createClient();
     const user = await getCurrentUser();
 
+    // pipeline_id and stage_id are NOT NULL in the canonical schema;
+    // resolve the business's default pipeline and its first stage when
+    // the caller does not specify them.
+    let pipelineId = input.pipeline_id;
+    let stageId = input.stage_id;
+
+    if (!pipelineId) {
+      const { data: pipeline } = await supabase
+        .from("pipelines")
+        .select("id")
+        .eq("business_id", businessId)
+        .order("is_default", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      pipelineId = (pipeline as any)?.id;
+    }
+
+    if (!pipelineId) {
+      throw new Error("No pipeline exists for this business");
+    }
+
+    if (!stageId) {
+      const { data: stage } = await supabase
+        .from("pipeline_stages")
+        .select("id")
+        .eq("pipeline_id", pipelineId)
+        .order("position", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      stageId = (stage as any)?.id;
+    }
+
+    if (!stageId) {
+      throw new Error("The pipeline has no stages");
+    }
+
     const { data, error } = await (supabase as any)
       .from("deals")
       .insert({
         ...input,
+        pipeline_id: pipelineId,
+        stage_id: stageId,
         business_id: businessId,
         created_by: user?.id,
       })
@@ -444,16 +486,22 @@ export async function createSupportTicket(
     const supabase = createClient();
     const user = await getCurrentUser();
 
-    // Generate ticket number
-    const ticketNumber = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    if (!user) {
+      return {
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "User not authenticated" },
+        timestamp: new Date().toISOString(),
+      };
+    }
 
+    // Canonical support_tickets columns: subject, description, priority,
+    // status (no ticket_number column)
     const { data, error } = await (supabase as any)
       .from("support_tickets")
       .insert({
         ...input,
         business_id: businessId,
-        ticket_number: ticketNumber,
-        created_by: user?.id,
+        created_by: user.id,
       })
       .select()
       .single();

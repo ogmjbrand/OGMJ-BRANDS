@@ -3,6 +3,23 @@ import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { NextRequest } from 'next/server';
 import { createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/utils/api';
 
+// Canonical support_tickets columns: id, business_id, subject, description,
+// priority, status, created_by, created_at, updated_at. A display ticket
+// number is derived from the row id.
+function transformTicket(ticket: any) {
+  return {
+    id: ticket.id,
+    ticketNumber: `TKT-${String(ticket.id).slice(0, 8).toUpperCase()}`,
+    subject: ticket.subject,
+    description: ticket.description,
+    priority: ticket.priority,
+    status: ticket.status,
+    createdAt: ticket.created_at,
+    updatedAt: ticket.updated_at,
+    createdBy: ticket.created_by,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -38,29 +55,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('support_tickets')
-      .select(`
-        id,
-        ticket_number,
-        subject,
-        description,
-        priority,
-        status,
-        category,
-        channel,
-        assigned_to,
-        resolve_sla,
-        resolved_at,
-        resolution_notes,
-        created_at,
-        updated_at,
-        created_by,
-        contact:contacts!support_tickets_contact_id_fkey (
-          id,
-          first_name,
-          last_name,
-          email
-        )
-      `)
+      .select('id, subject, description, priority, status, created_at, updated_at, created_by', { count: 'exact' })
       .eq('business_id', businessId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -80,36 +75,8 @@ export async function GET(request: NextRequest) {
       return createErrorResponse('Failed to fetch support tickets', 500);
     }
 
-    // Transform data to match service interface
-    const transformedTickets = tickets?.map(ticket => {
-      const contactObj = !Array.isArray(ticket.contact) ? ticket.contact : null;
-      return {
-        id: ticket.id,
-        ticketNumber: ticket.ticket_number,
-        subject: ticket.subject,
-        description: ticket.description,
-        priority: ticket.priority,
-        status: ticket.status,
-        category: ticket.category,
-        channel: ticket.channel,
-        assignedTo: ticket.assigned_to,
-        resolveSla: ticket.resolve_sla,
-        resolvedAt: ticket.resolved_at,
-        resolutionNotes: ticket.resolution_notes,
-        createdAt: ticket.created_at,
-        updatedAt: ticket.updated_at,
-        createdBy: ticket.created_by,
-        contact: contactObj ? {
-          id: (contactObj as any).id,
-          firstName: (contactObj as any).first_name,
-          lastName: (contactObj as any).last_name,
-          email: (contactObj as any).email,
-        } : undefined,
-      };
-    }) || [];
-
     return createSuccessResponse({
-      tickets: transformedTickets,
+      tickets: (tickets ?? []).map(transformTicket),
       total: count || 0,
       limit,
       offset,
@@ -128,10 +95,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, subject, description, priority, category, contactId } = body;
+    const { businessId, subject, description, priority } = body;
 
-    if (!businessId || !subject) {
-      return createErrorResponse('Business ID and subject are required', 400);
+    // description is NOT NULL in the canonical schema
+    if (!businessId || !subject || !description) {
+      return createErrorResponse('Business ID, subject and description are required', 400);
     }
 
     const supabase = await createServerClient();
@@ -149,48 +117,17 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Access denied', 403);
     }
 
-    // Generate ticket number
-    const timestamp = Math.floor(Date.now() / 1000);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const ticketNumber = `TKT-${timestamp}-${random}`;
-
-    const { data: ticket, error } = await supabase
+    const { data: ticket, error } = await (supabase as any)
       .from('support_tickets')
       .insert({
         business_id: businessId,
-        ticket_number: ticketNumber,
         subject,
         description,
         priority: priority || 'medium',
         status: 'open',
-        category,
-        channel: 'web',
         created_by: user.id,
-        contact_id: contactId,
       })
-      .select(`
-        id,
-        ticket_number,
-        subject,
-        description,
-        priority,
-        status,
-        category,
-        channel,
-        assigned_to,
-        resolve_sla,
-        resolved_at,
-        resolution_notes,
-        created_at,
-        updated_at,
-        created_by,
-        contact:contacts!support_tickets_contact_id_fkey (
-          id,
-          first_name,
-          last_name,
-          email
-        )
-      `)
+      .select('id, subject, description, priority, status, created_at, updated_at, created_by')
       .single();
 
     if (error) {
@@ -198,38 +135,9 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Failed to create support ticket', 500);
     }
 
-    // Transform data to match service interface
-    const transformedTicket = {
-      id: ticket.id,
-      ticketNumber: ticket.ticket_number,
-      subject: ticket.subject,
-      description: ticket.description,
-      priority: ticket.priority,
-      status: ticket.status,
-      category: ticket.category,
-      channel: ticket.channel,
-      assignedTo: ticket.assigned_to,
-      resolveSla: ticket.resolve_sla,
-      resolvedAt: ticket.resolved_at,
-      resolutionNotes: ticket.resolution_notes,
-      createdAt: ticket.created_at,
-      updatedAt: ticket.updated_at,
-      createdBy: ticket.created_by,
-      contact: (() => {
-        const contactObj = ticket.contact && !Array.isArray(ticket.contact) ? ticket.contact : null;
-        return contactObj ? {
-          id: (contactObj as any).id,
-          firstName: (contactObj as any).first_name,
-          lastName: (contactObj as any).last_name,
-          email: (contactObj as any).email,
-        } : undefined;
-      })(),
-    };
-
-    return createSuccessResponse(transformedTicket, undefined, undefined, 201);
+    return createSuccessResponse(transformTicket(ticket), undefined, undefined, 201);
 
   } catch (error) {
     return handleApiError(error);
   }
 }
-

@@ -750,6 +750,9 @@ export interface CreateDealInput {
   currency?: Currency;
   status?: DealStatus;
   stage?: DealStage;
+  // Canonical FKs; resolved to the default pipeline's first stage if omitted
+  pipeline_id?: string;
+  stage_id?: string;
   probability?: number;
   expected_close_date?: string;
   metadata?: Record<string, any>;
