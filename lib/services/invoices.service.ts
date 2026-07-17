@@ -5,9 +5,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { Invoice, InvoiceLineItem, InvoiceTemplate } from '@/lib/types';
 
-const supabase = createClient();
-const supabaseAny = supabase as any;
-
 /**
  * List invoices with filtering
  */
@@ -20,6 +17,7 @@ export async function listInvoices(
     offset?: number;
   } = {}
 ) {
+  const supabaseAny = createClient() as any;
   let query = supabaseAny
     .from('invoices')
     .select('*')
@@ -52,6 +50,7 @@ export async function listInvoices(
  * Get single invoice with line items
  */
 export async function getInvoice(invoiceId: string) {
+  const supabaseAny = createClient() as any;
   const { data: invoice, error: invoiceError } = await supabaseAny
     .from('invoices')
     .select('*')
@@ -74,6 +73,7 @@ export async function getInvoice(invoiceId: string) {
  * Create new invoice
  */
 export async function createInvoice(businessId: string, invoice: Partial<Invoice>) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoices')
     .insert({
@@ -92,6 +92,7 @@ export async function createInvoice(businessId: string, invoice: Partial<Invoice
  * Update invoice
  */
 export async function updateInvoice(invoiceId: string, updates: Partial<Invoice>) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoices')
     .update(updates as any)
@@ -107,6 +108,7 @@ export async function updateInvoice(invoiceId: string, updates: Partial<Invoice>
  * Delete invoice
  */
 export async function deleteInvoice(invoiceId: string) {
+  const supabaseAny = createClient() as any;
   const { error } = await supabaseAny
     .from('invoices')
     .delete()
@@ -123,6 +125,7 @@ export async function addLineItem(
   businessId: string,
   item: Partial<InvoiceLineItem>
 ) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoice_line_items')
     .insert({
@@ -144,6 +147,7 @@ export async function updateLineItem(
   lineItemId: string,
   updates: Partial<InvoiceLineItem>
 ) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoice_line_items')
     .update(updates as any)
@@ -159,6 +163,7 @@ export async function updateLineItem(
  * Delete line item
  */
 export async function deleteLineItem(lineItemId: string) {
+  const supabaseAny = createClient() as any;
   const { error } = await supabaseAny
     .from('invoice_line_items')
     .delete()
@@ -171,6 +176,7 @@ export async function deleteLineItem(lineItemId: string) {
  * Generate invoice number
  */
 export async function generateInvoiceNumber(businessId: string, prefix = 'INV'): Promise<string> {
+  const supabaseAny = createClient() as any;
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -199,6 +205,7 @@ export async function generateInvoiceNumber(businessId: string, prefix = 'INV'):
  * Mark invoice as sent
  */
 export async function markInvoiceAsSent(invoiceId: string) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoices')
     .update({
@@ -226,6 +233,8 @@ export async function recordInvoicePayment(
     reference_id?: string;
   }
 ) {
+  const supabaseAny = createClient() as any;
+
   // Create payment record
   const { data: paymentRecord, error: paymentError } = await supabaseAny
     .from('invoice_payments')
@@ -260,6 +269,7 @@ export async function recordInvoicePayment(
  * Get invoice templates
  */
 export async function getInvoiceTemplates(businessId: string) {
+  const supabaseAny = createClient() as any;
   const { data, error } = await supabaseAny
     .from('invoice_templates')
     .select('*')
@@ -273,6 +283,7 @@ export async function getInvoiceTemplates(businessId: string) {
  * Get invoice statistics
  */
 export async function getInvoiceStats(businessId: string) {
+  const supabaseAny = createClient() as any;
   const { data: invoices, error } = await supabaseAny
     .from('invoices')
     .select('status, total_amount, paid_amount')
@@ -306,5 +317,3 @@ export async function getInvoiceStats(businessId: string) {
 
   return stats;
 }
-
-

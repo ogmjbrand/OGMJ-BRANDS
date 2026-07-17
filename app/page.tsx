@@ -2,6 +2,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { DM_Sans, Syne } from 'next/font/google'
 import {
@@ -351,14 +352,6 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-function OgmjMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <path d="M12 1L14.1 9.9L23 12L14.1 14.1L12 23L9.9 14.1L1 12L9.9 9.9L12 1Z" fill="currentColor" />
-    </svg>
-  )
-}
-
 function Reveal({
   children,
   className,
@@ -450,7 +443,7 @@ function TopNav({ navItems, primaryCta }: { navItems: NavItem[]; primaryCta: Nav
         aria-label="Primary navigation"
       >
         <Link href="/" className="flex items-center gap-2">
-          <OgmjMark className="size-5 text-gold" />
+          <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={20} height={20} className="size-5 rounded-full object-cover" priority />
           <span className="font-[family-name:var(--font-syne)] text-base font-bold text-content">OGMJ BRANDS</span>
         </Link>
 
@@ -1009,7 +1002,7 @@ function Footer({ columns }: { columns: FooterColumn[] }) {
       <div className="mx-auto flex max-w-[1400px] flex-col gap-12 md:flex-row md:justify-between">
         <div className="max-w-sm">
           <Link href="/" className="flex items-center gap-2">
-            <OgmjMark className="size-5 text-gold" />
+            <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={20} height={20} className="size-5 rounded-full object-cover" />
             <span className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">OGMJ BRANDS</span>
           </Link>
           <p className="mt-4 text-sm leading-7 text-content-muted">

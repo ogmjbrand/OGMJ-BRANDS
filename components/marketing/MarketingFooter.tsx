@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Mail, MapPin, Phone } from 'lucide-react'
 import { SITE } from '@/lib/marketing/content'
 
@@ -27,8 +28,19 @@ export default function MarketingFooter() {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{SITE.name}</p>
-            <p className="mt-2 text-lg font-bold text-white">{SITE.tagline}</p>
+            <div className="flex items-center gap-3">
+              <Image
+                src="/brand/ogmj-mark.png"
+                alt={SITE.name}
+                width={40}
+                height={40}
+                className="h-10 w-10 shrink-0 rounded-2xl object-cover"
+              />
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{SITE.name}</p>
+                <p className="mt-2 text-lg font-bold text-white">{SITE.tagline}</p>
+              </div>
+            </div>
             <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
               Premium business operations, AI automation, and world-class launches in one unified ecosystem.
             </p>

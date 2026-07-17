@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 import { SITE } from '@/lib/marketing/content'
 
@@ -20,9 +21,19 @@ export default function MarketingHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#04060A]/95 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-        <Link href="/" className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{SITE.name}</p>
-          <p className="text-lg font-black text-white">{SITE.tagline}</p>
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/brand/ogmj-mark.png"
+            alt={SITE.name}
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-2xl object-cover"
+            priority
+          />
+          <span className="space-y-1">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{SITE.name}</p>
+            <p className="text-lg font-black text-white">{SITE.tagline}</p>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm text-slate-300 lg:flex">

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -87,8 +88,8 @@ function DashboardLayoutContent({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#D4AF37]/10 bg-[#0E1116]/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#D4AF37]/10 text-[#D4AF37]">
-            <LayoutDashboard className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-[#D4AF37]/10">
+            <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={36} height={36} className="h-full w-full object-cover" />
           </div>
           <div>
             <p className="text-sm font-semibold text-white">OGMJ BRANDS</p>
@@ -124,8 +125,8 @@ function DashboardLayoutContent({
           <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gold/10 text-gold">
-                  <LayoutDashboard className="h-6 w-6" />
+                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-3xl bg-gold/10">
+                  <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={48} height={48} className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-white">OGMJ BRANDS</p>

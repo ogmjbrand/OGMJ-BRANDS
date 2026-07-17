@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { signUp, signInWithOAuth } from '@/lib/auth';
@@ -76,6 +77,14 @@ export default function SignupPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2 text-center">
+        <Image
+          src="/brand/ogmj-mark.png"
+          alt="OGMJ Brands"
+          width={56}
+          height={56}
+          className="mx-auto h-14 w-14 rounded-2xl object-cover"
+          priority
+        />
         <h1 className="text-3xl font-bold text-white">Create Account</h1>
         <p className="text-[#D4AF37]/70">Join OGMJ BRANDS and start growing</p>
       </div>
