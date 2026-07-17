@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@paystack/inline-js": "^2.23.1",
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.0",
     "class-variance-authority": "^0.7.1",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/paystack__inline-js": "^1.0.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.19",
@@ -39,5 +41,3 @@
     "typescript": "^5"
   }
 }
-
-

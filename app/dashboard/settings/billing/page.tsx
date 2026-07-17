@@ -1,68 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { getCurrentUser } from '@/lib/auth';
 
-const PLANS = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    description: 'Perfect for individuals',
-    price: 29,
-    period: 'month',
-    features: [
-      'Up to 1,000 contacts',
-      '5 team members',
-      'Basic CRM',
-      'Email support',
-      '1 website',
-    ],
-    current: false,
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    description: 'For growing teams',
-    price: 99,
-    period: 'month',
-    features: [
-      'Up to 50,000 contacts',
-      '25 team members',
-      'Advanced CRM + Analytics',
-      'Priority support',
-      'Unlimited websites',
-      'Video processing',
-      'AI features',
-    ],
-    current: true,
-    popular: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    description: 'For large organizations',
-    price: 299,
-    period: 'month',
-    features: [
-      'Unlimited contacts',
-      'Unlimited team members',
-      'All features included',
-      '24/7 phone support',
-      'Custom integrations',
-      'Dedicated account manager',
-      'SLA guarantee',
-    ],
-    current: false,
-  },
-];
+interface Plan {
+  id: string;
+  name: string;
+  description: string | null;
+  price_ngn: string | number;
+  billing_period: string;
+  features: string[];
+  is_popular: boolean;
+}
 
 export default function BillingPage() {
   const { currentBusiness } = useBusinessContext();
-  const [selectedPlan, setSelectedPlan] = useState<string>('professional');
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadPlansAndSubscription() {
+      setPlansLoading(true);
+      try {
+        const plansResponse = await fetch('/api/plans');
+        const plansResult = await plansResponse.json();
+        if (plansResult.success) {
+          setPlans(plansResult.data || []);
+        }
+
+        if (currentBusiness) {
+          const subResponse = await fetch(`/api/subscriptions?businessId=${currentBusiness.id}`);
+          const subResult = await subResponse.json();
+          if (subResult.success && subResult.data?.status === 'active') {
+            setCurrentPlanId(subResult.data.plan_id);
+          }
+        }
+      } catch {
+        setError('Failed to load plans');
+      } finally {
+        setPlansLoading(false);
+      }
+    }
+    loadPlansAndSubscription();
+  }, [currentBusiness]);
 
   const handleSelectPlan = async (planId: string) => {
     if (!currentBusiness) {
@@ -70,7 +55,7 @@ export default function BillingPage() {
       return;
     }
 
-    if (planId === 'professional') {
+    if (planId === currentPlanId) {
       // Already on this plan
       return;
     }
@@ -80,7 +65,7 @@ export default function BillingPage() {
 
     try {
       // Get plan details
-      const plan = PLANS.find((p) => p.id === planId);
+      const plan = plans.find((p) => p.id === planId);
       if (!plan) {
         throw new Error('Plan not found');
       }
@@ -91,16 +76,11 @@ export default function BillingPage() {
         throw new Error('User not authenticated');
       }
 
-      // Initialize payment
+      // Initialize payment (amount is derived server-side from the plan)
       const response = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: plan.price,
-          email: user.email,
-          businessId: currentBusiness.id,
-          planId,
-        }),
+        body: JSON.stringify({ businessId: currentBusiness.id, planId }),
       });
 
       const result = await response.json();
@@ -109,15 +89,44 @@ export default function BillingPage() {
         throw new Error(result.error || 'Payment initialization failed');
       }
 
-      // Redirect to Paystack payment page
-      if (result.authorization_url) {
-        window.location.href = result.authorization_url;
-      } else {
-        throw new Error('No payment URL received');
+      const { accessCode } = result.data;
+      if (!accessCode) {
+        throw new Error('No payment access code received');
       }
+
+      const { default: PaystackPop } = await import('@paystack/inline-js');
+      const popup = new PaystackPop();
+
+      popup.resumeTransaction(accessCode, {
+        onSuccess: async (transaction: { reference: string }) => {
+          try {
+            const verifyResponse = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reference: transaction.reference }),
+            });
+            const verifyResult = await verifyResponse.json();
+
+            if (!verifyResult.success) {
+              throw new Error(verifyResult.error || 'Payment verification failed');
+            }
+
+            window.location.reload();
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Payment verification failed');
+            setLoading(false);
+          }
+        },
+        onCancel: () => {
+          setLoading(false);
+        },
+        onError: (err: { message: string }) => {
+          setError(err.message || 'Payment failed');
+          setLoading(false);
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment initialization failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -149,73 +158,82 @@ export default function BillingPage() {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {PLANS.map((plan) => (
-          <div
-            key={plan.id}
-            className={`relative rounded-xl border transition-all ${
-              plan.popular
-                ? 'border-[#D4AF37] bg-[#0E1116]/80 ring-2 ring-[#D4AF37]/20 transform md:scale-105'
-                : 'border-[#D4AF37]/10 bg-[#0E1116]'
-            }`}
-          >
-            {/* Popular Badge */}
-            {plan.popular && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="px-3 py-1 bg-[#D4AF37] text-[#07070A] text-xs font-semibold rounded-full">
-                  MOST POPULAR
-                </span>
-              </div>
-            )}
-
-            {/* Current Badge */}
-            {plan.current && (
-              <div className="p-4 bg-green-500/10 border-b border-green-500/20">
-                <p className="text-sm font-medium text-green-400">✓ Current Plan</p>
-              </div>
-            )}
-
-            <div className="p-6 space-y-6">
-              {/* Plan Name */}
-              <div>
-                <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                <p className="text-sm text-[#D4AF37]/70 mt-1">{plan.description}</p>
-              </div>
-
-              {/* Price */}
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-[#D4AF37]">${plan.price}</span>
-                  <span className="text-[#D4AF37]/50">/{plan.period}</span>
-                </div>
-              </div>
-
-              {/* Features */}
-              <ul className="space-y-3">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                    <span className="text-[#D4AF37]/80">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA Button */}
-              <button
-                onClick={() => handleSelectPlan(plan.id)}
-                disabled={plan.current || loading}
-                className={`w-full py-3 rounded-lg font-semibold transition ${
-                  plan.current
-                    ? 'bg-[#D4AF37]/20 text-[#D4AF37] cursor-default'
-                    : 'bg-[#D4AF37] text-[#07070A] hover:bg-[#D4AF37]/90 disabled:opacity-50'
+      {plansLoading ? (
+        <p className="text-[#D4AF37]/70">Loading plans...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((plan) => {
+            const isCurrent = plan.id === currentPlanId;
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-xl border transition-all ${
+                  plan.is_popular
+                    ? 'border-[#D4AF37] bg-[#0E1116]/80 ring-2 ring-[#D4AF37]/20 transform md:scale-105'
+                    : 'border-[#D4AF37]/10 bg-[#0E1116]'
                 }`}
               >
-                {plan.current ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                {/* Popular Badge */}
+                {plan.is_popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="px-3 py-1 bg-[#D4AF37] text-[#07070A] text-xs font-semibold rounded-full">
+                      MOST POPULAR
+                    </span>
+                  </div>
+                )}
+
+                {/* Current Badge */}
+                {isCurrent && (
+                  <div className="p-4 bg-green-500/10 border-b border-green-500/20">
+                    <p className="text-sm font-medium text-green-400">✓ Current Plan</p>
+                  </div>
+                )}
+
+                <div className="p-6 space-y-6">
+                  {/* Plan Name */}
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
+                    <p className="text-sm text-[#D4AF37]/70 mt-1">{plan.description}</p>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-[#D4AF37]">
+                        ₦{Number(plan.price_ngn).toLocaleString('en-NG')}
+                      </span>
+                      <span className="text-[#D4AF37]/50">/{plan.billing_period}</span>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
+                        <span className="text-[#D4AF37]/80">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    disabled={isCurrent || loading}
+                    className={`w-full py-3 rounded-lg font-semibold transition ${
+                      isCurrent
+                        ? 'bg-[#D4AF37]/20 text-[#D4AF37] cursor-default'
+                        : 'bg-[#D4AF37] text-[#07070A] hover:bg-[#D4AF37]/90 disabled:opacity-50'
+                    }`}
+                  >
+                    {isCurrent ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* FAQ Section */}
       <div className="mt-12 space-y-6">

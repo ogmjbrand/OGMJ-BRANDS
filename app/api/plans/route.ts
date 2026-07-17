@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       .from('subscription_plans')
       .select('*')
       .eq('status', 'active')
-      .order('price', { ascending: true });
+      .order('price_ngn', { ascending: true });
 
     if (error) {
       throw error;
