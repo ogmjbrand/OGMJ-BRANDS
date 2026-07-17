@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/paystack__inline-js": "^1.0.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.19",
