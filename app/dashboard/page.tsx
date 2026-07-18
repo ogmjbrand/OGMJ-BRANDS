@@ -140,10 +140,10 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-[#D4AF37]/20 rounded w-1/3 mb-8"></div>
+          <div className="h-8 bg-[#C8FF00]/20 rounded w-1/3 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-[#D4AF37]/20 rounded"></div>
+              <div key={i} className="h-32 bg-[#C8FF00]/20 rounded"></div>
             ))}
           </div>
         </div>
@@ -166,16 +166,16 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Rocket className="h-4 w-4" /> Executive Command Center
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Build your empire from one premium operating surface.</h1>
             <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Track revenue, orchestrate growth, move deals, launch campaigns and keep every team aligned in real time.</p>
           </div>
-          <div className="rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+          <div className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
             <p className="font-semibold text-white">Business health score</p>
             <p className="mt-2">Excellent momentum with strong conversion signals and rising automation coverage.</p>
           </div>
@@ -195,11 +195,11 @@ export default function DashboardPage() {
         <SectionPanel title="Revenue intelligence" subtitle="Growth signals and pipeline momentum" actionLabel="Open analytics" actionHref="/dashboard/analytics">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={metrics.revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37/20" />
-              <XAxis stroke="#D4AF37/50" />
-              <YAxis stroke="#D4AF37/50" />
-              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={2.8} dot={{ r: 3, fill: '#D4AF37' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#C8FF00/20" />
+              <XAxis stroke="#C8FF00/50" />
+              <YAxis stroke="#C8FF00/50" />
+              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
+              <Line type="monotone" dataKey="revenue" stroke="#C8FF00" strokeWidth={2.8} dot={{ r: 3, fill: '#C8FF00' }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionPanel>
@@ -218,26 +218,26 @@ export default function DashboardPage() {
         <SectionPanel title="Pipeline by stage" subtitle="Convert momentum into predictable growth" actionLabel="Open CRM" actionHref="/dashboard/crm/deals">
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={metrics.pipelineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D4AF37/20" />
-              <XAxis stroke="#D4AF37/50" />
-              <YAxis stroke="#D4AF37/50" />
-              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
-              <Bar dataKey="value" fill="#D4AF37" radius={[8, 8, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#C8FF00/20" />
+              <XAxis stroke="#C8FF00/50" />
+              <YAxis stroke="#C8FF00/50" />
+              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
+              <Bar dataKey="value" fill="#C8FF00" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionPanel>
 
         <SectionPanel title="Next-best actions" subtitle="Launch faster with one-click operating moves">
           <div className="grid gap-3">
-            <a href="/dashboard/crm/contacts" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+            <a href="/dashboard/crm/contacts" className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4 hover:border-[#C8FF00]/40">
               <p className="text-sm font-semibold text-white">Add a new contact</p>
               <p className="mt-1 text-sm text-[#F8F9FA]/60">Capture new demand and assign a follow-up sequence instantly.</p>
             </a>
-            <a href="/dashboard/invoices" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+            <a href="/dashboard/invoices" className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4 hover:border-[#C8FF00]/40">
               <p className="text-sm font-semibold text-white">Issue an invoice</p>
               <p className="mt-1 text-sm text-[#F8F9FA]/60">Keep revenue moving and automate your billing flow.</p>
             </a>
-            <a href="/dashboard/videos" className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 hover:border-[#D4AF37]/40">
+            <a href="/dashboard/videos" className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4 hover:border-[#C8FF00]/40">
               <p className="text-sm font-semibold text-white">Launch content</p>
               <p className="mt-1 text-sm text-[#F8F9FA]/60">Publish a new video or asset into your brand studio.</p>
             </a>
@@ -249,14 +249,14 @@ export default function DashboardPage() {
         <SectionPanel title="Top deals" subtitle="Your highest-value opportunities">
           <div className="space-y-3">
             {metrics.topDeals.map((deal, idx) => (
-              <div key={idx} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-3">
+              <div key={idx} className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-3">
                 <div>
                   <p className="text-sm font-semibold text-white">{deal.title}</p>
-                  <p className="text-xs text-[#D4AF37]/60">{deal.stage}</p>
+                  <p className="text-xs text-[#C8FF00]/60">{deal.stage}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-white">₦{(deal.value / 1000000).toFixed(1)}M</p>
-                  <p className={`text-xs ${deal.status === 'won' ? 'text-[#10B981]' : 'text-[#D4AF37]/60'}`}>{deal.status}</p>
+                  <p className={`text-xs ${deal.status === 'won' ? 'text-[#10B981]' : 'text-[#C8FF00]/60'}`}>{deal.status}</p>
                 </div>
               </div>
             ))}
@@ -266,11 +266,11 @@ export default function DashboardPage() {
         <SectionPanel title="Operating pulse" subtitle="Key activity and momentum from your stack">
           <div className="space-y-3">
             {metrics.recentActivities.map((activity, idx) => (
-              <div key={idx} className="flex items-center gap-3 rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-3">
+              <div key={idx} className="flex items-center gap-3 rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-3">
                 <span className="text-lg">{activity.icon}</span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-white">{activity.description}</p>
-                  <p className="text-xs text-[#D4AF37]/60">{activity.time}</p>
+                  <p className="text-xs text-[#C8FF00]/60">{activity.time}</p>
                 </div>
               </div>
             ))}
@@ -346,16 +346,16 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
                 <button
                   key={feature.name}
                   onClick={() => router.push(feature.path)}
-                  className="backdrop-blur-md bg-[#0E1116]/50 border border-[#D4AF37]/20 rounded-lg p-4 hover:border-[#D4AF37]/50 hover:bg-[#0E1116]/70 transition text-left group"
+                  className="backdrop-blur-md bg-[#0E1116]/50 border border-[#C8FF00]/20 rounded-lg p-4 hover:border-[#C8FF00]/50 hover:bg-[#0E1116]/70 transition text-left group"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 bg-[#D4AF37]/20 group-hover:bg-[#D4AF37]/30 rounded transition">
-                      <Icon className="w-5 h-5 text-[#D4AF37]" />
+                    <div className="p-2 bg-[#C8FF00]/20 group-hover:bg-[#C8FF00]/30 rounded transition">
+                      <Icon className="w-5 h-5 text-[#C8FF00]" />
                     </div>
                     <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">Active</span>
                   </div>
                   <h3 className="font-semibold text-white text-sm">{feature.name}</h3>
-                  <p className="text-xs text-[#D4AF37]/70 mt-1">{feature.description}</p>
+                  <p className="text-xs text-[#C8FF00]/70 mt-1">{feature.description}</p>
                 </button>
               );
             })}
@@ -372,21 +372,21 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
               return (
                 <div
                   key={feature.name}
-                  className="backdrop-blur-md bg-[#0E1116]/30 border border-[#D4AF37]/10 rounded-lg p-4 opacity-60"
+                  className="backdrop-blur-md bg-[#0E1116]/30 border border-[#C8FF00]/10 rounded-lg p-4 opacity-60"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 bg-[#D4AF37]/10 rounded">
-                      <Icon className="w-5 h-5 text-[#D4AF37]/50" />
+                    <div className="p-2 bg-[#C8FF00]/10 rounded">
+                      <Icon className="w-5 h-5 text-[#C8FF00]/50" />
                     </div>
-                    <span className="text-xs px-2 py-1 bg-[#D4AF37]/10 text-[#D4AF37]/50 rounded">
+                    <span className="text-xs px-2 py-1 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded">
                       {feature.badge}
                     </span>
                   </div>
                   <h3 className="font-semibold text-white/50 text-sm">{feature.name}</h3>
-                  <p className="text-xs text-[#D4AF37]/50 mt-1">{feature.description}</p>
+                  <p className="text-xs text-[#C8FF00]/50 mt-1">{feature.description}</p>
                   <a
                     href="/dashboard/settings/billing"
-                    className="mt-3 inline-block text-xs px-2 py-1 bg-[#D4AF37]/20 text-[#D4AF37]/70 rounded hover:bg-[#D4AF37]/30"
+                    className="mt-3 inline-block text-xs px-2 py-1 bg-[#C8FF00]/20 text-[#C8FF00]/70 rounded hover:bg-[#C8FF00]/30"
                   >
                     Upgrade Plan
                   </a>

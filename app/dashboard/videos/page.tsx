@@ -134,8 +134,8 @@ export default function VideosPage() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
-          <p className="text-[#D4AF37]/70">Loading videos...</p>
+          <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
+          <p className="text-[#C8FF00]/70">Loading videos...</p>
         </div>
       </div>
     );
@@ -149,7 +149,7 @@ export default function VideosPage() {
           <p className="text-red-400">{error}</p>
           <button
             onClick={loadVideos}
-            className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition"
+            className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition"
           >
             Try Again
           </button>
@@ -164,11 +164,11 @@ export default function VideosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white">Videos</h1>
-          <p className="text-[#D4AF37]/70 mt-2">Create viral video content automatically</p>
+          <p className="text-[#C8FF00]/70 mt-2">Create viral video content automatically</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
+            <Button className="flex items-center gap-2 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition" size="sm">
               <Upload className="w-5 h-5" />
               Upload Video
             </Button>
@@ -184,59 +184,59 @@ export default function VideosPage() {
                 </div>
               )}
               <div className="grid gap-4">
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   Title
                   <input
                     type="text"
                     value={newVideoTitle}
                     onChange={(e) => setNewVideoTitle(e.target.value)}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="Enter video title"
                     required
                   />
                 </label>
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   Description
                   <textarea
                     value={newVideoDescription}
                     onChange={(e) => setNewVideoDescription(e.target.value)}
                     rows={4}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="Video description"
                   />
                 </label>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Source URL
                     <input
                       type="url"
                       required
                       value={newVideoSourceUrl}
                       onChange={(e) => setNewVideoSourceUrl(e.target.value)}
-                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                       placeholder="https://"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Duration (seconds)
                     <input
                       type="number"
                       min={0}
                       value={newVideoDuration}
                       onChange={(e) => setNewVideoDuration(e.target.value)}
-                      className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                       placeholder="120"
                     />
                   </label>
                 </div>
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   File size (bytes)
                   <input
                     type="number"
                     min={0}
                     value={newVideoFileSize}
                     onChange={(e) => setNewVideoFileSize(e.target.value)}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="42000000"
                   />
                 </label>
@@ -261,13 +261,13 @@ export default function VideosPage() {
         ].map((stat, idx) => (
           <div
             key={idx}
-            className="p-4 bg-[#0E1116] border border-[#D4AF37]/10 rounded-lg space-y-2"
+            className="p-4 bg-[#0E1116] border border-[#C8FF00]/10 rounded-lg space-y-2"
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#D4AF37]/70">{stat.label}</p>
+              <p className="text-sm text-[#C8FF00]/70">{stat.label}</p>
               <span className="text-xl">{stat.icon}</span>
             </div>
-            <p className="text-2xl font-bold text-[#D4AF37]">{stat.value}</p>
+            <p className="text-2xl font-bold text-[#C8FF00]">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -278,13 +278,13 @@ export default function VideosPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <p className="text-[#D4AF37]/50">No videos uploaded yet</p>
+              <p className="text-[#C8FF00]/50">No videos uploaded yet</p>
             </div>
           ) : (
             videos.map((video) => (
               <div
                 key={video.id}
-                className="group bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl overflow-hidden hover:border-[#D4AF37]/30 transition"
+                className="group bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl overflow-hidden hover:border-[#C8FF00]/30 transition"
               >
                 {/* Thumbnail */}
                 <div className="relative h-40 overflow-hidden bg-[#07070A]">
@@ -295,13 +295,13 @@ export default function VideosPage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[#D4AF37]/30">
+                    <div className="w-full h-full flex items-center justify-center text-[#C8FF00]/30">
                       <Play className="w-12 h-12" />
                     </div>
                   )}
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-                    <button title="Play video" className="p-2 bg-[#D4AF37] text-[#07070A] rounded-full opacity-0 group-hover:opacity-100 transition">
+                    <button title="Play video" className="p-2 bg-[#C8FF00] text-[#07070A] rounded-full opacity-0 group-hover:opacity-100 transition">
                       <Play className="w-6 h-6 ml-0.5" />
                     </button>
                   </div>
@@ -322,16 +322,16 @@ export default function VideosPage() {
                 {/* Content */}
                 <div className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-white group-hover:text-[#D4AF37] transition">
+                    <h3 className="font-semibold text-white group-hover:text-[#C8FF00] transition">
                       {video.title}
                     </h3>
-                    <button title="More options" className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] opacity-0 group-hover:opacity-100 transition">
+                    <button title="More options" className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] opacity-0 group-hover:opacity-100 transition">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center gap-4 text-sm text-[#D4AF37]/70">
+                  <div className="flex items-center gap-4 text-sm text-[#C8FF00]/70">
                     <span className="flex items-center gap-1">
                       <Play className="w-3 h-3" />
                       {video.metadata?.views || 0} views
@@ -347,11 +347,11 @@ export default function VideosPage() {
                     <button
                       onClick={() => handleProcessVideo(video.id)}
                       disabled={video.status === 'processing' || operationVideoId === video.id}
-                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#D4AF37]/20 text-[#D4AF37] rounded text-sm font-medium hover:bg-[#D4AF37]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {operationVideoId === video.id ? 'Working…' : 'Process'}
                     </button>
-                    <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#D4AF37]/10 text-[#D4AF37]/50 rounded text-sm font-medium hover:bg-[#D4AF37]/20 transition">
+                    <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded text-sm font-medium hover:bg-[#C8FF00]/20 transition">
                       Clip
                     </button>
                     <button
@@ -367,12 +367,12 @@ export default function VideosPage() {
           )}
 
           {/* Upload Card */}
-          <div className="border-2 border-dashed border-[#D4AF37]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#D4AF37]/40 transition cursor-pointer group">
-            <Upload className="w-12 h-12 text-[#D4AF37]/50 group-hover:text-[#D4AF37] transition mb-3" />
-            <p className="font-semibold text-white group-hover:text-[#D4AF37] transition">
+          <div className="border-2 border-dashed border-[#C8FF00]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#C8FF00]/40 transition cursor-pointer group">
+            <Upload className="w-12 h-12 text-[#C8FF00]/50 group-hover:text-[#C8FF00] transition mb-3" />
+            <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
               Upload New Video
             </p>
-            <p className="text-sm text-[#D4AF37]/50 mt-1">
+            <p className="text-sm text-[#C8FF00]/50 mt-1">
               Drag and drop or click to browse
             </p>
           </div>

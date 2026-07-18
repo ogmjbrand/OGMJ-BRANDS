@@ -43,16 +43,16 @@ module.exports = {
           'text-muted': 'rgba(255,255,255,0.60)',
         },
         gold: {
-          50: '#FBF7E8',
-          100: '#F5EDD1',
-          200: '#EBDBA3',
-          300: '#E0C875',
-          400: '#D9B847',
-          DEFAULT: '#D4AF37',
-          600: '#C4942A',
-          700: '#B0791D',
-          800: '#8F5E14',
-          900: '#6F460A',
+          50: '#F7FFE0',
+          100: '#EDFFC2',
+          200: '#DEFF94',
+          300: '#D6FF66',
+          400: '#D0FF33',
+          DEFAULT: '#C8FF00',
+          600: '#A3D400',
+          700: '#7FA800',
+          800: '#5C7A00',
+          900: '#3D5200',
         },
         brand: {
           bg:      '#07070A',
@@ -109,11 +109,11 @@ module.exports = {
         glowPulse: {
           '0%, 100%': {
             opacity: '0.5',
-            boxShadow: '0 0 20px rgba(212, 175, 55, 0.15)',
+            boxShadow: '0 0 20px rgba(200, 255, 0, 0.15)',
           },
           '50%': {
             opacity: '1',
-            boxShadow: '0 0 40px rgba(212, 175, 55, 0.3)',
+            boxShadow: '0 0 40px rgba(200, 255, 0, 0.3)',
           },
         },
         shimmer: {
@@ -148,8 +148,8 @@ module.exports = {
         luxe: 'cubic-bezier(0.43, 0.13, 0.23, 0.96)',
       },
       boxShadow: {
-        'gold-glow': '0 0 20px rgba(212, 175, 55, 0.15)',
-        'gold-glow-lg': '0 0 40px rgba(212, 175, 55, 0.25)',
+        'gold-glow': '0 0 20px rgba(200, 255, 0, 0.15)',
+        'gold-glow-lg': '0 0 40px rgba(200, 255, 0, 0.25)',
         'emerald-glow': '0 0 20px rgba(16, 185, 129, 0.15)',
         'blue-glow': '0 0 20px rgba(59, 130, 246, 0.15)',
       },

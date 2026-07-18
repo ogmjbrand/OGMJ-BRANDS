@@ -59,13 +59,13 @@ export default function InvoiceCreatePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold text-white">Create New Invoice</h1>
-        <p className="text-[#D4AF37]/70 mt-2 max-w-2xl">
+        <p className="text-[#C8FF00]/70 mt-2 max-w-2xl">
           Create a polished invoice and keep billing organized for your clients.
         </p>
       </div>
 
       <form onSubmit={handleCreateInvoice} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-6 rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
+        <div className="space-y-6 rounded-3xl border border-[#C8FF00]/10 bg-[#0E1116] p-6">
           {error && (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
               {error}
@@ -73,12 +73,12 @@ export default function InvoiceCreatePage() {
           )}
 
           <div className="grid gap-6 md:grid-cols-2">
-            <label className="space-y-2 text-sm text-[#D4AF37]/70">
+            <label className="space-y-2 text-sm text-[#C8FF00]/70">
               Client
               <select
                 value={clientId}
                 onChange={(event) => setClientId(event.target.value)}
-                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
               >
                 <option value="">No client</option>
                 {clients.map((client) => (
@@ -88,73 +88,73 @@ export default function InvoiceCreatePage() {
                 ))}
               </select>
             </label>
-            <label className="space-y-2 text-sm text-[#D4AF37]/70">
+            <label className="space-y-2 text-sm text-[#C8FF00]/70">
               Due Date
               <input
                 type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
-                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
               />
             </label>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <label className="space-y-2 text-sm text-[#D4AF37]/70">
+            <label className="space-y-2 text-sm text-[#C8FF00]/70">
               Title / Description
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="e.g. Website design retainer"
-                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
               />
             </label>
-            <label className="space-y-2 text-sm text-[#D4AF37]/70">
+            <label className="space-y-2 text-sm text-[#C8FF00]/70">
               Total Amount (NGN)
               <input
                 type="number"
                 min={0}
                 value={totalAmount}
                 onChange={(event) => setTotalAmount(Number(event.target.value))}
-                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
               />
             </label>
           </div>
 
-          <label className="space-y-2 text-sm text-[#D4AF37]/70">
+          <label className="space-y-2 text-sm text-[#C8FF00]/70">
             Notes
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={5}
               placeholder="Add any payment instructions or line item summary."
-              className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
             />
           </label>
 
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-[#07070A] hover:bg-[#D4AF37]/90 transition disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full bg-[#C8FF00] px-6 py-3 text-sm font-semibold text-[#07070A] hover:bg-[#C8FF00]/90 transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Creating invoice...' : 'Create Invoice'}
           </button>
         </div>
 
-        <aside className="space-y-6 rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-6">
+        <aside className="space-y-6 rounded-3xl border border-[#C8FF00]/10 bg-[#0E1116] p-6">
           <div className="space-y-3">
-            <p className="text-sm text-[#D4AF37]/70">Invoice preview</p>
+            <p className="text-sm text-[#C8FF00]/70">Invoice preview</p>
             <div className="rounded-3xl bg-[#11151E] p-4">
-              <p className="text-sm text-[#D4AF37]/50">Invoice number</p>
+              <p className="text-sm text-[#C8FF00]/50">Invoice number</p>
               <p className="text-lg font-semibold text-white">Assigned on save</p>
             </div>
             <div className="rounded-3xl bg-[#11151E] p-4">
-              <p className="text-sm text-[#D4AF37]/50">Expected collection</p>
+              <p className="text-sm text-[#C8FF00]/50">Expected collection</p>
               <p className="text-lg font-semibold text-white">₦{totalAmount.toLocaleString('en-NG')}</p>
             </div>
           </div>
           <div className="rounded-3xl bg-[#11151E] p-4">
-            <p className="text-sm text-[#D4AF37]/50">Payment terms</p>
+            <p className="text-sm text-[#C8FF00]/50">Payment terms</p>
             <p className="text-sm text-white">Due on {dueDate || 'next billing date'}</p>
           </div>
         </aside>

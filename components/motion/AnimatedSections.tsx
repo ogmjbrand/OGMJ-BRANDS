@@ -18,7 +18,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   title,
   subtitle,
   children,
-  backgroundGradient = 'radial-gradient(circle_at_top_left,rgba(212,175,55,0.15),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.1),transparent_40%)',
+  backgroundGradient = 'radial-gradient(circle_at_top_left,rgba(200, 255, 0,0.15),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.1),transparent_40%)',
 }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-6">

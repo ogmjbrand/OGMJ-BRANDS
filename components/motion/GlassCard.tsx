@@ -33,9 +33,9 @@ export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
 
     const variants = {
       default: 'hover:border-white/20',
-      'hover-lift': 'hover:shadow-xl hover:shadow-[#D4AF37]/10 hover:-translate-y-1',
-      'hover-glow': 'hover:border-[#D4AF37]/30 hover:shadow-lg hover:shadow-[#D4AF37]/15',
-      bordered: 'border-[#D4AF37]/20 hover:border-[#D4AF37]/40',
+      'hover-lift': 'hover:shadow-xl hover:shadow-[#C8FF00]/10 hover:-translate-y-1',
+      'hover-glow': 'hover:border-[#C8FF00]/30 hover:shadow-lg hover:shadow-[#C8FF00]/15',
+      bordered: 'border-[#C8FF00]/20 hover:border-[#C8FF00]/40',
     };
 
     return (
@@ -79,10 +79,10 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   return (
     <GlassCard variant="hover-glow" delay={delay} className="p-6 group">
       <motion.div
-        className="mb-4 w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors"
+        className="mb-4 w-12 h-12 rounded-xl bg-[#C8FF00]/10 flex items-center justify-center group-hover:bg-[#C8FF00]/20 transition-colors"
         whileHover={{ rotate: 10, scale: 1.1 }}
       >
-        <div className="text-2xl text-[#D4AF37]">{icon}</div>
+        <div className="text-2xl text-[#C8FF00]">{icon}</div>
       </motion.div>
       <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
       <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
@@ -107,7 +107,7 @@ export const BorderAnimatedCard = React.forwardRef<HTMLDivElement, GlassCardProp
       >
         {/* Animated gradient border */}
         <motion.div
-          className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#D4AF37]/30 via-transparent to-[#D4AF37]/30"
+          className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#C8FF00]/30 via-transparent to-[#C8FF00]/30"
           animate={{
             backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
           }}

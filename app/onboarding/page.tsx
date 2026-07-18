@@ -98,7 +98,7 @@ export default function OnboardingPage() {
   if (checking) {
     return (
       <div className="min-h-screen bg-[#07070A] flex items-center justify-center">
-        <div className="animate-pulse h-8 w-48 rounded bg-[#D4AF37]/20" />
+        <div className="animate-pulse h-8 w-48 rounded bg-[#C8FF00]/20" />
       </div>
     );
   }
@@ -107,7 +107,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#07070A] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Rocket className="h-4 w-4" /> Welcome to OGMJ Brands
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#0E1116] p-6 sm:p-8 space-y-5"
+          className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#0E1116] p-6 sm:p-8 space-y-5"
         >
           {error && (
             <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
@@ -132,10 +132,10 @@ export default function OnboardingPage() {
 
           <div>
             <label htmlFor="business-name" className="block text-sm font-medium text-white mb-1.5">
-              Business name <span className="text-[#D4AF37]">*</span>
+              Business name <span className="text-[#C8FF00]">*</span>
             </label>
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AF37]/50" />
+              <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#C8FF00]/50" />
               <input
                 id="business-name"
                 type="text"
@@ -143,7 +143,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Likiya Fast Fashion"
                 required
-                className="w-full rounded-xl border border-[#D4AF37]/15 bg-[#07070A] py-2.5 pl-10 pr-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#D4AF37]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 pl-10 pr-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-none"
               />
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
               id="industry"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              className="w-full rounded-xl border border-[#D4AF37]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none"
+              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
             >
               <option value="">Select an industry…</option>
               {INDUSTRIES.map((i) => (
@@ -175,7 +175,7 @@ export default function OnboardingPage() {
                 type="text"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full rounded-xl border border-[#D4AF37]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
               />
             </div>
             <div>
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
                 id="currency"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="w-full rounded-xl border border-[#D4AF37]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#D4AF37]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -206,14 +206,14 @@ export default function OnboardingPage() {
               value={teamSize}
               onChange={(e) => setTeamSize(e.target.value)}
               placeholder="e.g. 5"
-              className="w-full rounded-xl border border-[#D4AF37]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#D4AF37]/50 focus:outline-none"
+              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-[#D4AF37] py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#e5c14d] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-[#C8FF00] py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#e5c14d] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? 'Creating your workspace…' : 'Create business'}
           </button>

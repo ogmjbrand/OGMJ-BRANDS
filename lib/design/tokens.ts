@@ -10,16 +10,16 @@
 export const colors = {
   // Primary Brand
   gold: {
-    50: '#FBF7E8',
-    100: '#F5EDD1',
-    200: '#EBDBA3',
-    300: '#E0C875',
-    400: '#D9B847',
-    500: '#D4AF37',
-    600: '#C4942A',
-    700: '#B0791D',
-    800: '#8F5E14',
-    900: '#6F460A',
+    50: '#F7FFE0',
+    100: '#EDFFC2',
+    200: '#DEFF94',
+    300: '#D6FF66',
+    400: '#D0FF33',
+    500: '#C8FF00',
+    600: '#A3D400',
+    700: '#7FA800',
+    800: '#5C7A00',
+    900: '#3D5200',
   },
 
   // Neutrals - Dark Luxury
@@ -214,8 +214,8 @@ export const shadows = {
   '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 
   // Glow effects
-  goldGlow: '0 0 20px rgba(212, 175, 55, 0.15)',
-  goldGlowLg: '0 0 40px rgba(212, 175, 55, 0.25)',
+  goldGlow: '0 0 20px rgba(200, 255, 0, 0.15)',
+  goldGlowLg: '0 0 40px rgba(200, 255, 0, 0.25)',
   emeraldGlow: '0 0 20px rgba(16, 185, 129, 0.15)',
   blueGlow: '0 0 20px rgba(59, 130, 246, 0.15)',
 };

@@ -180,9 +180,9 @@ export const pulseGlowVariants = {
   animate: {
     opacity: [0.5, 1, 0.5],
     boxShadow: [
-      '0 0 20px rgba(212, 175, 55, 0.15)',
-      '0 0 40px rgba(212, 175, 55, 0.3)',
-      '0 0 20px rgba(212, 175, 55, 0.15)',
+      '0 0 20px rgba(200, 255, 0, 0.15)',
+      '0 0 40px rgba(200, 255, 0, 0.3)',
+      '0 0 20px rgba(200, 255, 0, 0.15)',
     ],
     transition: {
       duration: 2.5,

@@ -58,16 +58,16 @@ export default function SocialPage() {
   if (!businessId) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <CalendarDays className="h-4 w-4" /> Social studio
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep your content calendar polished, strategic and on time.</h1>
@@ -99,35 +99,35 @@ export default function SocialPage() {
               rows={5}
               value={newMessage}
               onChange={(event) => setNewMessage(event.target.value)}
-              className="w-full rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#07070A] p-4 text-sm text-white outline-none transition focus:border-[#D4AF37]"
+              className="w-full rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-none transition focus:border-[#C8FF00]"
               placeholder="Write the message for your next social post..."
             />
             <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-              <label className="space-y-2 text-sm text-[#D4AF37]/70">
+              <label className="space-y-2 text-sm text-[#C8FF00]/70">
                 Channel
                 <select
                   value={newChannel}
                   onChange={(event) => setNewChannel(event.target.value)}
-                  className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
                 >
                   {CHANNELS.map((channel) => (
                     <option key={channel}>{channel}</option>
                   ))}
                 </select>
               </label>
-              <label className="space-y-2 text-sm text-[#D4AF37]/70">
+              <label className="space-y-2 text-sm text-[#C8FF00]/70">
                 Publish date
                 <input
                   type="date"
                   value={newDate}
                   onChange={(event) => setNewDate(event.target.value)}
-                  className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
                 />
               </label>
               <button
                 onClick={handleSchedulePost}
                 disabled={scheduling || !newMessage.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#C8FF00] px-6 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" /> {scheduling ? 'Scheduling...' : 'Schedule'}
               </button>
@@ -151,7 +151,7 @@ export default function SocialPage() {
         <SectionPanel title="Upcoming schedule" subtitle="The next posts already aligned to your calendar">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
             </div>
           ) : (
             <div className="space-y-3">
@@ -159,7 +159,7 @@ export default function SocialPage() {
                 <p className="py-8 text-center text-sm text-[#F8F9FA]/60">No posts scheduled yet.</p>
               ) : (
                 posts.slice(0, 3).map((post) => (
-                  <div key={post.id} className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                  <div key={post.id} className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-sm font-semibold text-white">{post.platforms.join(', ') || 'Unassigned'}</h3>
@@ -167,7 +167,7 @@ export default function SocialPage() {
                           {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString() : 'Draft'}
                         </p>
                       </div>
-                      <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#D4AF37]">
+                      <span className="rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#C8FF00]">
                         {post.status}
                       </span>
                     </div>
@@ -186,13 +186,13 @@ export default function SocialPage() {
             <p className="py-8 text-center text-sm text-[#F8F9FA]/60">No posts yet.</p>
           ) : (
             posts.map((post) => (
-              <div key={post.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4 md:flex-row md:items-center md:justify-between">
+              <div key={post.id} className="flex flex-col gap-2 rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">{post.platforms.join(', ') || 'Unassigned'}</p>
                   <p className="mt-1 text-sm text-[#F8F9FA]/60">{post.content}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
+                  <span className="rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-3 py-1 text-xs font-semibold text-[#C8FF00]">
                     {post.scheduled_at ? new Date(post.scheduled_at).toLocaleDateString() : 'Draft'}
                   </span>
                   <button

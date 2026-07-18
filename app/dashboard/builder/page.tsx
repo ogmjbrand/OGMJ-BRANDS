@@ -288,7 +288,7 @@ export default function BuilderPage() {
       case 'archived':
         return 'bg-gray-500/20 text-gray-400';
       default:
-        return 'bg-[#D4AF37]/20 text-[#D4AF37]';
+        return 'bg-[#C8FF00]/20 text-[#C8FF00]';
     }
   };
 
@@ -296,8 +296,8 @@ export default function BuilderPage() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
-          <p className="text-[#D4AF37]/70">Loading websites...</p>
+          <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
+          <p className="text-[#C8FF00]/70">Loading websites...</p>
         </div>
       </div>
     );
@@ -311,7 +311,7 @@ export default function BuilderPage() {
           <p className="text-red-400">{error}</p>
           <button
             onClick={loadWebsites}
-            className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition"
+            className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition"
           >
             Try Again
           </button>
@@ -326,7 +326,7 @@ export default function BuilderPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white">Website Builder</h1>
-          <p className="text-[#D4AF37]/70 mt-2">Create and manage your websites</p>
+          <p className="text-[#C8FF00]/70 mt-2">Create and manage your websites</p>
         </div>
         <Dialog open={isCreateWebsiteOpen} onOpenChange={(open) => {
           setIsCreateWebsiteOpen(open);
@@ -339,7 +339,7 @@ export default function BuilderPage() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition" size="sm">
+            <Button className="flex items-center gap-2 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition" size="sm">
               <Plus className="w-5 h-5" />
               New Website
             </Button>
@@ -355,35 +355,35 @@ export default function BuilderPage() {
                     {websiteActionError}
                   </div>
                 )}
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   Website Name
                   <input
                     type="text"
                     value={newWebsiteName}
                     onChange={(e) => setNewWebsiteName(e.target.value)}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="Brand site, storefront, landing page"
                     required
                   />
                 </label>
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   Website Slug
                   <input
                     type="text"
                     value={newWebsiteSlug}
                     onChange={(e) => setNewWebsiteSlug(e.target.value)}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="example-site"
                     required
                   />
                 </label>
-                <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                <label className="space-y-2 text-sm text-[#C8FF00]/70">
                   Description
                   <textarea
                     value={newWebsiteDescription}
                     onChange={(e) => setNewWebsiteDescription(e.target.value)}
                     rows={4}
-                    className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="One sentence summary of the website"
                   />
                 </label>
@@ -411,29 +411,29 @@ export default function BuilderPage() {
       <div className="space-y-6">
         {websites.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Globe className="w-16 h-16 text-[#D4AF37]/20 mx-auto mb-4" />
-            <p className="text-[#D4AF37]/50">No websites created yet</p>
-            <p className="text-sm text-[#D4AF37]/30 mt-2">Create your first website to get started</p>
+            <Globe className="w-16 h-16 text-[#C8FF00]/20 mx-auto mb-4" />
+            <p className="text-[#C8FF00]/50">No websites created yet</p>
+            <p className="text-sm text-[#C8FF00]/30 mt-2">Create your first website to get started</p>
           </div>
         ) : (
           websites.map((website) => (
             <div
               key={website.id}
-              className="bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl overflow-hidden"
+              className="bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl overflow-hidden"
             >
               {/* Website Header */}
-              <div className="p-6 border-b border-[#D4AF37]/10">
+              <div className="p-6 border-b border-[#C8FF00]/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37]/20 to-[#07070A] rounded-lg flex items-center justify-center">
-                      <Globe className="w-6 h-6 text-[#D4AF37]" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#C8FF00]/20 to-[#07070A] rounded-lg flex items-center justify-center">
+                      <Globe className="w-6 h-6 text-[#C8FF00]" />
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-white">{website.name}</h3>
-                      <p className="text-sm text-[#D4AF37]/70">
+                      <p className="text-sm text-[#C8FF00]/70">
                         {website.domain || website.customDomain || 'No domain assigned'}
                       </p>
-                      <p className="text-xs text-[#D4AF37]/50 mt-2">
+                      <p className="text-xs text-[#C8FF00]/50 mt-2">
                         {website.pages} page{website.pages === 1 ? '' : 's'} • Last updated {new Date(website.lastModified || website.updatedAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -449,7 +449,7 @@ export default function BuilderPage() {
                     <button
                       title="Edit website"
                       onClick={() => handleEditWebsite(website)}
-                      className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
+                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
@@ -463,7 +463,7 @@ export default function BuilderPage() {
                     <button
                       title="Show pages"
                       onClick={() => toggleWebsiteExpansion(website.id)}
-                      className="p-2 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
+                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
                     >
                       <FileText className="w-4 h-4" />
                     </button>
@@ -473,12 +473,12 @@ export default function BuilderPage() {
 
               {/* Pages Section */}
               {expandedWebsites.has(website.id) && (
-                <div className="p-6 border-t border-[#D4AF37]/10">
+                <div className="p-6 border-t border-[#C8FF00]/10">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-lg font-semibold text-white">Pages</h4>
                     <button
                       onClick={() => setCreatingPage(website.id)}
-                      className="flex items-center gap-2 px-3 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg text-sm font-medium hover:bg-[#D4AF37]/90 transition"
+                      className="flex items-center gap-2 px-3 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg text-sm font-medium hover:bg-[#C8FF00]/90 transition"
                     >
                       <Plus className="w-4 h-4" />
                       Add Page
@@ -487,21 +487,21 @@ export default function BuilderPage() {
 
                   {/* Create Page Form */}
                   {creatingPage === website.id && (
-                    <div className="mb-4 p-4 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-lg">
+                    <div className="mb-4 p-4 bg-[#C8FF00]/5 border border-[#C8FF00]/20 rounded-lg">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <input
                           type="text"
                           placeholder="Page Title"
                           value={newPageTitle}
                           onChange={(e) => setNewPageTitle(e.target.value)}
-                          className="px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded text-white placeholder-[#D4AF37]/50 focus:border-[#D4AF37] focus:outline-none"
+                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-none"
                         />
                         <input
                           type="text"
                           placeholder="Page Slug (e.g., about)"
                           value={newPageSlug}
                           onChange={(e) => setNewPageSlug(e.target.value)}
-                          className="px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded text-white placeholder-[#D4AF37]/50 focus:border-[#D4AF37] focus:outline-none"
+                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-none"
                         />
                       </div>
                       {pageActionError && (
@@ -512,7 +512,7 @@ export default function BuilderPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSavePage(website.id)}
-                          className="px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded text-sm font-medium hover:bg-[#D4AF37]/90 transition"
+                          className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded text-sm font-medium hover:bg-[#C8FF00]/90 transition"
                         >
                           {editPageId ? 'Save Page' : 'Create Page'}
                         </button>
@@ -521,7 +521,7 @@ export default function BuilderPage() {
                             setCreatingPage(null);
                             handleCancelPageEdit();
                           }}
-                          className="px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37]/70 rounded text-sm font-medium hover:bg-[#D4AF37]/20 transition"
+                          className="px-4 py-2 bg-[#C8FF00]/10 text-[#C8FF00]/70 rounded text-sm font-medium hover:bg-[#C8FF00]/20 transition"
                         >
                           Cancel
                         </button>
@@ -532,18 +532,18 @@ export default function BuilderPage() {
                   {/* Pages List */}
                   <div className="space-y-2">
                     {(pages[website.id] || []).length === 0 ? (
-                      <p className="text-[#D4AF37]/50 text-center py-4">No pages created yet</p>
+                      <p className="text-[#C8FF00]/50 text-center py-4">No pages created yet</p>
                     ) : (
                       (pages[website.id] || []).map((page) => (
                         <div
                           key={page.id}
-                          className="flex items-center justify-between p-3 bg-[#07070A] border border-[#D4AF37]/10 rounded-lg hover:border-[#D4AF37]/20 transition"
+                          className="flex items-center justify-between p-3 bg-[#07070A] border border-[#C8FF00]/10 rounded-lg hover:border-[#C8FF00]/20 transition"
                         >
                           <div className="flex items-center gap-3">
-                            <FileText className="w-4 h-4 text-[#D4AF37]/50" />
+                            <FileText className="w-4 h-4 text-[#C8FF00]/50" />
                             <div>
                               <p className="font-medium text-white">{page.title}</p>
-                              <p className="text-xs text-[#D4AF37]/50">/{page.slug}</p>
+                              <p className="text-xs text-[#C8FF00]/50">/{page.slug}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -558,14 +558,14 @@ export default function BuilderPage() {
                               <button
                                 onClick={() => handlePublishPage(page.id, website.id)}
                                 disabled={page.status === 'published'}
-                                className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 title="Publish Page"
                               >
                                 <ExternalLink className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => handleEditPage(page, website.id)}
-                                className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition"
+                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
                                 title="Edit Page"
                               >
                                 <Edit className="w-3 h-3" />
@@ -590,15 +590,15 @@ export default function BuilderPage() {
         )}
 
         {/* Create New Website Card */}
-        <div className="border-2 border-dashed border-[#D4AF37]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#D4AF37]/40 transition cursor-pointer group">
+        <div className="border-2 border-dashed border-[#C8FF00]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#C8FF00]/40 transition cursor-pointer group">
           <Dialog open={isCreateWebsiteOpen} onOpenChange={setIsCreateWebsiteOpen}>
             <DialogTrigger asChild>
               <button className="w-full h-full p-8 flex flex-col items-center justify-center gap-3 text-white">
-                <Plus className="w-12 h-12 text-[#D4AF37]/50 group-hover:text-[#D4AF37] transition" />
-                <p className="font-semibold text-white group-hover:text-[#D4AF37] transition">
+                <Plus className="w-12 h-12 text-[#C8FF00]/50 group-hover:text-[#C8FF00] transition" />
+                <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
                   Create New Website
                 </p>
-                <p className="text-sm text-[#D4AF37]/50 mt-1">
+                <p className="text-sm text-[#C8FF00]/50 mt-1">
                   Start with a blank site or template
                 </p>
               </button>
@@ -614,15 +614,15 @@ export default function BuilderPage() {
           {['Professional', 'Creative', 'E-Commerce'].map((template) => (
             <div
               key={template}
-              className="p-6 bg-[#0E1116] border border-[#D4AF37]/10 rounded-xl hover:border-[#D4AF37]/30 transition cursor-pointer group"
+              className="p-6 bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl hover:border-[#C8FF00]/30 transition cursor-pointer group"
             >
-              <div className="h-32 bg-gradient-to-br from-[#D4AF37]/10 to-[#07070A] rounded mb-4 flex items-center justify-center">
-                <Globe className="w-12 h-12 text-[#D4AF37]/20 group-hover:text-[#D4AF37]/40 transition" />
+              <div className="h-32 bg-gradient-to-br from-[#C8FF00]/10 to-[#07070A] rounded mb-4 flex items-center justify-center">
+                <Globe className="w-12 h-12 text-[#C8FF00]/20 group-hover:text-[#C8FF00]/40 transition" />
               </div>
-              <p className="font-semibold text-white group-hover:text-[#D4AF37] transition">
+              <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
                 {template}
               </p>
-              <button className="mt-3 w-full px-3 py-2 bg-[#D4AF37]/20 text-[#D4AF37] rounded text-sm font-medium hover:bg-[#D4AF37]/30 transition">
+              <button className="mt-3 w-full px-3 py-2 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition">
                 Use Template
               </button>
             </div>

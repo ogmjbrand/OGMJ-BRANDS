@@ -126,13 +126,13 @@ export function CreateDealModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6 max-w-lg w-full mx-4 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-lg w-full mx-4 space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Create Deal</h2>
           <button
             onClick={onClose}
-            className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] transition"
+            className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -150,7 +150,7 @@ export function CreateDealModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Contact Selection */}
           <div>
-            <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+            <label className="block text-xs font-medium text-[#C8FF00] mb-1">
               Contact *
             </label>
             <select
@@ -158,7 +158,7 @@ export function CreateDealModal({
               value={formData.contactId}
               onChange={handleChange}
               disabled={loadingContacts}
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37] disabled:opacity-50"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00] disabled:opacity-50"
             >
               <option value="">
                 {loadingContacts ? 'Loading contacts...' : 'Select a contact'}
@@ -173,7 +173,7 @@ export function CreateDealModal({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+            <label className="block text-xs font-medium text-[#C8FF00] mb-1">
               Deal Title *
             </label>
             <input
@@ -182,18 +182,18 @@ export function CreateDealModal({
               value={formData.title}
               onChange={handleChange}
               placeholder="Website Development Project"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
             />
           </div>
 
           {/* Value and Currency */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Value *
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#D4AF37]/50" />
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#C8FF00]/50" />
                 <input
                   type="number"
                   name="value"
@@ -202,19 +202,19 @@ export function CreateDealModal({
                   placeholder="50000"
                   min="0"
                   step="0.01"
-                  className="w-full pl-10 pr-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full pl-10 pr-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Currency
               </label>
               <select
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
               >
                 <option value="NGN">NGN (₦)</option>
                 <option value="USD">USD ($)</option>
@@ -227,14 +227,14 @@ export function CreateDealModal({
           {/* Stage and Expected Close Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Stage
               </label>
               <select
                 name="stage"
                 value={formData.stage}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
               >
                 <option value="prospecting">Prospecting</option>
                 <option value="qualification">Qualification</option>
@@ -244,7 +244,7 @@ export function CreateDealModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Expected Close Date
               </label>
               <input
@@ -252,14 +252,14 @@ export function CreateDealModal({
                 name="expectedCloseDate"
                 value={formData.expectedCloseDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+            <label className="block text-xs font-medium text-[#C8FF00] mb-1">
               Description
             </label>
             <textarea
@@ -268,7 +268,7 @@ export function CreateDealModal({
               onChange={handleChange}
               placeholder="Deal details and requirements..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] resize-none"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00] resize-none"
             />
           </div>
 
@@ -277,14 +277,14 @@ export function CreateDealModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37]/70 rounded-lg font-medium hover:bg-[#D4AF37]/20 transition"
+              className="flex-1 px-4 py-2 bg-[#C8FF00]/10 text-[#C8FF00]/70 rounded-lg font-medium hover:bg-[#C8FF00]/20 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-semibold hover:bg-[#D4AF37]/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create Deal'}
             </button>

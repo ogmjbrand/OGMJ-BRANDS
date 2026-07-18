@@ -98,23 +98,23 @@ export default function WorkflowsPage() {
   if (!businessId) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Zap className="h-4 w-4" /> Automation layer
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Automations that keep your empire moving while you focus on growth.</h1>
             <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Turn customer moments into responsive workflows that feel polished, intelligent and easy to trust.</p>
           </div>
-          <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90">
+          <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">
             <Plus className="h-4 w-4" /> New workflow
           </button>
         </div>
@@ -132,10 +132,10 @@ export default function WorkflowsPage() {
 
       {loading ? (
         <div className="flex min-h-[200px] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
         </div>
       ) : workflows.length === 0 ? (
-        <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-12 text-center">
+        <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-12 text-center">
           <p className="text-lg font-medium text-white">No workflows yet</p>
           <p className="mt-1 text-sm text-[#F8F9FA]/60">Create your first automation to get started.</p>
         </div>
@@ -147,7 +147,7 @@ export default function WorkflowsPage() {
               title={workflow.name}
               subtitle={`Trigger: ${TRIGGER_OPTIONS.find((t) => t.value === workflow.trigger_type)?.label || workflow.trigger_type}`}
             >
-              <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-white">Actions</p>
@@ -155,7 +155,7 @@ export default function WorkflowsPage() {
                       {workflow.actions.length > 0 ? workflow.actions.map((a) => a.label).join(', ') : 'No actions configured'}
                     </p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${workflow.status === 'active' ? 'border border-[#10B981]/20 bg-[#10B981]/10 text-[#10B981]' : 'border border-[#D4AF37]/20 bg-[#D4AF37]/10 text-[#D4AF37]'}`}>
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${workflow.status === 'active' ? 'border border-[#10B981]/20 bg-[#10B981]/10 text-[#10B981]' : 'border border-[#C8FF00]/20 bg-[#C8FF00]/10 text-[#C8FF00]'}`}>
                     {workflow.status}
                   </span>
                 </div>
@@ -167,13 +167,13 @@ export default function WorkflowsPage() {
                   <button
                     onClick={() => handleRun(workflow.id)}
                     disabled={runningId === workflow.id}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2 text-xs font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-4 py-2 text-xs font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-50"
                   >
                     <Send className="h-4 w-4" /> {runningId === workflow.id ? 'Running...' : 'Run now'}
                   </button>
                   <button
                     onClick={() => updateStatus(workflow.id, workflow.status === 'active' ? 'paused' : 'active')}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 px-4 py-2 text-xs font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/10"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 px-4 py-2 text-xs font-semibold text-[#C8FF00] transition hover:bg-[#C8FF00]/10"
                   >
                     <GitBranch className="h-4 w-4" /> {workflow.status === 'active' ? 'Pause' : 'Activate'}
                   </button>
@@ -192,7 +192,7 @@ export default function WorkflowsPage() {
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-[1.6rem] border border-[#D4AF37]/20 bg-[#0E1116] p-6">
+          <div className="w-full max-w-lg rounded-[1.6rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <h2 className="mb-4 text-2xl font-bold text-white">Create New Workflow</h2>
 
             {formError && (
@@ -200,39 +200,39 @@ export default function WorkflowsPage() {
             )}
 
             <div className="space-y-4">
-              <label className="block space-y-2 text-sm text-[#D4AF37]/70">
+              <label className="block space-y-2 text-sm text-[#C8FF00]/70">
                 Name
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. New Lead Nurture"
-                  className="w-full rounded-2xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                 />
               </label>
-              <label className="block space-y-2 text-sm text-[#D4AF37]/70">
+              <label className="block space-y-2 text-sm text-[#C8FF00]/70">
                 Description
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   placeholder="What does this automation do?"
-                  className="w-full rounded-2xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                 />
               </label>
-              <label className="block space-y-2 text-sm text-[#D4AF37]/70">
+              <label className="block space-y-2 text-sm text-[#C8FF00]/70">
                 Trigger
                 <select
                   value={triggerType}
                   onChange={(e) => setTriggerType(e.target.value)}
-                  className="w-full rounded-2xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                 >
                   {TRIGGER_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </label>
-              <div className="space-y-2 text-sm text-[#D4AF37]/70">
+              <div className="space-y-2 text-sm text-[#C8FF00]/70">
                 Actions
                 <div className="flex flex-wrap gap-2">
                   {ACTION_OPTIONS.map((action) => (
@@ -242,8 +242,8 @@ export default function WorkflowsPage() {
                       onClick={() => toggleAction(action.type)}
                       className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
                         selectedActions.includes(action.type)
-                          ? 'border-[#D4AF37] bg-[#D4AF37] text-[#07070A]'
-                          : 'border-[#D4AF37]/20 bg-transparent text-[#D4AF37] hover:bg-[#D4AF37]/10'
+                          ? 'border-[#C8FF00] bg-[#C8FF00] text-[#07070A]'
+                          : 'border-[#C8FF00]/20 bg-transparent text-[#C8FF00] hover:bg-[#C8FF00]/10'
                       }`}
                     >
                       {action.label}
@@ -256,14 +256,14 @@ export default function WorkflowsPage() {
             <div className="mt-6 flex gap-4">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 rounded-full border border-[#D4AF37]/20 px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#D4AF37]/10"
+                className="flex-1 rounded-full border border-[#C8FF00]/20 px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#C8FF00]/10"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateWorkflow}
                 disabled={creating}
-                className="flex-1 rounded-full bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:opacity-60"
+                className="flex-1 rounded-full bg-[#C8FF00] px-4 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-60"
               >
                 {creating ? 'Creating...' : 'Create'}
               </button>

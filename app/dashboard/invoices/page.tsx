@@ -73,16 +73,16 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Sparkles className="h-4 w-4" /> Revenue operations
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Invoice management that keeps cash flow visible and confident.</h1>
             <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Create, review and monitor invoices with the same polish as the rest of your empire operations.</p>
           </div>
-          <button onClick={() => router.push('/dashboard/invoices/new')} className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90">
+          <button onClick={() => router.push('/dashboard/invoices/new')} className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">
             <Plus className="h-4 w-4" /> New invoice
           </button>
         </div>
@@ -98,9 +98,9 @@ export default function InvoicesPage() {
       )}
 
       <SectionPanel title="Invoice overview" subtitle="Filter by status and stay on top of collection health">
-        <div className="flex flex-wrap gap-2 border-b border-[#D4AF37]/10 pb-3">
+        <div className="flex flex-wrap gap-2 border-b border-[#C8FF00]/10 pb-3">
           {['all', 'draft', 'sent', 'paid', 'overdue'].map((status) => (
-            <button key={status} onClick={() => setFilter(status)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === status ? 'bg-[#D4AF37] text-[#07070A]' : 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'}`}>
+            <button key={status} onClick={() => setFilter(status)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === status ? 'bg-[#C8FF00] text-[#07070A]' : 'bg-[#C8FF00]/10 text-[#C8FF00] hover:bg-[#C8FF00]/20'}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </button>
           ))}
@@ -108,34 +108,34 @@ export default function InvoicesPage() {
 
         {loading ? (
           <div className="py-12 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#C8FF00]/20 border-t-[#C8FF00]" />
           </div>
         ) : invoices.length === 0 ? (
-          <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-12 text-center">
-            <p className="mb-4 text-[#D4AF37]/70">No invoices found</p>
-            <button onClick={() => router.push('/dashboard/invoices/new')} className="font-medium text-[#D4AF37] transition hover:text-white">
+          <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-12 text-center">
+            <p className="mb-4 text-[#C8FF00]/70">No invoices found</p>
+            <button onClick={() => router.push('/dashboard/invoices/new')} className="font-medium text-[#C8FF00] transition hover:text-white">
               Create your first invoice →
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E]">
+          <div className="overflow-x-auto rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E]">
             <table className="w-full">
-              <thead className="border-b border-[#D4AF37]/10 bg-[#07070A]">
+              <thead className="border-b border-[#C8FF00]/10 bg-[#07070A]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Invoice</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-[#D4AF37]/70">Due date</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-[#D4AF37]/70">Actions</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#C8FF00]/70">Invoice</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#C8FF00]/70">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#C8FF00]/70">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-[#C8FF00]/70">Due date</th>
+                  <th className="px-6 py-4 text-right text-sm font-medium text-[#C8FF00]/70">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-[#D4AF37]/5 transition hover:bg-[#0E1116]/50">
+                  <tr key={invoice.id} className="border-b border-[#C8FF00]/5 transition hover:bg-[#0E1116]/50">
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-white">{invoice.invoice_number}</p>
-                        <p className="text-sm text-[#D4AF37]/50">
+                        <p className="text-sm text-[#C8FF00]/50">
                           {invoice.clients?.name || 'No client'} · {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -143,7 +143,7 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-white">₦{Number(invoice.total).toLocaleString('en-NG')}</p>
-                        <p className="text-sm text-[#D4AF37]/50">{invoice.status === 'paid' ? 'Paid in full' : 'Outstanding'}</p>
+                        <p className="text-sm text-[#C8FF00]/50">{invoice.status === 'paid' ? 'Paid in full' : 'Outstanding'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -151,16 +151,16 @@ export default function InvoicesPage() {
                         {invoice.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#D4AF37]/70">
+                    <td className="px-6 py-4 text-sm text-[#C8FF00]/70">
                       {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)} className="rounded p-2 transition hover:bg-[#D4AF37]/10" title="View">
-                          <Eye className="h-4 w-4 text-[#D4AF37]" />
+                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)} className="rounded p-2 transition hover:bg-[#C8FF00]/10" title="View">
+                          <Eye className="h-4 w-4 text-[#C8FF00]" />
                         </button>
-                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)} className="rounded p-2 transition hover:bg-[#D4AF37]/10" title="Edit">
-                          <Edit2 className="h-4 w-4 text-[#D4AF37]" />
+                        <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)} className="rounded p-2 transition hover:bg-[#C8FF00]/10" title="Edit">
+                          <Edit2 className="h-4 w-4 text-[#C8FF00]" />
                         </button>
                         <button onClick={() => setDeleteConfirm(invoice.id)} className="rounded p-2 transition hover:bg-red-500/10" title="Delete">
                           <Trash2 className="h-4 w-4 text-red-400" />
@@ -177,11 +177,11 @@ export default function InvoicesPage() {
 
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-w-sm rounded-[1.35rem] border border-[#D4AF37]/20 bg-[#0E1116] p-6">
+          <div className="max-w-sm rounded-[1.35rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <p className="mb-4 font-semibold text-white">Delete invoice?</p>
-            <p className="mb-6 text-sm text-[#D4AF37]/70">This action cannot be undone.</p>
+            <p className="mb-6 text-sm text-[#C8FF00]/70">This action cannot be undone.</p>
             <div className="flex gap-4">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-lg border border-[#D4AF37]/20 px-4 py-2 text-[#D4AF37] transition hover:bg-[#D4AF37]/10">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-lg border border-[#C8FF00]/20 px-4 py-2 text-[#C8FF00] transition hover:bg-[#C8FF00]/10">
                 Cancel
               </button>
               <button onClick={() => handleDeleteInvoice(deleteConfirm)} className="flex-1 rounded-lg border border-red-500/30 bg-red-500/20 px-4 py-2 text-red-300 transition hover:bg-red-500/30">

@@ -7,7 +7,7 @@ export default function Loading() {
     <div className="min-h-screen flex items-center justify-center bg-[#04060A] text-white">
       <div className="space-y-4 text-center">
         <motion.div
-          className="mx-auto h-14 w-14 rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]"
+          className="mx-auto h-14 w-14 rounded-full border-4 border-[#C8FF00]/20 border-t-[#C8FF00]"
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
         />

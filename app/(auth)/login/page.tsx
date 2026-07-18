@@ -105,7 +105,7 @@ export default function LoginPage() {
           priority
         />
         <h1 className="text-3xl font-bold text-white">Welcome Back</h1>
-        <p className="text-[#D4AF37]/70">Sign in to your OGMJ BRANDS account</p>
+        <p className="text-[#C8FF00]/70">Sign in to your OGMJ BRANDS account</p>
       </div>
 
       {/* Error Alert */}
@@ -122,14 +122,14 @@ export default function LoginPage() {
         <div>
           <label className="block text-sm font-medium text-white mb-2">Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-5 w-5 text-[#D4AF37]/50" />
+            <Mail className="absolute left-3 top-3 h-5 w-5 text-[#C8FF00]/50" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
             />
           </div>
         </div>
@@ -138,19 +138,19 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-white">Password</label>
-            <Link href="/forgot-password" className="text-xs text-[#D4AF37] hover:text-[#D4AF37]/80">
+            <Link href="/forgot-password" className="text-xs text-[#C8FF00] hover:text-[#C8FF00]/80">
               Forgot password?
             </Link>
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-5 w-5 text-[#D4AF37]/50" />
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-[#C8FF00]/50" />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
             />
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#D4AF37] hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50 text-[#07070A] font-semibold py-2.5 rounded-lg transition disabled:cursor-not-allowed"
+          className="w-full bg-[#C8FF00] hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50 text-[#07070A] font-semibold py-2.5 rounded-lg transition disabled:cursor-not-allowed"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
@@ -168,10 +168,10 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#D4AF37]/10"></div>
+          <div className="w-full border-t border-[#C8FF00]/10"></div>
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="px-2 bg-[#0E1116] text-[#D4AF37]/50">or continue with</span>
+          <span className="px-2 bg-[#0E1116] text-[#C8FF00]/50">or continue with</span>
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuthSignIn('google')}
           disabled={!!oauthLoading}
-          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
+          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#C8FF00]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
         >
           {oauthLoading === 'google' ? 'Connecting...' : 'Google'}
         </button>
@@ -189,16 +189,16 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuthSignIn('github')}
           disabled={!!oauthLoading}
-          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#D4AF37]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
+          className="bg-[#07070A] hover:bg-[#07070A]/80 disabled:bg-[#07070A]/50 border border-[#C8FF00]/20 text-white py-2.5 rounded-lg transition font-medium text-sm disabled:cursor-not-allowed flex items-center justify-center"
         >
           {oauthLoading === 'github' ? 'Connecting...' : 'GitHub'}
         </button>
       </div>
 
       {/* Sign Up Link */}
-      <p className="text-center text-sm text-[#D4AF37]/70">
+      <p className="text-center text-sm text-[#C8FF00]/70">
         Don't have an account?{' '}
-        <Link href="/signup" className="text-[#D4AF37] hover:text-[#D4AF37]/80 font-semibold">
+        <Link href="/signup" className="text-[#C8FF00] hover:text-[#C8FF00]/80 font-semibold">
           Sign up
         </Link>
       </p>

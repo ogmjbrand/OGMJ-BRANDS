@@ -130,10 +130,10 @@ export default function AIPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Sparkles className="h-4 w-4" /> Empire AI — your unfair advantage
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -145,7 +145,7 @@ export default function AIPage() {
               the rest of your operating system.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-[#D4AF37]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+          <div className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
             <p className="font-semibold text-white">Speaking with: {activeAgent.label}</p>
             <p className="mt-2">{activeAgent.focus}</p>
           </div>
@@ -165,7 +165,7 @@ export default function AIPage() {
         >
           <div
             ref={scrollRef}
-            className="max-h-[480px] min-h-[260px] space-y-4 overflow-y-auto rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#07070A] p-4"
+            className="max-h-[480px] min-h-[260px] space-y-4 overflow-y-auto rounded-[1.4rem] border border-[#C8FF00]/10 bg-[#07070A] p-4"
           >
             {messages.length === 0 && (
               <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-4 text-center">
@@ -178,7 +178,7 @@ export default function AIPage() {
                     <button
                       key={item}
                       onClick={() => sendMessage(item)}
-                      className="rounded-full border border-[#D4AF37]/10 bg-[#11151E] px-4 py-2 text-xs text-[#F8F9FA]/70 transition hover:border-[#D4AF37]/40 hover:text-white sm:text-sm"
+                      className="rounded-full border border-[#C8FF00]/10 bg-[#11151E] px-4 py-2 text-xs text-[#F8F9FA]/70 transition hover:border-[#C8FF00]/40 hover:text-white sm:text-sm"
                     >
                       {item}
                     </button>
@@ -193,20 +193,20 @@ export default function AIPage() {
                 className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {message.role === 'assistant' && (
-                  <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-[#D4AF37]/15 text-[#D4AF37]">
+                  <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-[#C8FF00]/15 text-[#C8FF00]">
                     <Sparkles className="h-4 w-4" />
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] whitespace-pre-wrap rounded-[1.2rem] px-4 py-3 text-sm leading-7 ${
                     message.role === 'user'
-                      ? 'bg-[#D4AF37]/15 text-white'
-                      : 'border border-[#D4AF37]/10 bg-[#11151E] text-[#F8F9FA]/85'
+                      ? 'bg-[#C8FF00]/15 text-white'
+                      : 'border border-[#C8FF00]/10 bg-[#11151E] text-[#F8F9FA]/85'
                   }`}
                 >
                   {message.content || (
                     <span className="inline-flex items-center gap-2 text-[#F8F9FA]/50">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-[#D4AF37]" />
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-[#C8FF00]" />
                       Thinking…
                     </span>
                   )}
@@ -236,7 +236,7 @@ export default function AIPage() {
               onKeyDown={handleKeyDown}
               placeholder={`Ask the ${activeAgent.label.toLowerCase()} to draft a launch, investor update, campaign plan or automation sequence…`}
               rows={3}
-              className="w-full rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#07070A] p-4 text-sm text-white outline-none ring-0 transition focus:border-[#D4AF37]"
+              className="w-full rounded-[1.4rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-none ring-0 transition focus:border-[#C8FF00]"
             />
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {messages.length > 0 && (
@@ -246,7 +246,7 @@ export default function AIPage() {
                     setMessages([]);
                     setError(null);
                   }}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/10 bg-[#11151E] px-4 py-2 text-xs text-[#F8F9FA]/60 transition hover:border-[#D4AF37]/40 hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/10 bg-[#11151E] px-4 py-2 text-xs text-[#F8F9FA]/60 transition hover:border-[#C8FF00]/40 hover:text-white"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> New conversation
                 </button>
@@ -255,7 +255,7 @@ export default function AIPage() {
               {streaming ? (
                 <button
                   onClick={stopStreaming}
-                  className="ml-auto inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-[#11151E] px-5 py-2.5 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/10"
+                  className="ml-auto inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/40 bg-[#11151E] px-5 py-2.5 text-sm font-semibold text-[#C8FF00] transition hover:bg-[#C8FF00]/10"
                 >
                   <Square className="h-4 w-4" /> Stop
                 </button>
@@ -263,7 +263,7 @@ export default function AIPage() {
                 <button
                   onClick={() => sendMessage()}
                   disabled={!input.trim()}
-                  className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-5 py-2.5 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" /> Send
                 </button>
@@ -283,14 +283,14 @@ export default function AIPage() {
                   onClick={() => setSelectedAgent(agent.id)}
                   className={`w-full rounded-[1.4rem] border p-4 text-left transition ${
                     selected
-                      ? 'border-[#D4AF37]/60 bg-[#D4AF37]/10'
-                      : 'border-[#D4AF37]/10 bg-[#11151E] hover:border-[#D4AF37]/30'
+                      ? 'border-[#C8FF00]/60 bg-[#C8FF00]/10'
+                      : 'border-[#C8FF00]/10 bg-[#11151E] hover:border-[#C8FF00]/30'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-                        selected ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-white/5 text-[#F8F9FA]/60'
+                        selected ? 'bg-[#C8FF00]/20 text-[#C8FF00]' : 'bg-white/5 text-[#F8F9FA]/60'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -300,7 +300,7 @@ export default function AIPage() {
                       <p className="text-xs uppercase tracking-[0.2em] text-[#F8F9FA]/40">{agent.role}</p>
                     </div>
                     {selected && (
-                      <span className="ml-auto rounded-full bg-[#D4AF37]/20 px-3 py-1 text-xs font-semibold text-[#D4AF37]">
+                      <span className="ml-auto rounded-full bg-[#C8FF00]/20 px-3 py-1 text-xs font-semibold text-[#C8FF00]">
                         Active
                       </span>
                     )}
