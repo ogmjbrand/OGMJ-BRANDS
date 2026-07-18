@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
       { count: lostDeals }
     ] = await Promise.all([
       supabase
-        .from('contacts')
-        .select('deals!inner(*)', { count: 'exact', head: true })
+        .from('deals')
+        .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId),
       supabase
         .from('deals')

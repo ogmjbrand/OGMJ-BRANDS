@@ -20,7 +20,8 @@ export interface DashboardMetrics {
 
 export interface RevenueData {
   total: number;
-  monthly: Record<string, number>;
+  bySource: { transactions: number; deals: number };
+  monthlyBreakdown: Array<{ month: string; amount: number }>;
   period: string;
 }
 
@@ -30,16 +31,16 @@ export interface DealPipelineData {
   proposal: number;
   negotiation: number;
   decision: number;
+  conversionRate: number;
 }
 
-export interface TopContactsData {
-  contacts: Array<{
-    id: string;
-    name: string;
-    email: string;
-    totalValue: number;
-    dealCount: number;
-  }>;
+export interface RecentContact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  status: string;
+  created_at: string;
 }
 
 // ================================
@@ -117,9 +118,16 @@ export async function getRevenueData(
       };
     }
 
+    const revenue = result.data?.revenue || {};
+
     return {
       success: true,
-      data: result.data,
+      data: {
+        total: revenue.total || 0,
+        bySource: revenue.bySource || { transactions: 0, deals: 0 },
+        monthlyBreakdown: revenue.monthlyBreakdown || [],
+        period: result.data?.period || period,
+      },
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
@@ -169,6 +177,7 @@ export async function getDealPipelineData(
         proposal: pipelineData.proposal || 0,
         negotiation: pipelineData.negotiation || 0,
         decision: pipelineData.decision || 0,
+        conversionRate: result.data.crm.deals.conversionRate || 0,
       },
       timestamp: new Date().toISOString(),
     };
@@ -187,7 +196,7 @@ export async function getDealPipelineData(
 export async function getTopContacts(
   businessId: string,
   limit: number = 5
-): Promise<APIResponse<TopContactsData>> {
+): Promise<APIResponse<RecentContact[]>> {
   try {
     const queryParams = new URLSearchParams({
       businessId,
@@ -211,9 +220,11 @@ export async function getTopContacts(
       };
     }
 
+    const contacts: RecentContact[] = result.data?.crm?.recentActivity?.contacts || [];
+
     return {
       success: true,
-      data: result.data,
+      data: contacts.slice(0, limit),
       timestamp: new Date().toISOString(),
     };
   } catch (error) {

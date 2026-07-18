@@ -29,6 +29,8 @@ import {
   getDealPipelineData,
   getTopContacts,
   type DealPipelineData,
+  type RecentContact,
+  type RevenueData,
 } from '@/lib/services/analytics.service';
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
@@ -40,9 +42,9 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<any>(null);
-  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [pipelineData, setPipelineData] = useState<DealPipelineData | null>(null);
-  const [topContacts, setTopContacts] = useState<any[]>([]);
+  const [topContacts, setTopContacts] = useState<RecentContact[]>([]);
 
   async function loadAnalytics() {
     if (!currentBusiness) {
@@ -65,8 +67,8 @@ export default function AnalyticsPage() {
         setMetrics(metricsResult.data);
       }
 
-      if (revenueResult.success) {
-        setRevenueData(Array.isArray(revenueResult.data) ? revenueResult.data : []);
+      if (revenueResult.success && revenueResult.data) {
+        setRevenueData(revenueResult.data);
       }
 
       if (pipelineResult.success && pipelineResult.data) {
@@ -129,20 +131,13 @@ export default function AnalyticsPage() {
     ? Object.values(pipelineData).reduce((total: number, value: number) => total + value, 0)
     : 0;
 
-  const chartData = revenueData.length
-    ? revenueData.map((item: any, index: number) => ({
-        name: item.name ?? item.period ?? item.label ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][index] ?? `P${index + 1}`,
-        revenue: item.revenue ?? item.value ?? item.amount ?? 0,
-      }))
-    : [
-        { name: 'Mon', revenue: 24 },
-        { name: 'Tue', revenue: 38 },
-        { name: 'Wed', revenue: 29 },
-        { name: 'Thu', revenue: 50 },
-        { name: 'Fri', revenue: 44 },
-        { name: 'Sat', revenue: 62 },
-        { name: 'Sun', revenue: 58 },
-      ];
+  const chartData = (revenueData?.monthlyBreakdown || []).map((item) => {
+    const [year, month] = item.month.split('-');
+    const label = year && month
+      ? new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-US', { month: 'short' })
+      : item.month;
+    return { name: label, revenue: item.amount };
+  });
 
   const pipelineSeries = pipelineData
     ? [
@@ -161,7 +156,7 @@ export default function AnalyticsPage() {
       description: 'Revenue generated across the current period',
       icon: DollarSign,
       accent: 'gold' as const,
-      trend: '+12.5%',
+      trend: 'Live',
     },
     {
       title: 'Active deals',
@@ -169,7 +164,7 @@ export default function AnalyticsPage() {
       description: 'Opportunities in active motion',
       icon: Target,
       accent: 'emerald' as const,
-      trend: '+3 this month',
+      trend: 'Live',
     },
     {
       title: 'New contacts',
@@ -177,15 +172,15 @@ export default function AnalyticsPage() {
       description: 'Fresh prospects and customer touchpoints',
       icon: Users,
       accent: 'slate' as const,
-      trend: '+180 this month',
+      trend: 'Live',
     },
     {
       title: 'Conversion rate',
-      value: '32%',
-      description: 'Deals converted versus opportunities',
+      value: `${Math.round((pipelineData?.conversionRate ?? 0) * 100)}%`,
+      description: 'Won deals versus total opportunities',
       icon: TrendingUp,
       accent: 'gold' as const,
-      trend: '+2.1%',
+      trend: 'Live',
     },
   ];
 
@@ -226,17 +221,23 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <SectionPanel title="Revenue trend" subtitle="Momentum across the selected range" actionLabel="View reports" actionHref="/dashboard/analytics">
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(200, 255, 0,0.16)" />
-                <XAxis dataKey="name" stroke="#C8FF00/60" />
-                <YAxis stroke="#C8FF00/60" />
-                <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
-                <Line type="monotone" dataKey="revenue" stroke="#C8FF00" strokeWidth={3} dot={{ r: 3, fill: '#C8FF00' }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {chartData.length > 0 ? (
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(200, 255, 0,0.16)" />
+                  <XAxis dataKey="name" stroke="#C8FF00/60" />
+                  <YAxis stroke="#C8FF00/60" />
+                  <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
+                  <Line type="monotone" dataKey="revenue" stroke="#C8FF00" strokeWidth={3} dot={{ r: 3, fill: '#C8FF00' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-[280px] items-center justify-center">
+              <p className="text-sm text-[#C8FF00]/60">No revenue data for this period yet.</p>
+            </div>
+          )}
         </SectionPanel>
 
         <SectionPanel title="Pipeline distribution" subtitle="Where your next revenue is most likely to come from">
@@ -289,24 +290,34 @@ export default function AnalyticsPage() {
           </div>
         </SectionPanel>
 
-        <SectionPanel title="Operating pulse" subtitle="Key actions and momentum this week">
+        <SectionPanel title="Revenue by source" subtitle="Where this period's revenue actually came from">
           <div className="space-y-3">
-            {[
-              { label: 'New offers launched', value: '3', detail: 'Premium offers are converting well' },
-              { label: 'Automations active', value: '8', detail: 'Follow-ups and reminders are running' },
-              { label: 'Content shipped', value: '12', detail: 'A strong publishing cadence is in motion' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">{item.label}</p>
-                  <p className="mt-1 text-sm text-[#F8F9FA]/60">{item.detail}</p>
+            {revenueData && (revenueData.bySource.transactions > 0 || revenueData.bySource.deals > 0) ? (
+              <>
+                <div className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Payments &amp; subscriptions</p>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">Completed transactions this period</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#C8FF00]">
+                    <Activity className="h-4 w-4" />
+                    <span className="text-sm font-semibold">${Number(revenueData.bySource.transactions).toLocaleString()}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-[#C8FF00]">
-                  <Activity className="h-4 w-4" />
-                  <span className="text-sm font-semibold">{item.value}</span>
+                <div className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Won deals</p>
+                    <p className="mt-1 text-sm text-[#F8F9FA]/60">Closed CRM opportunities this period</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#C8FF00]">
+                    <Activity className="h-4 w-4" />
+                    <span className="text-sm font-semibold">${Number(revenueData.bySource.deals).toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              </>
+            ) : (
+              <p className="text-sm text-[#C8FF00]/60">No revenue recorded for this period yet.</p>
+            )}
           </div>
         </SectionPanel>
       </div>
