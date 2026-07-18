@@ -47,6 +47,19 @@ export async function GET(request: NextRequest) {
     const startDate = calculateStartDate(period);
     const supabase = await createServerClient();
 
+    // Verify business access
+    const { data: accessCheck } = await supabase
+      .from('business_users')
+      .select('role')
+      .eq('business_id', businessId)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (!accessCheck) {
+      return createErrorResponse('Access denied', 403);
+    }
+
     const [{ count: contacts }, { count: deals }, { data: revenueData }] = await Promise.all([
       supabase
         .from('contacts')
