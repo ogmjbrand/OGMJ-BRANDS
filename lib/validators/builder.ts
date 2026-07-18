@@ -28,47 +28,12 @@ export function validateCreateWebsiteInput(input: CreateWebsiteInput): { isValid
     errors.push('Website name must be less than 100 characters');
   }
 
-  // Slug validation
-  if (input.slug !== undefined) {
-    if (typeof input.slug !== 'string') {
-      errors.push('Slug must be a string');
-    } else if (input.slug.trim().length === 0) {
-      errors.push('Slug cannot be empty');
-    } else if (!isValidSlug(input.slug)) {
-      errors.push('Slug must contain only lowercase letters, numbers, and hyphens');
-    } else if (input.slug.length > 50) {
-      errors.push('Slug must be less than 50 characters');
-    }
-  }
-
   // Description validation
   if (input.description !== undefined) {
     if (typeof input.description !== 'string') {
       errors.push('Description must be a string');
     } else if (input.description.length > 500) {
       errors.push('Description must be less than 500 characters');
-    }
-  }
-
-  // Domain validation
-  if (input.domain !== undefined) {
-    if (typeof input.domain !== 'string') {
-      errors.push('Domain must be a string');
-    } else if (input.domain.trim().length === 0) {
-      errors.push('Domain cannot be empty');
-    } else if (!isValidDomain(input.domain)) {
-      errors.push('Invalid domain format');
-    }
-  }
-
-  // Custom domain validation
-  if (input.customDomain !== undefined) {
-    if (typeof input.customDomain !== 'string') {
-      errors.push('Custom domain must be a string');
-    } else if (input.customDomain.trim().length === 0) {
-      errors.push('Custom domain cannot be empty');
-    } else if (!isValidDomain(input.customDomain)) {
-      errors.push('Invalid custom domain format');
     }
   }
 
@@ -92,47 +57,12 @@ export function validateUpdateWebsiteInput(input: UpdateWebsiteInput): { isValid
     }
   }
 
-  // Slug validation
-  if (input.slug !== undefined) {
-    if (typeof input.slug !== 'string') {
-      errors.push('Slug must be a string');
-    } else if (input.slug.trim().length === 0) {
-      errors.push('Slug cannot be empty');
-    } else if (!isValidSlug(input.slug)) {
-      errors.push('Slug must contain only lowercase letters, numbers, and hyphens');
-    } else if (input.slug.length > 50) {
-      errors.push('Slug must be less than 50 characters');
-    }
-  }
-
   // Description validation
   if (input.description !== undefined) {
     if (typeof input.description !== 'string') {
       errors.push('Description must be a string');
     } else if (input.description.length > 500) {
       errors.push('Description must be less than 500 characters');
-    }
-  }
-
-  // Domain validation
-  if (input.domain !== undefined) {
-    if (typeof input.domain !== 'string') {
-      errors.push('Domain must be a string');
-    } else if (input.domain.trim().length === 0) {
-      errors.push('Domain cannot be empty');
-    } else if (!isValidDomain(input.domain)) {
-      errors.push('Invalid domain format');
-    }
-  }
-
-  // Custom domain validation
-  if (input.customDomain !== undefined) {
-    if (typeof input.customDomain !== 'string') {
-      errors.push('Custom domain must be a string');
-    } else if (input.customDomain.trim().length === 0) {
-      errors.push('Custom domain cannot be empty');
-    } else if (!isValidDomain(input.customDomain)) {
-      errors.push('Invalid custom domain format');
     }
   }
 
@@ -399,11 +329,6 @@ function isValidSlug(slug: string): boolean {
   return slugRegex.test(slug);
 }
 
-function isValidDomain(domain: string): boolean {
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
-  return domainRegex.test(domain) && domain.length <= 253;
-}
-
 // ================================
 // SANITIZATION FUNCTIONS
 // ================================
@@ -412,10 +337,7 @@ export function sanitizeCreateWebsiteInput(input: CreateWebsiteInput): CreateWeb
   return {
     ...input,
     name: input.name.trim(),
-    slug: input.slug?.trim().toLowerCase(),
     description: input.description?.trim(),
-    domain: input.domain?.trim().toLowerCase(),
-    customDomain: input.customDomain?.trim().toLowerCase(),
   };
 }
 
@@ -423,10 +345,7 @@ export function sanitizeUpdateWebsiteInput(input: UpdateWebsiteInput): UpdateWeb
   return {
     ...input,
     name: input.name?.trim(),
-    slug: input.slug?.trim().toLowerCase(),
     description: input.description?.trim(),
-    domain: input.domain?.trim().toLowerCase(),
-    customDomain: input.customDomain?.trim().toLowerCase(),
   };
 }
 

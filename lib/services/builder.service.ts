@@ -12,10 +12,7 @@ import type { APIResponse } from "../types";
 export interface Website {
   id: string;
   name: string;
-  slug: string;
   description?: string;
-  domain?: string;
-  customDomain?: string;
   status: 'draft' | 'published' | 'archived';
   templateId?: string;
   publishedAt?: string;
@@ -29,19 +26,13 @@ export interface Website {
 export interface CreateWebsiteInput {
   businessId: string;
   name: string;
-  slug?: string;
   description?: string;
-  domain?: string;
-  customDomain?: string;
   templateId?: string;
 }
 
 export interface UpdateWebsiteInput {
   name?: string;
-  slug?: string;
   description?: string;
-  domain?: string;
-  customDomain?: string;
   status?: 'draft' | 'published' | 'archived';
 }
 
@@ -73,16 +64,13 @@ export async function getWebsites(
     const websites = result.data?.websites?.map((site: any) => ({
       id: site.id,
       name: site.name,
-      slug: site.slug,
       description: site.description,
-      domain: site.domain,
-      customDomain: site.custom_domain,
       status: site.status,
       templateId: site.template_id,
       publishedAt: site.published_at,
       createdAt: site.created_at,
       updatedAt: site.updated_at,
-      pages: site.pages?.length || 0,
+      pages: site.web_pages?.length || 0,
       visitors: 0,
       lastModified: site.updated_at,
     })) || [];
@@ -213,6 +201,64 @@ export async function deleteWebsite(
     return {
       success: true,
       data: { success: true },
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'An error occurred',
+        code: 'NETWORK_ERROR',
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+// ================================
+// TEMPLATE TYPES + FUNCTIONS
+// ================================
+
+export interface Template {
+  id: string;
+  name: string;
+  category?: string;
+  previewImage?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export async function getTemplates(category?: string): Promise<APIResponse<Template[]>> {
+  try {
+    const response = await fetch(`/api/builder/templates${category ? `?category=${category}` : ''}`, {
+      method: 'GET',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          message: result.error || 'Failed to fetch templates',
+          code: response.status.toString(),
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    const templates = result.data?.templates?.map((template: any) => ({
+      id: template.id,
+      name: template.name,
+      category: template.category,
+      previewImage: template.preview_image,
+      isActive: template.is_active,
+      createdAt: template.created_at,
+    })) || [];
+
+    return {
+      success: true,
+      data: templates,
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
