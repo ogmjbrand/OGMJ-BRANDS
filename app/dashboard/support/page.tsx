@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { MessageSquare, Plus, Search, AlertCircle, Sparkles } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { getSupportTickets, createSupportTicket } from '@/lib/services/support.service';
@@ -21,7 +22,6 @@ export default function SupportPage() {
   const [newTicketSubject, setNewTicketSubject] = useState('');
   const [newTicketDescription, setNewTicketDescription] = useState('');
   const [newTicketPriority, setNewTicketPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
-  const [newTicketCategory, setNewTicketCategory] = useState('General');
   const [creatingTicket, setCreatingTicket] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -71,7 +71,6 @@ export default function SupportPage() {
       subject: newTicketSubject,
       description: newTicketDescription,
       priority: newTicketPriority,
-      category: newTicketCategory,
     });
 
     if (!result.success) {
@@ -83,7 +82,6 @@ export default function SupportPage() {
     setNewTicketSubject('');
     setNewTicketDescription('');
     setNewTicketPriority('medium');
-    setNewTicketCategory('General');
     setIsDialogOpen(false);
     setCreatingTicket(false);
     loadTickets();
@@ -193,21 +191,15 @@ export default function SupportPage() {
                     Description
                     <textarea value={newTicketDescription} onChange={(e) => setNewTicketDescription(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" rows={5} placeholder="Describe the issue, request, or question." />
                   </label>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-2 text-sm text-[#C8FF00]/70">
-                      Priority
-                      <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                      </select>
-                    </label>
-                    <label className="space-y-2 text-sm text-[#C8FF00]/70">
-                      Category
-                      <input type="text" value={newTicketCategory} onChange={(e) => setNewTicketCategory(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" placeholder="e.g. Billing, Product, Technical" />
-                    </label>
-                  </div>
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
+                    Priority
+                    <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]">
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </label>
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={creatingTicket}>{creatingTicket ? 'Creating...' : 'Create ticket'}</Button>
@@ -272,7 +264,11 @@ export default function SupportPage() {
                   <td className="px-6 py-3"><span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${getStatusColor(ticket.status)}`}>{ticket.status.replace('_', ' ')}</span></td>
                   <td className="px-6 py-3 text-white">{ticket.contact ? `${ticket.contact.firstName} ${ticket.contact.lastName}` : 'N/A'}</td>
                   <td className="px-6 py-3 text-sm text-[#F8F9FA]/60">{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-3"><button className="text-sm font-medium text-[#C8FF00] transition hover:text-white">View</button></td>
+                  <td className="px-6 py-3">
+                    <Link href={`/dashboard/support/${ticket.id}`} className="text-sm font-medium text-[#C8FF00] transition hover:text-white">
+                      View
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
