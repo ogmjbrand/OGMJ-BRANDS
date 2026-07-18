@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { CalendarDays, Clock3, MapPin, Sparkles, Video } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { CalendarDays, Clock3, MapPin, Plus, Sparkles, Video } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards'
 
@@ -31,6 +31,10 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [newAppt, setNewAppt] = useState({ title: '', startTime: '', endTime: '', location: '', meetingUrl: '', description: '' })
 
   useEffect(() => {
     async function fetchBusinessId() {
@@ -62,36 +66,78 @@ export default function AppointmentsPage() {
     fetchBusinessId()
   }, [])
 
-  useEffect(() => {
+  async function fetchAppointments() {
     if (!businessId) return
+    setLoading(true)
+    setError(null)
 
-    async function fetchAppointments() {
-      setLoading(true)
-      setError(null)
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('start_time', { ascending: true })
 
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('business_id', businessId)
-          .order('start_time', { ascending: true })
-
-        if (fetchError) {
-          setError(fetchError.message)
-          return
-        }
-
-        setAppointments((data as Appointment[]) ?? [])
-      } catch (err) {
-        setError('Failed to load appointments')
-        console.error(err)
-      } finally {
-        setLoading(false)
+      if (fetchError) {
+        setError(fetchError.message)
+        return
       }
-    }
 
+      setAppointments((data as Appointment[]) ?? [])
+    } catch (err) {
+      setError('Failed to load appointments')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchAppointments()
   }, [businessId])
+
+  async function handleCreateAppointment(e: React.FormEvent) {
+    e.preventDefault()
+    if (!businessId) return
+    if (!newAppt.title.trim() || !newAppt.startTime || !newAppt.endTime) {
+      setCreateError('Title, start time and end time are required')
+      return
+    }
+    if (new Date(newAppt.endTime) <= new Date(newAppt.startTime)) {
+      setCreateError('End time must be after start time')
+      return
+    }
+
+    setCreating(true)
+    setCreateError(null)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { error: insertError } = await supabase
+        .from('appointments')
+        .insert({
+          business_id: businessId,
+          owner_id: user.id,
+          title: newAppt.title.trim(),
+          description: newAppt.description.trim() || null,
+          location: newAppt.location.trim() || null,
+          meeting_url: newAppt.meetingUrl.trim() || null,
+          start_time: new Date(newAppt.startTime).toISOString(),
+          end_time: new Date(newAppt.endTime).toISOString(),
+        } as any)
+
+      if (insertError) throw insertError
+
+      setNewAppt({ title: '', startTime: '', endTime: '', location: '', meetingUrl: '', description: '' })
+      setShowNewModal(false)
+      await fetchAppointments()
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create appointment')
+    } finally {
+      setCreating(false)
+    }
+  }
 
   const upcomingCount = appointments.filter((appt) => new Date(appt.start_time) >= new Date()).length
   const scheduledCount = appointments.filter((appt) => (appt.status ?? 'scheduled') === 'scheduled').length
@@ -115,12 +161,20 @@ export default function AppointmentsPage() {
   return (
     <div className="space-y-8">
       <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
-            <Sparkles className="h-4 w-4" /> Time and attention orchestration
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
+              <Sparkles className="h-4 w-4" /> Time and attention orchestration
+            </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep every meeting, touchpoint and follow-up moving smoothly.</h1>
+            <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Your calendar stays elegant, actionable and connected to the rest of your empire.</p>
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep every meeting, touchpoint and follow-up moving smoothly.</h1>
-          <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Your calendar stays elegant, actionable and connected to the rest of your empire.</p>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-5 py-3 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90"
+          >
+            <Plus className="h-4 w-4" /> New appointment
+          </button>
         </div>
       </div>
 
@@ -172,6 +226,83 @@ export default function AppointmentsPage() {
           </div>
         )}
       </SectionPanel>
+
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md space-y-4 rounded-xl border border-[#C8FF00]/20 bg-[#0E1116] p-6">
+            <h2 className="text-xl font-semibold text-white">New appointment</h2>
+            {createError && (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">{createError}</div>
+            )}
+            <form onSubmit={handleCreateAppointment} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Title *"
+                value={newAppt.title}
+                onChange={(e) => setNewAppt((prev) => ({ ...prev, title: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-[#C8FF00]/70">Starts *</label>
+                  <input
+                    type="datetime-local"
+                    value={newAppt.startTime}
+                    onChange={(e) => setNewAppt((prev) => ({ ...prev, startTime: e.target.value }))}
+                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-[#C8FF00]/70">Ends *</label>
+                  <input
+                    type="datetime-local"
+                    value={newAppt.endTime}
+                    onChange={(e) => setNewAppt((prev) => ({ ...prev, endTime: e.target.value }))}
+                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                  />
+                </div>
+              </div>
+              <input
+                type="text"
+                placeholder="Location"
+                value={newAppt.location}
+                onChange={(e) => setNewAppt((prev) => ({ ...prev, location: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <input
+                type="url"
+                placeholder="Meeting URL (optional)"
+                value={newAppt.meetingUrl}
+                onChange={(e) => setNewAppt((prev) => ({ ...prev, meetingUrl: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <textarea
+                placeholder="Notes"
+                rows={3}
+                value={newAppt.description}
+                onChange={(e) => setNewAppt((prev) => ({ ...prev, description: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowNewModal(false); setCreateError(null) }}
+                  className="flex-1 rounded-lg bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00]/70 transition hover:bg-[#C8FF00]/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 rounded-lg bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-50"
+                >
+                  {creating ? 'Scheduling...' : 'Schedule'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -6,17 +6,20 @@ import { Plus, Trash2, Package, Sparkles, Tag, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards'
 
+const emptyProductForm = {
+  name: '',
+  description: '',
+  type: 'physical' as const,
+  status: 'draft' as const,
+  price: 0,
+}
+
 export default function ProductsPage() {
   const [businessId, setBusinessId] = useState<string>('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [newProduct, setNewProduct] = useState({
-    name: '',
-    description: '',
-    type: 'physical' as const,
-    status: 'draft' as const,
-    price: 0,
-  })
-  const { products, createProduct, deleteProduct } = useProducts(businessId)
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [newProduct, setNewProduct] = useState(emptyProductForm)
+  const { products, createProduct, updateProduct, deleteProduct } = useProducts(businessId)
 
   React.useEffect(() => {
     const fetchBusinessId = async () => {
@@ -35,19 +38,43 @@ export default function ProductsPage() {
     fetchBusinessId()
   }, [])
 
-  const handleCreateProduct = async () => {
+  const handleSaveProduct = async () => {
     if (!newProduct.name.trim()) return
-    await createProduct({
-      business_id: businessId,
-      name: newProduct.name,
-      description: newProduct.description || undefined,
-      type: newProduct.type,
-      status: newProduct.status,
-      price: newProduct.price,
-      currency: 'USD',
-    })
-    setNewProduct({ name: '', description: '', type: 'physical', status: 'draft', price: 0 })
+
+    if (editingProductId) {
+      await updateProduct(editingProductId, {
+        name: newProduct.name,
+        description: newProduct.description || undefined,
+        type: newProduct.type,
+        status: newProduct.status,
+        price: newProduct.price,
+      })
+    } else {
+      await createProduct({
+        business_id: businessId,
+        name: newProduct.name,
+        description: newProduct.description || undefined,
+        type: newProduct.type,
+        status: newProduct.status,
+        price: newProduct.price,
+        currency: 'USD',
+      })
+    }
+    setNewProduct(emptyProductForm)
+    setEditingProductId(null)
     setShowCreateModal(false)
+  }
+
+  function handleEditProduct(product: typeof products[number]) {
+    setEditingProductId(product.id)
+    setNewProduct({
+      name: product.name,
+      description: product.description || '',
+      type: (product.type as any) || 'physical',
+      status: (product.status as any) || 'draft',
+      price: product.price,
+    })
+    setShowCreateModal(true)
   }
 
   const totalValue = products.reduce((sum, product) => sum + (product.price || 0), 0)
@@ -81,7 +108,7 @@ export default function ProductsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[1.6rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
-            <h2 className="mb-4 text-2xl font-bold text-white">Add new product</h2>
+            <h2 className="mb-4 text-2xl font-bold text-white">{editingProductId ? 'Edit product' : 'Add new product'}</h2>
             <div className="space-y-4">
               <input type="text" placeholder="Product name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
               <textarea placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
@@ -95,8 +122,15 @@ export default function ProductsPage() {
               <input type="number" placeholder="Price" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
             </div>
             <div className="mt-6 flex gap-4">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 rounded-full border border-[#C8FF00]/20 px-4 py-2 text-white transition hover:bg-[#C8FF00]/10">Cancel</button>
-              <button onClick={handleCreateProduct} className="flex-1 rounded-full bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">Create</button>
+              <button
+                onClick={() => { setShowCreateModal(false); setEditingProductId(null); setNewProduct(emptyProductForm) }}
+                className="flex-1 rounded-full border border-[#C8FF00]/20 px-4 py-2 text-white transition hover:bg-[#C8FF00]/10"
+              >
+                Cancel
+              </button>
+              <button onClick={handleSaveProduct} className="flex-1 rounded-full bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">
+                {editingProductId ? 'Save changes' : 'Create'}
+              </button>
             </div>
           </div>
         </div>
@@ -124,7 +158,12 @@ export default function ProductsPage() {
                 <p className="mt-1 text-2xl font-semibold text-[#C8FF00]">${product.price.toFixed(2)}</p>
               </div>
               <div className="mt-5 flex gap-2">
-                <button className="flex-1 rounded-full bg-[#C8FF00] px-3 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">Edit</button>
+                <button
+                  onClick={() => handleEditProduct(product)}
+                  className="flex-1 rounded-full bg-[#C8FF00] px-3 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90"
+                >
+                  Edit
+                </button>
                 <button onClick={() => deleteProduct(product.id)} className="rounded-full border border-red-500/30 bg-red-500/10 p-2 text-red-400 transition hover:bg-red-500/20"><Trash2 className="h-4 w-4" /></button>
               </div>
             </div>
