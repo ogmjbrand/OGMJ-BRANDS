@@ -24,8 +24,7 @@ export function useProducts(businessId: string) {
         .from('products')
         .select(`
           *,
-          product_variants(*),
-          product_images(*)
+          product_variants(*)
         `)
         .eq('business_id', businessId)
         .order('created_at', { ascending: false })
