@@ -10,7 +10,37 @@ export default function LeadsPage() {
   const [businessId, setBusinessId] = useState<string>('')
   const [filterTemp, setFilterTemp] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
-  const { leads, stats, loading, error, updateLeadStatus, updateLeadTemperature } = useLeads(businessId)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newLead, setNewLead] = useState({ first_name: '', last_name: '', email: '', phone: '', company: '', source: '' })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const { leads, stats, loading, error, updateLeadStatus, updateLeadTemperature, createLead } = useLeads(businessId)
+
+  async function handleAddLead(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newLead.first_name.trim()) {
+      setCreateError('First name is required')
+      return
+    }
+    setCreating(true)
+    setCreateError(null)
+    try {
+      await createLead({
+        first_name: newLead.first_name.trim(),
+        last_name: newLead.last_name.trim() || undefined,
+        email: newLead.email.trim() || undefined,
+        phone: newLead.phone.trim() || undefined,
+        company: newLead.company.trim() || undefined,
+        source: newLead.source.trim() || undefined,
+      })
+      setNewLead({ first_name: '', last_name: '', email: '', phone: '', company: '', source: '' })
+      setShowAddModal(false)
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create lead')
+    } finally {
+      setCreating(false)
+    }
+  }
 
   React.useEffect(() => {
     const fetchBusinessId = async () => {
@@ -82,7 +112,10 @@ export default function LeadsPage() {
               <option className="bg-[#11151E] text-white" value="lost">Lost</option>
             </select>
           </label>
-          <button className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90"
+          >
             <Plus className="h-4 w-4" /> Add lead
           </button>
         </div>
@@ -97,15 +130,14 @@ export default function LeadsPage() {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#C8FF00]">Score</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#C8FF00]">Temperature</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#C8FF00]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[#C8FF00]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredLeads.map((lead) => (
                 <tr key={lead.id} className="border-b border-[#C8FF00]/5 transition hover:bg-[#0E1116]/50">
-                  <td className="px-6 py-4 text-white">{(lead as any).contact?.first_name} {(lead as any).contact?.last_name}</td>
-                  <td className="px-6 py-4 text-[#F8F9FA]/60">{(lead as any).contact?.email}</td>
-                  <td className="px-6 py-4 text-[#F8F9FA]/60">{(lead as any).contact?.company_name || '—'}</td>
+                  <td className="px-6 py-4 text-white">{lead.contact?.first_name ?? lead.first_name} {lead.contact?.last_name ?? lead.last_name}</td>
+                  <td className="px-6 py-4 text-[#F8F9FA]/60">{lead.contact?.email ?? lead.email}</td>
+                  <td className="px-6 py-4 text-[#F8F9FA]/60">{lead.contact?.company_name ?? lead.company ?? '—'}</td>
                   <td className="px-6 py-4 font-semibold text-white">{lead.lead_score || 0}</td>
                   <td className="px-6 py-4">
                     <select value={lead.temperature} onChange={(e) => updateLeadTemperature(lead.id, e.target.value as any)} className={`rounded-full px-3 py-1 text-sm font-semibold text-white ${lead.temperature === 'hot' ? 'border border-red-500/40 bg-red-500/20' : lead.temperature === 'warm' ? 'border border-yellow-500/40 bg-yellow-500/20' : 'border border-cyan-500/40 bg-cyan-500/20'}`}>
@@ -124,9 +156,6 @@ export default function LeadsPage() {
                       <option value="lost">Lost</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4">
-                    <button className="text-sm font-medium text-[#C8FF00] transition hover:text-white">View</button>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -137,6 +166,79 @@ export default function LeadsPage() {
           ) : null}
         </div>
       </SectionPanel>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md space-y-4 rounded-xl border border-[#C8FF00]/20 bg-[#0E1116] p-6">
+            <h2 className="text-xl font-semibold text-white">Add lead</h2>
+            {createError && (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">{createError}</div>
+            )}
+            <form onSubmit={handleAddLead} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="First name *"
+                  value={newLead.first_name}
+                  onChange={(e) => setNewLead((prev) => ({ ...prev, first_name: e.target.value }))}
+                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                />
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  value={newLead.last_name}
+                  onChange={(e) => setNewLead((prev) => ({ ...prev, last_name: e.target.value }))}
+                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                />
+              </div>
+              <input
+                type="email"
+                placeholder="Email"
+                value={newLead.email}
+                onChange={(e) => setNewLead((prev) => ({ ...prev, email: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <input
+                type="tel"
+                placeholder="Phone"
+                value={newLead.phone}
+                onChange={(e) => setNewLead((prev) => ({ ...prev, phone: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <input
+                type="text"
+                placeholder="Company"
+                value={newLead.company}
+                onChange={(e) => setNewLead((prev) => ({ ...prev, company: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <input
+                type="text"
+                placeholder="Source (e.g. referral, website)"
+                value={newLead.source}
+                onChange={(e) => setNewLead((prev) => ({ ...prev, source: e.target.value }))}
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+              />
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowAddModal(false); setCreateError(null) }}
+                  className="flex-1 rounded-lg bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00]/70 transition hover:bg-[#C8FF00]/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 rounded-lg bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-50"
+                >
+                  {creating ? 'Adding...' : 'Add lead'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

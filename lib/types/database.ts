@@ -24,12 +24,26 @@ export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer'
 export interface Lead {
   id: string
   business_id: string
-  contact_id: string
+  contact_id: string | null
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  phone?: string | null
+  company?: string | null
+  source?: string | null
   status: LeadStatus
   temperature: LeadTemperature
   lead_score: number
   created_at: string
   updated_at: string
+  contact?: {
+    id: string
+    first_name?: string
+    last_name?: string
+    email?: string
+    phone?: string
+    company_name?: string
+  } | null
 }
 
 export interface Appointment {

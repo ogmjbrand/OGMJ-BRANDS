@@ -52,10 +52,14 @@ export function useLeads(businessId: string) {
 
       if (leadsError) throw leadsError
 
-      setLeads(leadsData || [])
+      // Supabase infers the to-one contact embed as an array without
+      // generated DB types; normalize to a single object (or null).
+      const leadsArray: Lead[] = (leadsData || []).map((lead: any) => ({
+        ...lead,
+        contact: Array.isArray(lead.contact) ? lead.contact[0] ?? null : lead.contact,
+      }))
 
-      // Calculate stats
-      const leadsArray = leadsData || []
+      setLeads(leadsArray)
       const stats: LeadStats = {
         total_leads: leadsArray.length,
         active_count: leadsArray.filter(l => l.status !== 'converted' && l.status !== 'lost').length,
@@ -113,6 +117,31 @@ export function useLeads(businessId: string) {
     }
   }, [fetchLeadsWithStats])
 
+  const createLead = useCallback(async (input: {
+    first_name?: string
+    last_name?: string
+    email?: string
+    phone?: string
+    company?: string
+    source?: string
+  }) => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('leads')
+      .insert({ ...input, business_id: businessId, status: 'new', temperature: 'warm' } as any)
+      .select()
+      .single()
+
+    if (error) {
+      const message = error.message || 'Failed to create lead'
+      setError(message)
+      throw new Error(message)
+    }
+
+    await fetchLeadsWithStats()
+    return data
+  }, [businessId, fetchLeadsWithStats])
+
   return {
     leads,
     stats,
@@ -121,6 +150,7 @@ export function useLeads(businessId: string) {
     refetch: fetchLeadsWithStats,
     updateLeadStatus,
     updateLeadTemperature,
+    createLead,
   }
 }
 
