@@ -51,6 +51,7 @@ import {
   Workflow,
   type LucideIcon,
 } from 'lucide-react'
+import { TESTIMONIALS } from '@/lib/marketing/content'
 
 const syne = Syne({
   subsets: ['latin'],
@@ -648,6 +649,16 @@ function Hero({
       }}
     >
       <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Image
+          src="/site/service-business.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-[0.22]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/85 to-obsidian/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/60" />
         <div className="absolute -left-40 -top-40 size-[520px] rounded-full bg-gold/10 blur-[140px]" />
         <div className="absolute -bottom-40 right-0 size-[480px] rounded-full bg-emerald/10 blur-[140px]" />
         <div className="absolute right-1/3 top-0 size-[280px] rounded-full bg-heritage/10 blur-[120px]" />
@@ -948,6 +959,121 @@ function MarketplaceCluster({ cards }: { cards: MarketplaceCard[] }) {
   )
 }
 
+const SERVICE_PHOTOS = [
+  {
+    src: '/site/service-business.jpg',
+    title: 'Business Operations',
+    description: 'Run registration, compliance, and day-to-day operations from one command layer.',
+  },
+  {
+    src: '/site/branding.jpg',
+    title: 'Branding',
+    description: 'Identity systems, brand guidelines, and creative direction built for global markets.',
+  },
+  {
+    src: '/site/capabilities.jpg',
+    title: 'Analytics & Automation',
+    description: 'Live dashboards and AI-assisted workflows that turn activity into decisions.',
+  },
+  {
+    src: '/site/business-launch.jpg',
+    title: 'Launch',
+    description: 'Go-to-market strategy, positioning, and a launch sequence that ships on time.',
+  },
+  {
+    src: '/site/support.jpg',
+    title: 'Support',
+    description: 'A dedicated team on call for every stage, from onboarding to scale.',
+  },
+  {
+    src: '/site/dashboard.jpg',
+    title: 'Track Everything',
+    description: 'Revenue, pipeline, and team performance visible in real time, no spreadsheets.',
+  },
+] as const
+
+function ServicesShowcase() {
+  return (
+    <section id="services" className="border-t border-white/5 px-4 py-24 md:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px]">
+        <Reveal className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Services</p>
+          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+            Everything a founder needs to look, and run, like the real thing.
+          </h2>
+        </Reveal>
+
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {SERVICE_PHOTOS.map((service, index) => (
+            <Reveal key={service.title} delay={index * 0.06}>
+              <div className="group relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-white/10">
+                <Image
+                  src={service.src}
+                  alt={service.title}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover transition duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-6">
+                  <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">{service.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-content-muted">{service.description}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const TESTIMONIAL_PHOTOS: Record<string, string> = {
+  MS: '/site/testimonial-2.jpg',
+  AM: '/site/testimonial-1.jpg',
+  JO: '/site/testimonial-3.jpg',
+}
+
+function TestimonialsSection() {
+  return (
+    <section id="testimonials" className="border-t border-white/5 bg-obsidian-soft/40 px-4 py-24 md:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px]">
+        <Reveal className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Testimonials</p>
+          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+            Founders who moved faster with OGMJ.
+          </h2>
+        </Reveal>
+
+        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          {TESTIMONIALS.map((testimonial, index) => (
+            <Reveal key={testimonial.name} delay={index * 0.08}>
+              <BentoCard className="h-full">
+                <p className="text-base leading-7 text-content-muted">&ldquo;{testimonial.quote}&rdquo;</p>
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="relative size-11 shrink-0 overflow-hidden rounded-full border border-white/10">
+                    <Image
+                      src={TESTIMONIAL_PHOTOS[testimonial.initials] || '/site/testimonial-1.jpg'}
+                      alt={testimonial.name}
+                      fill
+                      sizes="44px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-content">{testimonial.name}</p>
+                    <p className="text-xs text-content-muted">{testimonial.role}, {testimonial.company}</p>
+                  </div>
+                </div>
+              </BentoCard>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function StatementBand({ facts }: { facts: FactItem[] }) {
   return (
     <section className="border-t border-white/5 bg-obsidian-soft/40 px-4 py-24 md:px-10 lg:py-32">
@@ -986,11 +1112,21 @@ function StatementBand({ facts }: { facts: FactItem[] }) {
 function InvestorBanner() {
   return (
     <section id="investors" className="px-4 py-20 md:px-10">
-      <Reveal className="mx-auto flex max-w-[1400px] flex-col gap-8 rounded-[2rem] border border-white/10 bg-white/[0.03] p-10 md:flex-row md:items-center md:justify-between">
-        <h2 className="max-w-xl font-[family-name:var(--font-syne)] text-2xl font-bold leading-tight text-content md:text-4xl">
+      <Reveal className="relative mx-auto flex max-w-[1400px] flex-col gap-8 overflow-hidden rounded-[2rem] border border-white/10 p-10 md:flex-row md:items-center md:justify-between">
+        <Image
+          src="/site/cta-bg.jpg"
+          alt=""
+          fill
+          sizes="(min-width: 1400px) 1400px, 100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-obsidian/50" />
+        <h2 className="relative max-w-xl font-[family-name:var(--font-syne)] text-2xl font-bold leading-tight text-content md:text-4xl">
           Track the business from idea to scale.
         </h2>
-        <PillButton href="/contact">Request Access</PillButton>
+        <div className="relative">
+          <PillButton href="/contact">Request Access</PillButton>
+        </div>
       </Reveal>
     </section>
   )
@@ -1064,6 +1200,8 @@ export default function Home() {
       <CommandCenterSplit signals={content.commandSignals} modules={content.modules} />
       <BuilderSplit checklist={content.checklist} funnel={content.funnel} />
       <MarketplaceCluster cards={content.marketplaceCards} />
+      <ServicesShowcase />
+      <TestimonialsSection />
       <StatementBand facts={content.statementFacts} />
       <InvestorBanner />
       <Footer columns={content.footerColumns} />
