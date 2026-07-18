@@ -4,12 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { EmailSequence, SequenceStatus } from '@/lib/types/database'
 
-interface SequenceWithStats extends EmailSequence {
-  enrollment_count: number
-}
-
 export function useEmailSequences(businessId: string) {
-  const [sequences, setSequences] = useState<SequenceWithStats[]>([])
+  const [sequences, setSequences] = useState<EmailSequence[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,23 +15,17 @@ export function useEmailSequences(businessId: string) {
       setError(null)
       const supabase = createClient()
 
+      // total_enrolled/total_completed/total_unsubscribed are denormalized
+      // counters maintained directly on email_sequences.
       const { data, error: fetchError } = await supabase
         .from('email_sequences')
-        .select(`
-          *,
-          sequence_enrollments(count)
-        `)
+        .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
 
-      const sequencesWithStats = (data || []).map(seq => ({
-        ...seq,
-        enrollment_count: seq.sequence_enrollments?.[0]?.count || 0,
-      }))
-
-      setSequences(sequencesWithStats)
+      setSequences(data || [])
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch sequences'
       setError(message)

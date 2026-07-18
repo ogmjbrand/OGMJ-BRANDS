@@ -52,6 +52,9 @@ export interface EmailSequence {
   name: string
   description?: string
   status: SequenceStatus
+  total_enrolled?: number
+  total_completed?: number
+  total_unsubscribed?: number
   created_at: string
   updated_at: string
 }
@@ -82,7 +85,7 @@ export interface Message {
 export interface Conversation {
   id: string
   business_id: string
-  subject: string
+  title: string | null
   created_at: string
   updated_at: string
 }
