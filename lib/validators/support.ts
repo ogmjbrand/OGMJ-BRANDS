@@ -39,17 +39,6 @@ export function validateCreateSupportTicketInput(input: CreateSupportTicketInput
     }
   }
 
-  // Category validation
-  if (input.category !== undefined) {
-    if (typeof input.category !== 'string') {
-      errors.push('Category must be a string');
-    } else if (input.category.trim().length === 0) {
-      errors.push('Category cannot be empty');
-    } else if (input.category.length > 100) {
-      errors.push('Category must be less than 100 characters');
-    }
-  }
-
   return {
     isValid: errors.length === 0,
     errors,
@@ -97,26 +86,6 @@ export function validateUpdateSupportTicketInput(input: UpdateSupportTicketInput
     }
   }
 
-  // Category validation
-  if (input.category !== undefined) {
-    if (typeof input.category !== 'string') {
-      errors.push('Category must be a string');
-    } else if (input.category.trim().length === 0) {
-      errors.push('Category cannot be empty');
-    } else if (input.category.length > 100) {
-      errors.push('Category must be less than 100 characters');
-    }
-  }
-
-  // Resolution notes validation
-  if (input.resolutionNotes !== undefined) {
-    if (typeof input.resolutionNotes !== 'string') {
-      errors.push('Resolution notes must be a string');
-    } else if (input.resolutionNotes.length > 5000) {
-      errors.push('Resolution notes must be less than 5000 characters');
-    }
-  }
-
   return {
     isValid: errors.length === 0,
     errors,
@@ -139,35 +108,6 @@ export function validateCreateTicketReplyInput(input: CreateTicketReplyInput): {
     errors.push('Reply body must be less than 10000 characters');
   }
 
-  // Is internal validation
-  if (input.isInternal !== undefined && typeof input.isInternal !== 'boolean') {
-    errors.push('Is internal must be a boolean');
-  }
-
-  // Attachments validation
-  if (input.attachments !== undefined) {
-    if (!Array.isArray(input.attachments)) {
-      errors.push('Attachments must be an array');
-    } else {
-      input.attachments.forEach((attachment, index) => {
-        if (typeof attachment !== 'object' || attachment === null) {
-          errors.push(`Attachment at index ${index} must be an object`);
-        } else {
-          // Validate attachment structure
-          if (!attachment.url || typeof attachment.url !== 'string') {
-            errors.push(`Attachment at index ${index} must have a valid URL`);
-          }
-          if (attachment.name && typeof attachment.name !== 'string') {
-            errors.push(`Attachment name at index ${index} must be a string`);
-          }
-          if (attachment.size && typeof attachment.size !== 'number') {
-            errors.push(`Attachment size at index ${index} must be a number`);
-          }
-        }
-      });
-    }
-  }
-
   return {
     isValid: errors.length === 0,
     errors,
@@ -183,7 +123,6 @@ export function sanitizeSupportTicketInput(input: CreateSupportTicketInput): Cre
     ...input,
     subject: input.subject.trim(),
     description: input.description?.trim(),
-    category: input.category?.trim(),
   };
 }
 
@@ -192,8 +131,6 @@ export function sanitizeUpdateSupportTicketInput(input: UpdateSupportTicketInput
     ...input,
     subject: input.subject?.trim(),
     description: input.description?.trim(),
-    category: input.category?.trim(),
-    resolutionNotes: input.resolutionNotes?.trim(),
   };
 }
 

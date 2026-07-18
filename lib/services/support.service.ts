@@ -12,19 +12,17 @@ import type { APIResponse } from "../types";
 export interface SupportTicket {
   id: string;
   ticketNumber: string;
+  businessId?: string;
   subject: string;
   description?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'open' | 'in_progress' | 'waiting_for_customer' | 'resolved' | 'closed';
-  category?: string;
-  channel: 'web' | 'email' | 'chat' | 'phone';
-  assignedTo?: string;
-  resolveSla?: string;
-  resolvedAt?: string;
-  resolutionNotes?: string;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  // Not a real column — no FK from support_tickets to contacts exists.
+  // Kept optional so any future UI that tries to render a linked contact
+  // degrades gracefully instead of crashing.
   contact?: {
     id: string;
     firstName?: string;
@@ -37,8 +35,6 @@ export interface CreateSupportTicketInput {
   subject: string;
   description?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
-  category?: string;
-  contactId?: string;
 }
 
 export interface UpdateSupportTicketInput {
@@ -46,9 +42,6 @@ export interface UpdateSupportTicketInput {
   description?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   status?: 'open' | 'in_progress' | 'waiting_for_customer' | 'resolved' | 'closed';
-  category?: string;
-  assignedTo?: string;
-  resolutionNotes?: string;
 }
 
 // ================================
@@ -59,17 +52,12 @@ export interface TicketReply {
   id: string;
   ticketId: string;
   body: string;
-  isInternal: boolean;
-  attachments: any[];
-  aiSuggestedReply: boolean;
   createdAt: string;
   createdBy: string;
 }
 
 export interface CreateTicketReplyInput {
   body: string;
-  isInternal?: boolean;
-  attachments?: any[];
 }
 
 // ================================
