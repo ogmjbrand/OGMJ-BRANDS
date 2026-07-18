@@ -5,7 +5,7 @@ import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, 
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { getWebsites, getPages, createWebsite, updateWebsite, deleteWebsite, createPage, updatePage, deletePage, publishPage, type Website, type Page } from '@/lib/services/builder.service';
+import { getWebsites, getPages, createWebsite, updateWebsite, deleteWebsite, createPage, updatePage, deletePage, publishPage, getTemplates, type Website, type Page, type Template } from '@/lib/services/builder.service';
 
 export default function BuilderPage() {
   const { currentBusiness } = useBusinessContext();
@@ -17,7 +17,6 @@ export default function BuilderPage() {
   const [isCreateWebsiteOpen, setIsCreateWebsiteOpen] = useState(false);
   const [editWebsiteId, setEditWebsiteId] = useState<string | null>(null);
   const [newWebsiteName, setNewWebsiteName] = useState('');
-  const [newWebsiteSlug, setNewWebsiteSlug] = useState('');
   const [newWebsiteDescription, setNewWebsiteDescription] = useState('');
   const [creatingWebsite, setCreatingWebsite] = useState(false);
   const [websiteActionError, setWebsiteActionError] = useState<string | null>(null);
@@ -26,6 +25,9 @@ export default function BuilderPage() {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
   const [pageActionError, setPageActionError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   async function loadWebsites() {
     if (!currentBusiness) {
@@ -114,7 +116,7 @@ export default function BuilderPage() {
   async function handleCreateWebsite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!currentBusiness) return;
-    if (!newWebsiteName.trim() || !newWebsiteSlug.trim()) return;
+    if (!newWebsiteName.trim()) return;
 
     setCreatingWebsite(true);
     setWebsiteActionError(null);
@@ -123,15 +125,15 @@ export default function BuilderPage() {
       const result = await createWebsite(currentBusiness.id, {
         businessId: currentBusiness.id,
         name: newWebsiteName.trim(),
-        slug: newWebsiteSlug.trim(),
         description: newWebsiteDescription.trim() || undefined,
+        templateId: selectedTemplateId || undefined,
       });
 
       if (result.success && result.data) {
         setWebsites((prev) => [result.data!, ...prev]);
         setNewWebsiteName('');
-        setNewWebsiteSlug('');
         setNewWebsiteDescription('');
+        setSelectedTemplateId(null);
         setIsCreateWebsiteOpen(false);
       } else {
         setWebsiteActionError(result.error?.message || 'Failed to create website');
@@ -147,7 +149,6 @@ export default function BuilderPage() {
   async function handleEditWebsite(website: Website) {
     setEditWebsiteId(website.id);
     setNewWebsiteName(website.name || '');
-    setNewWebsiteSlug(website.slug || '');
     setNewWebsiteDescription(website.description || '');
     setIsCreateWebsiteOpen(true);
   }
@@ -170,7 +171,7 @@ export default function BuilderPage() {
   async function handleUpdateWebsite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editWebsiteId) return;
-    if (!newWebsiteName.trim() || !newWebsiteSlug.trim()) return;
+    if (!newWebsiteName.trim()) return;
 
     setCreatingWebsite(true);
     setWebsiteActionError(null);
@@ -178,7 +179,6 @@ export default function BuilderPage() {
     try {
       const result = await updateWebsite(editWebsiteId, {
         name: newWebsiteName.trim(),
-        slug: newWebsiteSlug.trim(),
         description: newWebsiteDescription.trim() || undefined,
       });
 
@@ -186,7 +186,6 @@ export default function BuilderPage() {
         setWebsites((prev) => prev.map((site) => (site.id === editWebsiteId ? result.data! : site)));
         setEditWebsiteId(null);
         setNewWebsiteName('');
-        setNewWebsiteSlug('');
         setNewWebsiteDescription('');
         setIsCreateWebsiteOpen(false);
       } else {
@@ -279,6 +278,27 @@ export default function BuilderPage() {
     loadWebsites();
   }, [currentBusiness]);
 
+  useEffect(() => {
+    async function loadTemplates() {
+      setTemplatesLoading(true);
+      const result = await getTemplates();
+      if (result.success && result.data) {
+        setTemplates(result.data);
+      }
+      setTemplatesLoading(false);
+    }
+    loadTemplates();
+  }, []);
+
+  function handleUseTemplate(template: Template) {
+    setEditWebsiteId(null);
+    setSelectedTemplateId(template.id);
+    setNewWebsiteName(template.name);
+    setNewWebsiteDescription('');
+    setWebsiteActionError(null);
+    setIsCreateWebsiteOpen(true);
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published':
@@ -333,8 +353,8 @@ export default function BuilderPage() {
           if (!open) {
             setEditWebsiteId(null);
             setNewWebsiteName('');
-            setNewWebsiteSlug('');
             setNewWebsiteDescription('');
+            setSelectedTemplateId(null);
             setWebsiteActionError(null);
           }
         }}>
@@ -363,17 +383,6 @@ export default function BuilderPage() {
                     onChange={(e) => setNewWebsiteName(e.target.value)}
                     className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
                     placeholder="Brand site, storefront, landing page"
-                    required
-                  />
-                </label>
-                <label className="space-y-2 text-sm text-[#C8FF00]/70">
-                  Website Slug
-                  <input
-                    type="text"
-                    value={newWebsiteSlug}
-                    onChange={(e) => setNewWebsiteSlug(e.target.value)}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
-                    placeholder="example-site"
                     required
                   />
                 </label>
@@ -431,7 +440,7 @@ export default function BuilderPage() {
                     <div>
                       <h3 className="text-xl font-semibold text-white">{website.name}</h3>
                       <p className="text-sm text-[#C8FF00]/70">
-                        {website.domain || website.customDomain || 'No domain assigned'}
+                        Free .ogmj.co subdomain
                       </p>
                       <p className="text-xs text-[#C8FF00]/50 mt-2">
                         {website.pages} page{website.pages === 1 ? '' : 's'} • Last updated {new Date(website.lastModified || website.updatedAt).toLocaleDateString()}
@@ -610,24 +619,41 @@ export default function BuilderPage() {
       {/* Templates Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-white">Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {['Professional', 'Creative', 'E-Commerce'].map((template) => (
-            <div
-              key={template}
-              className="p-6 bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl hover:border-[#C8FF00]/30 transition cursor-pointer group"
-            >
-              <div className="h-32 bg-gradient-to-br from-[#C8FF00]/10 to-[#07070A] rounded mb-4 flex items-center justify-center">
-                <Globe className="w-12 h-12 text-[#C8FF00]/20 group-hover:text-[#C8FF00]/40 transition" />
+        {templatesLoading ? (
+          <p className="text-[#C8FF00]/50 text-sm">Loading templates...</p>
+        ) : templates.length === 0 ? (
+          <p className="text-[#C8FF00]/50 text-sm">No templates available yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {templates.map((template) => (
+              <div
+                key={template.id}
+                className="p-6 bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl hover:border-[#C8FF00]/30 transition group"
+              >
+                <div className="h-32 bg-gradient-to-br from-[#C8FF00]/10 to-[#07070A] rounded mb-4 flex items-center justify-center overflow-hidden">
+                  {template.previewImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={template.previewImage} alt={template.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Globe className="w-12 h-12 text-[#C8FF00]/20 group-hover:text-[#C8FF00]/40 transition" />
+                  )}
+                </div>
+                <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
+                  {template.name}
+                </p>
+                {template.category && (
+                  <p className="text-xs text-[#C8FF00]/50 mt-1 capitalize">{template.category}</p>
+                )}
+                <button
+                  onClick={() => handleUseTemplate(template)}
+                  className="mt-3 w-full px-3 py-2 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition"
+                >
+                  Use Template
+                </button>
               </div>
-              <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
-                {template}
-              </p>
-              <button className="mt-3 w-full px-3 py-2 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition">
-                Use Template
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
