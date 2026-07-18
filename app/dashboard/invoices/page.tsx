@@ -4,19 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Eye, Trash2, Edit2, Sparkles, Receipt, CircleDollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { listInvoices, deleteInvoice, getInvoiceStats } from '@/lib/services/invoices.service';
+import { listInvoices, deleteInvoice, getInvoiceStats, type Invoice } from '@/lib/services/invoices.service';
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
-
-interface Invoice {
-  id: string;
-  invoice_number: string;
-  status: 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled' | 'partially_paid';
-  contact_id?: string;
-  total_amount: number;
-  paid_amount: number;
-  due_date: string;
-  created_at: string;
-}
 
 interface Stats {
   total_invoices: number;
@@ -146,13 +135,15 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-white">{invoice.invoice_number}</p>
-                        <p className="text-sm text-[#D4AF37]/50">{new Date(invoice.created_at).toLocaleDateString()}</p>
+                        <p className="text-sm text-[#D4AF37]/50">
+                          {invoice.clients?.name || 'No client'} · {new Date(invoice.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-white">₦{(invoice.total_amount / 1000000).toFixed(1)}M</p>
-                        <p className="text-sm text-[#D4AF37]/50">Paid: ₦{(invoice.paid_amount / 1000000).toFixed(1)}M</p>
+                        <p className="font-medium text-white">₦{Number(invoice.total).toLocaleString('en-NG')}</p>
+                        <p className="text-sm text-[#D4AF37]/50">{invoice.status === 'paid' ? 'Paid in full' : 'Outstanding'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -160,7 +151,9 @@ export default function InvoicesPage() {
                         {invoice.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-[#D4AF37]/70">{new Date(invoice.due_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-[#D4AF37]/70">
+                      {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '—'}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)} className="rounded p-2 transition hover:bg-[#D4AF37]/10" title="View">

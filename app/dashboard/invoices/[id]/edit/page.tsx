@@ -2,18 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Pencil } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { getInvoice, updateInvoice } from '@/lib/services/invoices.service';
+import { getInvoice, updateInvoice, listClients, type InvoiceClient } from '@/lib/services/invoices.service';
 
 export default function InvoiceEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { currentBusiness } = useBusinessContext();
   const [invoice, setInvoice] = useState<any>(null);
+  const [clients, setClients] = useState<InvoiceClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [title, setTitle] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState('draft');
@@ -26,11 +28,15 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
       try {
         const data = await getInvoice(params.id);
         setInvoice(data);
-        setInvoiceNumber(data.invoice_number || '');
-        setTotalAmount(data.total_amount || 0);
+        setClientId(data.client_id || '');
+        setTitle(data.title || '');
+        setTotalAmount(Number(data.total) || 0);
         setDueDate(data.due_date ? data.due_date.split('T')[0] : '');
         setStatus(data.status || 'draft');
-        setNotes(data.metadata?.notes || '');
+        setNotes(data.notes || '');
+        if (currentBusiness) {
+          setClients(await listClients(currentBusiness.id));
+        }
       } catch (err) {
         console.error('Failed to load invoice:', err);
       } finally {
@@ -38,7 +44,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
       }
     }
     loadInvoice();
-  }, [params.id]);
+  }, [params.id, currentBusiness]);
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -48,11 +54,12 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
 
     try {
       await updateInvoice(invoice.id, {
-        invoice_number: invoiceNumber,
-        due_date: dueDate,
-        total_amount: totalAmount,
-        status: status as any,
-        metadata: { notes },
+        clientId: clientId || null,
+        title,
+        dueDate,
+        status,
+        notes,
+        amount: totalAmount,
       });
       router.push(`/dashboard/invoices/${invoice.id}`);
     } catch (err) {
@@ -97,12 +104,19 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
 
           <div className="grid gap-6 md:grid-cols-2">
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
-              Invoice Number
-              <input
-                value={invoiceNumber}
-                onChange={(event) => setInvoiceNumber(event.target.value)}
+              Client
+              <select
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
                 className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
-              />
+              >
+                <option value="">No client</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
               Due Date
@@ -117,6 +131,14 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
 
           <div className="grid gap-6 md:grid-cols-2">
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
+              Title / Description
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+              />
+            </label>
+            <label className="space-y-2 text-sm text-[#D4AF37]/70">
               Status
               <select
                 value={status}
@@ -127,19 +149,21 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
                 <option value="sent">Sent</option>
                 <option value="paid">Paid</option>
                 <option value="overdue">Overdue</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </label>
-            <label className="space-y-2 text-sm text-[#D4AF37]/70">
-              Total Amount (NGN)
-              <input
-                type="number"
-                min={0}
-                value={totalAmount}
-                onChange={(event) => setTotalAmount(Number(event.target.value))}
-                className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
-              />
-            </label>
           </div>
+
+          <label className="space-y-2 text-sm text-[#D4AF37]/70">
+            Total Amount (NGN)
+            <input
+              type="number"
+              min={0}
+              value={totalAmount}
+              onChange={(event) => setTotalAmount(Number(event.target.value))}
+              className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+            />
+          </label>
 
           <label className="space-y-2 text-sm text-[#D4AF37]/70">
             Notes
@@ -170,8 +194,8 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
             <p className="text-white mt-2">{new Date(invoice.created_at).toLocaleDateString()}</p>
           </div>
           <div className="rounded-3xl bg-[#11151E] p-4">
-            <p className="text-sm text-[#D4AF37]/60">Contact</p>
-            <p className="text-white mt-2">{invoice.contact_id || 'Unassigned'}</p>
+            <p className="text-sm text-[#D4AF37]/60">Client</p>
+            <p className="text-white mt-2">{invoice.clients?.name || 'Unassigned'}</p>
           </div>
         </aside>
       </form>
