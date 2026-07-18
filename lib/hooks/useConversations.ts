@@ -7,9 +7,8 @@ import type { Conversation, Message, MessageType } from '@/lib/types/database'
 interface MessageWithSender extends Message {
   sender?: {
     id: string
-    first_name: string
-    last_name: string
-    email: string
+    name: string | null
+    email: string | null
   }
 }
 
@@ -50,23 +49,32 @@ export function useConversations(businessId: string) {
       setError(null)
       const supabase = createClient()
 
+      // messages.sender_id FKs to auth.users, which PostgREST can't embed
+      // directly and has no relationship to public.profiles — fetch senders
+      // separately and merge instead of embedding.
       const { data, error: fetchError } = await supabase
         .from('messages')
-        .select(`
-          *,
-          sender:users(
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
       if (fetchError) throw fetchError
 
-      setMessages(data || [])
+      const rows = data || []
+      const senderIds = Array.from(new Set(rows.map((m: any) => m.sender_id).filter(Boolean)))
+
+      let sendersById = new Map<string, { id: string; name: string | null; email: string | null }>()
+      if (senderIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('id', senderIds)
+
+        if (profilesError) throw profilesError
+        sendersById = new Map((profiles || []).map((p: any) => [p.id, p]))
+      }
+
+      setMessages(rows.map((m: any) => ({ ...m, sender: sendersById.get(m.sender_id) })))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch messages'
       setError(message)
@@ -150,7 +158,7 @@ export function useConversations(businessId: string) {
   )
 
   const createConversation = useCallback(
-    async (subject: string) => {
+    async (title: string) => {
       try {
         const supabase = createClient()
         const { data, error: createError } = await supabase
@@ -158,7 +166,7 @@ export function useConversations(businessId: string) {
           .insert([
             {
               business_id: businessId,
-              subject,
+              title,
             },
           ])
           .select()

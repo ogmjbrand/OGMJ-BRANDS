@@ -118,11 +118,11 @@ export default function SequencesPage() {
               <div className="flex items-center gap-4 mb-4 p-3 bg-[#D4AF37]/5 rounded">
                 <div>
                   <p className="text-[#D4AF37]/50 text-xs">Enrolled</p>
-                  <p className="text-xl font-bold text-white">0</p>
+                  <p className="text-xl font-bold text-white">{sequence.total_enrolled ?? 0}</p>
                 </div>
                 <div>
                   <p className="text-[#D4AF37]/50 text-xs">Completed</p>
-                  <p className="text-xl font-bold text-white">0</p>
+                  <p className="text-xl font-bold text-white">{sequence.total_completed ?? 0}</p>
                 </div>
               </div>
 

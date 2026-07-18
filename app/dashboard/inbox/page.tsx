@@ -71,7 +71,7 @@ export default function InboxPage() {
             ) : (
               conversations.map((conv) => (
                 <div key={conv.id} onClick={() => setSelectedConversation(conv)} className={`cursor-pointer border-b border-[#D4AF37]/5 p-4 transition ${selectedConversation?.id === conv.id ? 'bg-[#D4AF37]/10 border-l-2 border-l-[#D4AF37]' : 'hover:bg-[#D4AF37]/5'}`}>
-                  <p className="truncate font-semibold text-white">{conv.subject}</p>
+                  <p className="truncate font-semibold text-white">{conv.title}</p>
                   <p className="mt-1 text-xs text-[#F8F9FA]/60">{new Date(conv.updated_at).toLocaleDateString()}</p>
                 </div>
               ))
@@ -83,7 +83,7 @@ export default function InboxPage() {
           {selectedConversation ? (
             <>
               <div className="border-b border-[#D4AF37]/10 p-4">
-                <h2 className="font-semibold text-white">{selectedConversation.subject}</h2>
+                <h2 className="font-semibold text-white">{selectedConversation.title}</h2>
                 <p className="mt-1 text-xs text-[#F8F9FA]/60">{new Date(selectedConversation.updated_at).toLocaleString()}</p>
               </div>
               <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -96,7 +96,7 @@ export default function InboxPage() {
                   messages.map((msg) => (
                     <div key={msg.id} className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#D4AF37]">{msg.sender?.first_name} {msg.sender?.last_name}</span>
+                        <span className="text-sm font-semibold text-[#D4AF37]">{msg.sender?.name || 'Unknown'}</span>
                         <span className="text-xs text-[#F8F9FA]/50">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div className="rounded-[1.1rem] border border-[#D4AF37]/20 bg-[#D4AF37]/10 p-3 text-white break-words">{msg.content}</div>
