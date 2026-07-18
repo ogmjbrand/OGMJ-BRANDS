@@ -10,8 +10,8 @@
   --surface2: #121925;
   --surface3: #171E2B;
   --border: rgba(255,255,255,0.08);
-  --gold: #D4AF37;
-  --gold-soft: rgba(212,175,55,0.18);
+  --gold: #C8FF00;
+  --gold-soft: rgba(200, 255, 0,0.18);
   --emerald: #10B981;
   --text: #F4F7FB;
   --muted: #8E99AD;
@@ -31,7 +31,7 @@ body {
   padding: 0;
   min-height: 100%;
   background: radial-gradient(circle at top, rgba(36, 44, 64, 0.18), transparent 26%),
-    radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.12), transparent 18%),
+    radial-gradient(circle at 20% 20%, rgba(200, 255, 0, 0.12), transparent 18%),
     radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 20%),
     var(--bg);
   color: var(--text);
@@ -45,13 +45,13 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(circle at 12% 12%, rgba(212, 175, 55, 0.09), transparent 20%),
+  background: radial-gradient(circle at 12% 12%, rgba(200, 255, 0, 0.09), transparent 20%),
     radial-gradient(circle at 86% 14%, rgba(16, 185, 129, 0.08), transparent 18%),
     linear-gradient(180deg, rgba(255,255,255,0.02), transparent 42%);
 }
 
 ::selection {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(200, 255, 0, 0.2);
   color: #fff;
 }
 
@@ -63,17 +63,17 @@ body::before {
   }
 
   .hero-gradient {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.16), rgba(16, 185, 129, 0.12));
+    background: linear-gradient(135deg, rgba(200, 255, 0, 0.16), rgba(16, 185, 129, 0.12));
   }
 
   .text-gradient {
-    background: linear-gradient(90deg, #F8E2A1, #EDD8B0 28%, #D4AF37 60%, #F8E2A1 100%);
+    background: linear-gradient(90deg, #F8E2A1, #EDD8B0 28%, #C8FF00 60%, #F8E2A1 100%);
     -webkit-background-clip: text;
     color: transparent;
   }
 
   .soft-ring {
-    box-shadow: 0 20px 120px rgba(212, 175, 55, 0.08);
+    box-shadow: 0 20px 120px rgba(200, 255, 0, 0.08);
   }
 
   .shadow-luxe {
@@ -92,12 +92,12 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.35);
+  background: rgba(200, 255, 0, 0.35);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.55);
+  background: rgba(200, 255, 0, 0.55);
 }
 
 

@@ -2,21 +2,21 @@
 
 .progress-bar-fill {
   height: 100%;
-  background-color: #D4AF37;
+  background-color: #C8FF00;
   border-radius: 9999px;
   transition: width 0.3s ease;
 }
 
 .revenue-bar {
   flex: 1;
-  background: linear-gradient(to top, #D4AF37, rgba(212, 175, 55, 0.375));
+  background: linear-gradient(to top, #C8FF00, rgba(200, 255, 0, 0.375));
   border-radius: 0.375rem 0.375rem 0 0;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .revenue-bar:hover {
-  background: linear-gradient(to top, rgba(212, 175, 55, 0.5), rgba(212, 175, 55, 0.25));
+  background: linear-gradient(to top, rgba(200, 255, 0, 0.5), rgba(200, 255, 0, 0.25));
 }
 
 .pipeline-progress-bar {
@@ -28,7 +28,7 @@
 
 .pipeline-progress-fill {
   height: 100%;
-  background: linear-gradient(to right, #D4AF37, rgba(212, 175, 55, 0.375));
+  background: linear-gradient(to right, #C8FF00, rgba(200, 255, 0, 0.375));
   border-radius: 9999px;
   transition: width 0.3s ease;
 }
@@ -47,7 +47,7 @@
 }
 
 .checkbox-toggle input:checked + .slider {
-  background-color: #D4AF37;
+  background-color: #C8FF00;
 }
 
 .checkbox-toggle .slider {
@@ -59,7 +59,7 @@
   bottom: 0;
   background-color: #07070A;
   transition: 0.3s;
-  border: 1px solid #D4AF37;
+  border: 1px solid #C8FF00;
   border-radius: 0.375rem;
   display: flex;
   align-items: center;

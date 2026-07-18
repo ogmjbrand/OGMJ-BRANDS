@@ -89,7 +89,7 @@ export default function ChatPanel({
   return (
     <div className="flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-[rgba(8,8,10,0.6)] backdrop-blur-[24px]">
       <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-[#D4AF37]">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-[#C8FF00]">
           <MIcon name="auto_awesome" size={14} />
         </div>
         <div>
@@ -134,7 +134,7 @@ export default function ChatPanel({
           />
           <button
             type="submit"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#D4AF37] p-2 text-black transition-colors hover:bg-[#e0c04a]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#C8FF00] p-2 text-black transition-colors hover:bg-[#e0c04a]"
             aria-label="Send message"
           >
             <MIcon name="arrow_upward" size={16} weight={500} />

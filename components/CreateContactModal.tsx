@@ -91,13 +91,13 @@ export function CreateContactModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-[#0E1116] border border-[#D4AF37]/20 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
+      <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Create Contact</h2>
           <button
             onClick={onClose}
-            className="p-1 text-[#D4AF37]/50 hover:text-[#D4AF37] transition"
+            className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -115,7 +115,7 @@ export function CreateContactModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 First Name *
               </label>
               <input
@@ -124,11 +124,11 @@ export function CreateContactModal({
                 value={formData.firstName}
                 onChange={handleChange}
                 placeholder="John"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Last Name
               </label>
               <input
@@ -137,13 +137,13 @@ export function CreateContactModal({
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Doe"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+            <label className="block text-xs font-medium text-[#C8FF00] mb-1">
               Email *
             </label>
             <input
@@ -152,12 +152,12 @@ export function CreateContactModal({
               value={formData.email}
               onChange={handleChange}
               placeholder="john@example.com"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+            <label className="block text-xs font-medium text-[#C8FF00] mb-1">
               Phone
             </label>
             <input
@@ -166,13 +166,13 @@ export function CreateContactModal({
               value={formData.phone}
               onChange={handleChange}
               placeholder="+1 (555) 000-0000"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Job Title
               </label>
               <input
@@ -181,11 +181,11 @@ export function CreateContactModal({
                 value={formData.jobTitle}
                 onChange={handleChange}
                 placeholder="CEO"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#D4AF37] mb-1">
+              <label className="block text-xs font-medium text-[#C8FF00] mb-1">
                 Company
               </label>
               <input
@@ -194,7 +194,7 @@ export function CreateContactModal({
                 value={formData.companyName}
                 onChange={handleChange}
                 placeholder="Company Inc"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#D4AF37]/20 rounded-lg text-white placeholder-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
               />
             </div>
           </div>
@@ -204,14 +204,14 @@ export function CreateContactModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-[#D4AF37]/10 text-[#D4AF37] rounded-lg font-medium hover:bg-[#D4AF37]/20 transition"
+              className="flex-1 px-4 py-2 bg-[#C8FF00]/10 text-[#C8FF00] rounded-lg font-medium hover:bg-[#C8FF00]/20 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-[#D4AF37] text-[#07070A] rounded-lg font-medium hover:bg-[#D4AF37]/90 disabled:opacity-50 transition"
+              className="flex-1 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-medium hover:bg-[#C8FF00]/90 disabled:opacity-50 transition"
             >
               {loading ? 'Creating...' : 'Create'}
             </button>

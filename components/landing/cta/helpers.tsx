@@ -61,7 +61,7 @@ type PrimaryButtonProps =
 
 export function PrimaryButton(props: PrimaryButtonProps) {
   const baseClassName =
-    "group inline-flex h-12 items-center justify-center overflow-hidden rounded-full bg-[#D4AF37] px-9 text-sm font-medium leading-none text-black transition-colors hover:bg-[#e0c04a]"
+    "group inline-flex h-12 items-center justify-center overflow-hidden rounded-full bg-[#C8FF00] px-9 text-sm font-medium leading-none text-black transition-colors hover:bg-[#e0c04a]"
 
   if (props.as === "a") {
     const { as, children, className, ...anchorProps } = props

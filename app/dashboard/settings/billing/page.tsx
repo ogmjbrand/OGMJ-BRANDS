@@ -136,7 +136,7 @@ export default function BillingPage() {
       {/* Header */}
       <div>
         <h1 className="text-4xl font-bold text-white">Billing & Plans</h1>
-        <p className="text-[#D4AF37]/70 mt-2">Choose the perfect plan for your business</p>
+        <p className="text-[#C8FF00]/70 mt-2">Choose the perfect plan for your business</p>
       </div>
 
       {/* Error Alert */}
@@ -148,18 +148,18 @@ export default function BillingPage() {
       )}
 
       {/* Billing Period Tabs */}
-      <div className="flex gap-4 border-b border-[#D4AF37]/10">
-        <button className="px-4 py-3 font-medium text-[#D4AF37] border-b-2 border-[#D4AF37]">
+      <div className="flex gap-4 border-b border-[#C8FF00]/10">
+        <button className="px-4 py-3 font-medium text-[#C8FF00] border-b-2 border-[#C8FF00]">
           Monthly
         </button>
-        <button className="px-4 py-3 font-medium text-[#D4AF37]/50 hover:text-[#D4AF37]/70">
+        <button className="px-4 py-3 font-medium text-[#C8FF00]/50 hover:text-[#C8FF00]/70">
           Annual (Save 20%)
         </button>
       </div>
 
       {/* Plans Grid */}
       {plansLoading ? (
-        <p className="text-[#D4AF37]/70">Loading plans...</p>
+        <p className="text-[#C8FF00]/70">Loading plans...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan) => {
@@ -169,14 +169,14 @@ export default function BillingPage() {
                 key={plan.id}
                 className={`relative rounded-xl border transition-all ${
                   plan.is_popular
-                    ? 'border-[#D4AF37] bg-[#0E1116]/80 ring-2 ring-[#D4AF37]/20 transform md:scale-105'
-                    : 'border-[#D4AF37]/10 bg-[#0E1116]'
+                    ? 'border-[#C8FF00] bg-[#0E1116]/80 ring-2 ring-[#C8FF00]/20 transform md:scale-105'
+                    : 'border-[#C8FF00]/10 bg-[#0E1116]'
                 }`}
               >
                 {/* Popular Badge */}
                 {plan.is_popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="px-3 py-1 bg-[#D4AF37] text-[#07070A] text-xs font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-[#C8FF00] text-[#07070A] text-xs font-semibold rounded-full">
                       MOST POPULAR
                     </span>
                   </div>
@@ -193,16 +193,16 @@ export default function BillingPage() {
                   {/* Plan Name */}
                   <div>
                     <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                    <p className="text-sm text-[#D4AF37]/70 mt-1">{plan.description}</p>
+                    <p className="text-sm text-[#C8FF00]/70 mt-1">{plan.description}</p>
                   </div>
 
                   {/* Price */}
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-[#D4AF37]">
+                      <span className="text-4xl font-bold text-[#C8FF00]">
                         ₦{Number(plan.price_ngn).toLocaleString('en-NG')}
                       </span>
-                      <span className="text-[#D4AF37]/50">/{plan.billing_period}</span>
+                      <span className="text-[#C8FF00]/50">/{plan.billing_period}</span>
                     </div>
                   </div>
 
@@ -210,8 +210,8 @@ export default function BillingPage() {
                   <ul className="space-y-3">
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                        <span className="text-[#D4AF37]/80">{feature}</span>
+                        <Check className="w-5 h-5 text-[#C8FF00] flex-shrink-0 mt-0.5" />
+                        <span className="text-[#C8FF00]/80">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -222,8 +222,8 @@ export default function BillingPage() {
                     disabled={isCurrent || loading}
                     className={`w-full py-3 rounded-lg font-semibold transition ${
                       isCurrent
-                        ? 'bg-[#D4AF37]/20 text-[#D4AF37] cursor-default'
-                        : 'bg-[#D4AF37] text-[#07070A] hover:bg-[#D4AF37]/90 disabled:opacity-50'
+                        ? 'bg-[#C8FF00]/20 text-[#C8FF00] cursor-default'
+                        : 'bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-50'
                     }`}
                   >
                     {isCurrent ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
@@ -260,13 +260,13 @@ export default function BillingPage() {
           ].map((faq, idx) => (
             <details
               key={idx}
-              className="group p-4 bg-[#0E1116] border border-[#D4AF37]/10 rounded-lg cursor-pointer hover:border-[#D4AF37]/30 transition"
+              className="group p-4 bg-[#0E1116] border border-[#C8FF00]/10 rounded-lg cursor-pointer hover:border-[#C8FF00]/30 transition"
             >
               <summary className="font-semibold text-white flex items-center justify-between">
                 {faq.q}
                 <span className="transform group-open:rotate-180 transition">▼</span>
               </summary>
-              <p className="mt-3 text-[#D4AF37]/70">{faq.a}</p>
+              <p className="mt-3 text-[#C8FF00]/70">{faq.a}</p>
             </details>
           ))}
         </div>

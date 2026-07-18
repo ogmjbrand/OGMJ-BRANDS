@@ -119,8 +119,8 @@ export default function SettingsPage() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="space-y-4 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
-          <p className="text-[#D4AF37]/70">Loading settings...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#C8FF00]/20 border-t-[#C8FF00]" />
+          <p className="text-[#C8FF00]/70">Loading settings...</p>
         </div>
       </div>
     );
@@ -128,9 +128,9 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Sparkles className="h-4 w-4" /> Control center
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep your account, billing and team preferences tightly managed.</h1>
@@ -144,9 +144,9 @@ export default function SettingsPage() {
         <MetricCard title="Team" value={businesses.length.toString()} description="Businesses connected to your workspace" icon={Users} accent="slate" trend="Managed" />
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-[1.4rem] border border-[#D4AF37]/10 bg-[#0E1116]/90 p-2">
+      <div className="flex flex-wrap gap-2 rounded-[1.4rem] border border-[#C8FF00]/10 bg-[#0E1116]/90 p-2">
         {tabs.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id ? 'bg-[#D4AF37] text-[#07070A]' : 'text-[#D4AF37] hover:bg-[#D4AF37]/10'}`}>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id ? 'bg-[#C8FF00] text-[#07070A]' : 'text-[#C8FF00] hover:bg-[#C8FF00]/10'}`}>
             {tab.icon}
             {tab.label}
           </button>
@@ -161,16 +161,16 @@ export default function SettingsPage() {
               {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-[#D4AF37]">Full name</label>
-                  <input id="fullName" type="text" value={profileForm.fullName} onChange={(e) => setProfileForm((prev) => ({ ...prev, fullName: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" />
+                  <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-[#C8FF00]">Full name</label>
+                  <input id="fullName" type="text" value={profileForm.fullName} onChange={(e) => setProfileForm((prev) => ({ ...prev, fullName: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
                 </div>
                 <div>
-                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#D4AF37]">Email</label>
-                  <input id="email" type="email" value={profileForm.email} disabled className="w-full cursor-not-allowed rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-[#D4AF37]/50" />
-                  <p className="mt-1 text-xs text-[#D4AF37]/50">Email cannot be changed here.</p>
+                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#C8FF00]">Email</label>
+                  <input id="email" type="email" value={profileForm.email} disabled className="w-full cursor-not-allowed rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-[#C8FF00]/50" />
+                  <p className="mt-1 text-xs text-[#C8FF00]/50">Email cannot be changed here.</p>
                 </div>
               </div>
-              <button type="submit" disabled={saving} className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">
+              <button type="submit" disabled={saving} className="rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50">
                 {saving ? 'Saving...' : 'Save changes'}
               </button>
             </form>
@@ -180,17 +180,17 @@ export default function SettingsPage() {
         {activeTab === 'billing' && (
           <div className="space-y-6">
             <SectionPanel title="Current plan" subtitle="Your current subscription and payment setup">
-              <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <p className="font-semibold text-white">Professional plan</p>
                 <p className="mt-1 text-sm text-[#F8F9FA]/60">$99/month • Next billing: May 17, 2026</p>
-                <button className="mt-4 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Change plan</button>
+                <button className="mt-4 rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Change plan</button>
               </div>
             </SectionPanel>
             <SectionPanel title="Payment method" subtitle="Your stored card and billing details">
-              <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <p className="font-semibold text-white">Visa •••• 4242</p>
                 <p className="mt-1 text-sm text-[#F8F9FA]/60">Expires 12/26</p>
-                <button className="mt-4 rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Update payment method</button>
+                <button className="mt-4 rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Update payment method</button>
               </div>
             </SectionPanel>
           </div>
@@ -200,11 +200,11 @@ export default function SettingsPage() {
           <SectionPanel title="Team workspace" subtitle="The businesses linked to your account">
             <div className="space-y-3">
               {businesses.length > 0 ? businesses.map((business) => (
-                <div key={business.id} className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div key={business.id} className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                   <p className="font-semibold text-white">{business.name}</p>
                   <p className="mt-1 text-sm text-[#F8F9FA]/60">You are an admin for this workspace.</p>
                 </div>
-              )) : <p className="text-sm text-[#D4AF37]/60">No connected businesses yet.</p>}
+              )) : <p className="text-sm text-[#C8FF00]/60">No connected businesses yet.</p>}
             </div>
           </SectionPanel>
         )}
@@ -216,22 +216,22 @@ export default function SettingsPage() {
                 {error && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{error}</div>}
                 {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
                 <div>
-                  <label htmlFor="currentPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">Current password</label>
-                  <input id="currentPassword" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
+                  <label htmlFor="currentPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">Current password</label>
+                  <input id="currentPassword" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
                 </div>
                 <div>
-                  <label htmlFor="newPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">New password</label>
-                  <input id="newPassword" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
+                  <label htmlFor="newPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">New password</label>
+                  <input id="newPassword" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
                 </div>
                 <div>
-                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#D4AF37]">Confirm new password</label>
-                  <input id="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#D4AF37]" required />
+                  <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">Confirm new password</label>
+                  <input id="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
                 </div>
-                <button type="submit" disabled={saving} className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">{saving ? 'Changing...' : 'Change password'}</button>
+                <button type="submit" disabled={saving} className="rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50">{saving ? 'Changing...' : 'Change password'}</button>
               </form>
             </SectionPanel>
             <SectionPanel title="Two-factor authentication" subtitle="Add another layer of protection to your account">
-              <button className="rounded-full bg-[#D4AF37]/10 px-4 py-2 text-sm font-medium text-[#D4AF37] transition hover:bg-[#D4AF37]/20">Enable 2FA</button>
+              <button className="rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Enable 2FA</button>
             </SectionPanel>
           </div>
         )}
@@ -241,7 +241,7 @@ export default function SettingsPage() {
             <form onSubmit={handleNotificationsUpdate} className="space-y-4">
               {error && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{error}</div>}
               {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
-              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">Email notifications</p>
@@ -250,7 +250,7 @@ export default function SettingsPage() {
                   <input id="emailNotifications" type="checkbox" checked={notificationsForm.emailNotifications} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, emailNotifications: e.target.checked }))} className="h-5 w-5" aria-label="Enable email notifications" />
                 </div>
               </div>
-              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">Marketing updates</p>
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                   <input id="marketingUpdates" type="checkbox" checked={notificationsForm.marketingUpdates} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, marketingUpdates: e.target.checked }))} className="h-5 w-5" aria-label="Enable marketing updates" />
                 </div>
               </div>
-              <div className="rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">Payment reminders</p>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                   <input id="paymentReminders" type="checkbox" checked={notificationsForm.paymentReminders} onChange={(e) => setNotificationsForm((prev) => ({ ...prev, paymentReminders: e.target.checked }))} className="h-5 w-5" aria-label="Enable payment reminders" />
                 </div>
               </div>
-              <button type="submit" disabled={saving} className="w-full rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90 disabled:bg-[#D4AF37]/50">{saving ? 'Saving...' : 'Save preferences'}</button>
+              <button type="submit" disabled={saving} className="w-full rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50">{saving ? 'Saving...' : 'Save preferences'}</button>
             </form>
           </SectionPanel>
         )}

@@ -77,7 +77,7 @@ export function AIAssistButton({
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2 text-sm font-semibold text-[#D4AF37] transition hover:bg-[#D4AF37]/20 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+        className={`inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-4 py-2 text-sm font-semibold text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
         {loading ? 'Drafting…' : label}

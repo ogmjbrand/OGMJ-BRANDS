@@ -563,8 +563,8 @@ function PulsePanel({
             <AreaChart data={pulse} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="pulseFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#D4AF37" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#D4AF37" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#C8FF00" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="#C8FF00" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -587,7 +587,7 @@ function PulsePanel({
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="#D4AF37"
+                stroke="#C8FF00"
                 strokeWidth={2}
                 fill="url(#pulseFill)"
                 isAnimationActive
@@ -888,7 +888,7 @@ function BuilderSplit({ checklist, funnel }: { checklist: string[]; funnel: Funn
                     width={80}
                     tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
                   />
-                  <Bar dataKey="value" fill="#D4AF37" radius={[0, 6, 6, 0]} barSize={18} />
+                  <Bar dataKey="value" fill="#C8FF00" radius={[0, 6, 6, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

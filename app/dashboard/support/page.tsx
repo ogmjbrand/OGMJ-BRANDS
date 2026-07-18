@@ -102,7 +102,7 @@ export default function SupportPage() {
       case 'closed':
         return 'bg-gray-500/20 text-gray-400';
       default:
-        return 'bg-[#D4AF37]/20 text-[#D4AF37]';
+        return 'bg-[#C8FF00]/20 text-[#C8FF00]';
     }
   };
 
@@ -117,7 +117,7 @@ export default function SupportPage() {
       case 'low':
         return 'bg-green-500/20 text-green-400';
       default:
-        return 'bg-[#D4AF37]/20 text-[#D4AF37]';
+        return 'bg-[#C8FF00]/20 text-[#C8FF00]';
     }
   };
 
@@ -142,8 +142,8 @@ export default function SupportPage() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="space-y-4 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
-          <p className="text-[#D4AF37]/70">Loading support tickets...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#C8FF00]/20 border-t-[#C8FF00]" />
+          <p className="text-[#C8FF00]/70">Loading support tickets...</p>
         </div>
       </div>
     );
@@ -155,7 +155,7 @@ export default function SupportPage() {
         <div className="space-y-4 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
           <p className="text-red-400">{error}</p>
-          <button onClick={loadTickets} className="rounded-lg bg-[#D4AF37] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90">Try again</button>
+          <button onClick={loadTickets} className="rounded-lg bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">Try again</button>
         </div>
       </div>
     );
@@ -163,10 +163,10 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Sparkles className="h-4 w-4" /> Care system
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Support flow that feels responsive, calm and premium.</h1>
@@ -174,7 +174,7 @@ export default function SupportPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90" size="sm">
+              <Button className="flex items-center gap-2 rounded-full bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90" size="sm">
                 <Plus className="h-4 w-4" /> New ticket
               </Button>
             </DialogTrigger>
@@ -185,27 +185,27 @@ export default function SupportPage() {
               <form onSubmit={handleCreateTicket} className="space-y-4 pt-2">
                 <div className="space-y-4">
                   {formError && <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{formError}</div>}
-                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Subject
-                    <input type="text" value={newTicketSubject} onChange={(e) => setNewTicketSubject(e.target.value)} className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]" placeholder="Enter the ticket title" required />
+                    <input type="text" value={newTicketSubject} onChange={(e) => setNewTicketSubject(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" placeholder="Enter the ticket title" required />
                   </label>
-                  <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Description
-                    <textarea value={newTicketDescription} onChange={(e) => setNewTicketDescription(e.target.value)} className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]" rows={5} placeholder="Describe the issue, request, or question." />
+                    <textarea value={newTicketDescription} onChange={(e) => setNewTicketDescription(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" rows={5} placeholder="Describe the issue, request, or question." />
                   </label>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    <label className="space-y-2 text-sm text-[#C8FF00]/70">
                       Priority
-                      <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]">
+                      <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]">
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
                         <option value="urgent">Urgent</option>
                       </select>
                     </label>
-                    <label className="space-y-2 text-sm text-[#D4AF37]/70">
+                    <label className="space-y-2 text-sm text-[#C8FF00]/70">
                       Category
-                      <input type="text" value={newTicketCategory} onChange={(e) => setNewTicketCategory(e.target.value)} className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Billing, Product, Technical" />
+                      <input type="text" value={newTicketCategory} onChange={(e) => setNewTicketCategory(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" placeholder="e.g. Billing, Product, Technical" />
                     </label>
                   </div>
                 </div>
@@ -228,10 +228,10 @@ export default function SupportPage() {
       <SectionPanel title="Ticket queue" subtitle="Search, filter and stay on top of every customer request">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#D4AF37]/50" />
-            <input type="text" placeholder="Search by ticket number, title, or contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-full border border-[#D4AF37]/10 bg-[#07070A] py-2 pl-10 pr-4 text-white outline-none focus:border-[#D4AF37]" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#C8FF00]/50" />
+            <input type="text" placeholder="Search by ticket number, title, or contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-full border border-[#C8FF00]/10 bg-[#07070A] py-2 pl-10 pr-4 text-white outline-none focus:border-[#C8FF00]" />
           </div>
-          <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-full border border-[#D4AF37]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#D4AF37]">
+          <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]">
             <option value="">All status</option>
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>
@@ -239,7 +239,7 @@ export default function SupportPage() {
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
           </select>
-          <select id="priority-filter" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-full border border-[#D4AF37]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#D4AF37]">
+          <select id="priority-filter" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]">
             <option value="">All priority</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -248,31 +248,31 @@ export default function SupportPage() {
           </select>
         </div>
 
-        <div className="overflow-x-auto rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E]">
+        <div className="overflow-x-auto rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E]">
           <table className="w-full">
-            <thead className="border-b border-[#D4AF37]/10 bg-[#07070A]">
+            <thead className="border-b border-[#C8FF00]/10 bg-[#07070A]">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Ticket</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Title</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Priority</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Contact</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Created</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#D4AF37]">Action</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Ticket</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Title</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Priority</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Contact</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Created</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8FF00]">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#D4AF37]/10">
+            <tbody className="divide-y divide-[#C8FF00]/10">
               {filteredTickets.length === 0 ? (
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-[#F8F9FA]/60">No tickets found.</td></tr>
               ) : filteredTickets.map((ticket) => (
                 <tr key={ticket.id} className="transition hover:bg-[#0E1116]/50">
-                  <td className="px-6 py-3 font-mono text-sm text-[#D4AF37]">{ticket.ticketNumber}</td>
-                  <td className="px-6 py-3"><div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#D4AF37]/50" /><span className="text-white">{ticket.subject}</span></div></td>
+                  <td className="px-6 py-3 font-mono text-sm text-[#C8FF00]">{ticket.ticketNumber}</td>
+                  <td className="px-6 py-3"><div className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#C8FF00]/50" /><span className="text-white">{ticket.subject}</span></div></td>
                   <td className="px-6 py-3"><span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${getPriorityColor(ticket.priority)}`}>{ticket.priority}</span></td>
                   <td className="px-6 py-3"><span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${getStatusColor(ticket.status)}`}>{ticket.status.replace('_', ' ')}</span></td>
                   <td className="px-6 py-3 text-white">{ticket.contact ? `${ticket.contact.firstName} ${ticket.contact.lastName}` : 'N/A'}</td>
                   <td className="px-6 py-3 text-sm text-[#F8F9FA]/60">{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-3"><button className="text-sm font-medium text-[#D4AF37] transition hover:text-white">View</button></td>
+                  <td className="px-6 py-3"><button className="text-sm font-medium text-[#C8FF00] transition hover:text-white">View</button></td>
                 </tr>
               ))}
             </tbody>

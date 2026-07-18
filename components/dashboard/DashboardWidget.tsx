@@ -17,7 +17,7 @@ const dashboardWidgetVariants = cva(
     'rounded-2xl border bg-gradient-to-br',
     'from-[#0E1116] to-[#07070A]',
     'p-6 transition-all duration-300',
-    'hover:border-[#D4AF37]/40'
+    'hover:border-[#C8FF00]/40'
   ),
   {
     variants: {
@@ -29,9 +29,9 @@ const dashboardWidgetVariants = cva(
         full: 'col-span-full',
       },
       variant: {
-        default: 'border-[#D4AF37]/20',
+        default: 'border-[#C8FF00]/20',
         accent: 'border-[#10B981]/20 hover:border-[#10B981]/40',
-        subtle: 'border-[#D4AF37]/10 hover:border-[#D4AF37]/20',
+        subtle: 'border-[#C8FF00]/10 hover:border-[#C8FF00]/20',
         danger: 'border-red-500/20 hover:border-red-500/40',
       },
     },
@@ -85,11 +85,11 @@ export const DashboardWidget = React.forwardRef<HTMLDivElement, DashboardWidgetP
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3 flex-1">
-            {icon && <div className="text-[#D4AF37] flex-shrink-0">{icon}</div>}
+            {icon && <div className="text-[#C8FF00] flex-shrink-0">{icon}</div>}
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-white truncate">{title}</h3>
               {subtitle && (
-                <p className="text-xs text-[#D4AF37]/60 truncate mt-1">{subtitle}</p>
+                <p className="text-xs text-[#C8FF00]/60 truncate mt-1">{subtitle}</p>
               )}
             </div>
           </div>
@@ -100,7 +100,7 @@ export const DashboardWidget = React.forwardRef<HTMLDivElement, DashboardWidgetP
         <div className="space-y-4">
           {isLoading ? (
             <div className="h-24 flex items-center justify-center">
-              <div className="animate-spin text-[#D4AF37]">
+              <div className="animate-spin text-[#C8FF00]">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
@@ -153,7 +153,7 @@ export const MetricWidget = React.forwardRef<HTMLDivElement, MetricWidgetProps>(
     {
       title,
       value,
-      valueColor = 'text-[#D4AF37]',
+      valueColor = 'text-[#C8FF00]',
       change,
       icon,
       action,
@@ -291,12 +291,12 @@ export const TableWidget = React.forwardRef<HTMLDivElement, TableWidgetProps>(
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#D4AF37]/10">
+              <tr className="border-b border-[#C8FF00]/10">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     className={cn(
-                      'px-6 py-3 text-left text-xs font-semibold text-[#D4AF37]/60 uppercase tracking-wider',
+                      'px-6 py-3 text-left text-xs font-semibold text-[#C8FF00]/60 uppercase tracking-wider',
                       col.width
                     )}
                   >
@@ -310,7 +310,7 @@ export const TableWidget = React.forwardRef<HTMLDivElement, TableWidgetProps>(
                 <tr
                   key={idx}
                   className={cn(
-                    'border-b border-[#D4AF37]/10 hover:bg-[#D4AF37]/5 transition-colors',
+                    'border-b border-[#C8FF00]/10 hover:bg-[#C8FF00]/5 transition-colors',
                     onRowClick && 'cursor-pointer'
                   )}
                   onClick={() => onRowClick?.(row)}

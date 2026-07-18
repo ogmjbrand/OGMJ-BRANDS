@@ -76,8 +76,8 @@ function DashboardLayoutContent({
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
-          <p className="text-[#D4AF37]/70">Loading...</p>
+          <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
+          <p className="text-[#C8FF00]/70">Loading...</p>
         </div>
       </div>
     );
@@ -86,9 +86,9 @@ function DashboardLayoutContent({
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#D4AF37]/10 bg-[#0E1116]/95 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#C8FF00]/10 bg-[#0E1116]/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-[#D4AF37]/10">
+          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-[#C8FF00]/10">
             <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={36} height={36} className="h-full w-full object-cover" />
           </div>
           <div>
@@ -100,7 +100,7 @@ function DashboardLayoutContent({
           type="button"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open navigation"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#D4AF37]/15 bg-white/5 text-white transition hover:bg-white/10"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#C8FF00]/15 bg-white/5 text-white transition hover:bg-white/10"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -117,7 +117,7 @@ function DashboardLayoutContent({
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed left-0 top-0 z-50 h-screen w-72 transform overflow-y-auto border-r border-[#D4AF37]/10 bg-[#0E1116] transition-transform duration-200 ease-out lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 h-screen w-72 transform overflow-y-auto border-r border-[#C8FF00]/10 bg-[#0E1116] transition-transform duration-200 ease-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -154,11 +154,11 @@ function DashboardLayoutContent({
                   href={item.href}
                   className={`group flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition ${
                     active
-                      ? 'bg-[#D4AF37]/10 text-white ring-1 ring-inset ring-[#D4AF37]/30'
+                      ? 'bg-[#C8FF00]/10 text-white ring-1 ring-inset ring-[#C8FF00]/30'
                       : 'text-slate-200 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 transition ${active ? 'text-[#D4AF37]' : 'text-gold group-hover:text-white'}`} />
+                  <Icon className={`h-5 w-5 transition ${active ? 'text-[#C8FF00]' : 'text-gold group-hover:text-white'}`} />
                   <span>{item.label}</span>
                 </Link>
               )
@@ -167,7 +167,7 @@ function DashboardLayoutContent({
 
           <div className="rounded-[2rem] border border-white/10 bg-[#07070A] p-4 shadow-lg shadow-black/20">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#D4AF37]/15 text-gold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#C8FF00]/15 text-gold">
                 <span className="text-sm font-semibold">{user?.email?.[0].toUpperCase() || 'U'}</span>
               </div>
               <div className="min-w-0">

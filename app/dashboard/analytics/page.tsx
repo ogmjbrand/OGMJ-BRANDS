@@ -100,8 +100,8 @@ export default function AnalyticsPage() {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="space-y-4 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37]/20 border-t-[#D4AF37]" />
-          <p className="text-[#D4AF37]/70">Loading analytics...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#C8FF00]/20 border-t-[#C8FF00]" />
+          <p className="text-[#C8FF00]/70">Loading analytics...</p>
         </div>
       </div>
     );
@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
           <p className="text-red-400">{error}</p>
           <button
             onClick={loadAnalytics}
-            className="rounded-full bg-[#D4AF37] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#D4AF37]/90"
+            className="rounded-full bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90"
           >
             Try again
           </button>
@@ -191,10 +191,10 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
               <Sparkles className="h-4 w-4" /> Intelligence overview
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Analytics that read like a boardroom briefing.</h1>
@@ -207,8 +207,8 @@ export default function AnalyticsPage() {
                 onClick={() => setTimeframe(period)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                   timeframe === period
-                    ? 'bg-[#D4AF37] text-[#07070A]'
-                    : 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'
+                    ? 'bg-[#C8FF00] text-[#07070A]'
+                    : 'bg-[#C8FF00]/10 text-[#C8FF00] hover:bg-[#C8FF00]/20'
                 }`}
               >
                 {period}
@@ -229,11 +229,11 @@ export default function AnalyticsPage() {
           <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(212,175,55,0.16)" />
-                <XAxis dataKey="name" stroke="#D4AF37/60" />
-                <YAxis stroke="#D4AF37/60" />
-                <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(212,175,55,0.3)' }} labelStyle={{ color: '#D4AF37' }} />
-                <Line type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={3} dot={{ r: 3, fill: '#D4AF37' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(200, 255, 0,0.16)" />
+                <XAxis dataKey="name" stroke="#C8FF00/60" />
+                <YAxis stroke="#C8FF00/60" />
+                <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
+                <Line type="monotone" dataKey="revenue" stroke="#C8FF00" strokeWidth={3} dot={{ r: 3, fill: '#C8FF00' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -259,14 +259,14 @@ export default function AnalyticsPage() {
                 <div key={item.stage} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-white">{item.stage}</span>
-                    <span className="text-[#D4AF37]">{item.count} deals</span>
+                    <span className="text-[#C8FF00]">{item.count} deals</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-[#07070A]">
-                    <div className={`h-full rounded-full bg-[#D4AF37] ${widthClass}`} />
+                    <div className={`h-full rounded-full bg-[#C8FF00] ${widthClass}`} />
                   </div>
                 </div>
               );
-            }) : <p className="text-sm text-[#D4AF37]/60">No pipeline data is available yet.</p>}
+            }) : <p className="text-sm text-[#C8FF00]/60">No pipeline data is available yet.</p>}
           </div>
         </SectionPanel>
       </div>
@@ -275,17 +275,17 @@ export default function AnalyticsPage() {
         <SectionPanel title="Recent contacts" subtitle="Who is moving through your funnel right now">
           <div className="space-y-3">
             {topContacts.length > 0 ? topContacts.map((contact: any, index: number) => (
-              <div key={`${contact.email ?? 'contact'}-${index}`} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div key={`${contact.email ?? 'contact'}-${index}`} className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">{contact.first_name ?? 'New'} {contact.last_name ?? 'contact'}</p>
-                  <p className="mt-1 text-xs text-[#D4AF37]/60">{contact.status ?? 'Active'}</p>
+                  <p className="mt-1 text-xs text-[#C8FF00]/60">{contact.status ?? 'Active'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-[#D4AF37]">{contact.email ?? '—'}</p>
+                  <p className="text-sm font-medium text-[#C8FF00]">{contact.email ?? '—'}</p>
                   <p className="mt-1 text-xs text-[#F8F9FA]/50">Priority lead</p>
                 </div>
               </div>
-            )) : <p className="text-sm text-[#D4AF37]/60">No recent contacts have been captured yet.</p>}
+            )) : <p className="text-sm text-[#C8FF00]/60">No recent contacts have been captured yet.</p>}
           </div>
         </SectionPanel>
 
@@ -296,12 +296,12 @@ export default function AnalyticsPage() {
               { label: 'Automations active', value: '8', detail: 'Follow-ups and reminders are running' },
               { label: 'Content shipped', value: '12', detail: 'A strong publishing cadence is in motion' },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-[1.2rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+              <div key={item.label} className="flex items-center justify-between rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">{item.label}</p>
                   <p className="mt-1 text-sm text-[#F8F9FA]/60">{item.detail}</p>
                 </div>
-                <div className="flex items-center gap-2 text-[#D4AF37]">
+                <div className="flex items-center gap-2 text-[#C8FF00]">
                   <Activity className="h-4 w-4" />
                   <span className="text-sm font-semibold">{item.value}</span>
                 </div>

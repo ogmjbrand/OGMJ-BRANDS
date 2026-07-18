@@ -99,7 +99,7 @@ export default function AppointmentsPage() {
   if (loading && !businessId) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
       </div>
     )
   }
@@ -114,9 +114,9 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#D4AF37]/10 bg-[radial-gradient(circle_at_top_left,_rgba(212,175,55,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-4 py-2 text-sm text-[#D4AF37]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Sparkles className="h-4 w-4" /> Time and attention orchestration
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Keep every meeting, touchpoint and follow-up moving smoothly.</h1>
@@ -133,10 +133,10 @@ export default function AppointmentsPage() {
       <SectionPanel title="Appointment flow" subtitle="Review the meetings that shape your next moves">
         {loading ? (
           <div className="flex min-h-[200px] items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D4AF37]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#C8FF00]" />
           </div>
         ) : appointments.length === 0 ? (
-          <div className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-12 text-center">
+          <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-12 text-center">
             <p className="text-lg font-medium text-white">No appointments yet</p>
             <p className="mt-1 text-sm text-[#F8F9FA]/60">Schedule your first appointment to get started.</p>
           </div>
@@ -145,13 +145,13 @@ export default function AppointmentsPage() {
             {appointments.map((appt) => {
               const statusLabel = appt.status ?? 'scheduled'
               return (
-                <div key={appt.id} className="rounded-[1.35rem] border border-[#D4AF37]/10 bg-[#11151E] p-4">
+                <div key={appt.id} className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-white">{appt.title}</h3>
                       <p className="mt-1 text-sm text-[#F8F9FA]/60">{new Date(appt.start_time).toLocaleString()} — {new Date(appt.end_time).toLocaleTimeString()}</p>
                     </div>
-                    <span className="rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-medium capitalize text-[#D4AF37]">
+                    <span className="rounded-full bg-[#C8FF00]/10 px-3 py-1 text-xs font-medium capitalize text-[#C8FF00]">
                       {statusLabel}
                     </span>
                   </div>
@@ -162,7 +162,7 @@ export default function AppointmentsPage() {
                     {appt.type ? <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" /> {appt.type}</span> : null}
                   </div>
                   {appt.meeting_url ? (
-                    <a href={appt.meeting_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#D4AF37]">
+                    <a href={appt.meeting_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#C8FF00]">
                       <Video className="h-4 w-4" /> Join meeting
                     </a>
                   ) : null}

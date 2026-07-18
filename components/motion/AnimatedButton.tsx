@@ -32,10 +32,10 @@ export const AnimatedButton = React.forwardRef<HTMLButtonElement, AnimatedButton
     const baseStyles = 'relative font-semibold rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer';
 
     const variants = {
-      primary: 'bg-[#D4AF37] text-black hover:bg-[#E8CC6A] shadow-lg shadow-[#D4AF37]/20 focus:ring-[#D4AF37]/50',
+      primary: 'bg-[#C8FF00] text-black hover:bg-[#E8CC6A] shadow-lg shadow-[#C8FF00]/20 focus:ring-[#C8FF00]/50',
       secondary: 'bg-white/10 border border-white/20 text-white hover:bg-white/15 hover:border-white/30',
-      ghost: 'bg-transparent text-[#D4AF37] hover:bg-[#D4AF37]/10 border border-[#D4AF37]/30 hover:border-[#D4AF37]/50',
-      gradient: 'bg-gradient-to-r from-[#D4AF37] to-[#E8CC6A] text-black hover:shadow-lg hover:shadow-[#D4AF37]/30',
+      ghost: 'bg-transparent text-[#C8FF00] hover:bg-[#C8FF00]/10 border border-[#C8FF00]/30 hover:border-[#C8FF00]/50',
+      gradient: 'bg-gradient-to-r from-[#C8FF00] to-[#E8CC6A] text-black hover:shadow-lg hover:shadow-[#C8FF00]/30',
     };
 
     const sizes = {
@@ -87,7 +87,7 @@ export const GlossyButton = React.forwardRef<HTMLButtonElement, AnimatedButtonPr
         whileTap={{ scale: 0.95 }}
         className={`relative overflow-hidden rounded-full font-semibold transition-all duration-300 ${
           variant === 'primary'
-            ? 'bg-[#D4AF37] text-black px-8 py-4 shadow-lg shadow-[#D4AF37]/20'
+            ? 'bg-[#C8FF00] text-black px-8 py-4 shadow-lg shadow-[#C8FF00]/20'
             : 'bg-white/10 text-white px-8 py-4 border border-white/20'
         }`}
       >
@@ -127,11 +127,11 @@ export const MagneticButton = React.forwardRef<HTMLButtonElement, AnimatedButton
           disabled={disabled}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="relative px-8 py-4 font-semibold rounded-full bg-gradient-to-r from-[#D4AF37] to-[#E8CC6A] text-black shadow-lg shadow-[#D4AF37]/20 overflow-hidden"
+          className="relative px-8 py-4 font-semibold rounded-full bg-gradient-to-r from-[#C8FF00] to-[#E8CC6A] text-black shadow-lg shadow-[#C8FF00]/20 overflow-hidden"
         >
           {/* Animated background particle */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-white/20 to-[#D4AF37]/0"
+            className="absolute inset-0 bg-gradient-to-r from-[#C8FF00]/0 via-white/20 to-[#C8FF00]/0"
             animate={isHovered ? { x: 200 } : { x: -200 }}
             transition={{ duration: 0.8, ease: 'easeInOut' }}
           />
