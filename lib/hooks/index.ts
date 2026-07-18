@@ -5,5 +5,7 @@ export { useEmailSequences } from './useEmailSequences'
 export { useConversations } from './useConversations'
 export { useProducts } from './useProducts'
 export { useFeatureFlags } from './useFeatureFlags'
+export { useWorkflows } from './useWorkflows'
+export { useSocialPosts } from './useSocialPosts'
 
 
