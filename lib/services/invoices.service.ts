@@ -1,9 +1,53 @@
 /**
- * Invoicing Service - Invoice management, generation, and PDF export
+ * Invoicing Service - client_invoices / invoice_items
+ *
+ * invoice_number, subtotal, tax_amount and total are computed by database
+ * triggers (generate_invoice_number, recalculate_invoice_total) — never set
+ * them directly from here.
  */
 
 import { createClient } from '@/lib/supabase/client';
-import { Invoice, InvoiceLineItem, InvoiceTemplate } from '@/lib/types';
+
+export interface InvoiceClient {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+export interface Invoice {
+  id: string;
+  business_id: string;
+  client_id: string | null;
+  project_id: string | null;
+  invoice_number: string;
+  title: string | null;
+  status: string;
+  currency: string;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  discount: number;
+  total: number;
+  notes: string | null;
+  terms: string | null;
+  due_date: string | null;
+  sent_at: string | null;
+  paid_at: string | null;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+  clients?: InvoiceClient | null;
+  invoice_items?: InvoiceItem[];
+}
 
 /**
  * List invoices with filtering
@@ -12,15 +56,15 @@ export async function listInvoices(
   businessId: string,
   options: {
     status?: string;
-    contactId?: string;
+    clientId?: string;
     limit?: number;
     offset?: number;
   } = {}
 ) {
-  const supabaseAny = createClient() as any;
-  let query = supabaseAny
-    .from('invoices')
-    .select('*')
+  const supabase = createClient();
+  let query = supabase
+    .from('client_invoices')
+    .select('*, clients(id, name, email)')
     .eq('business_id', businessId)
     .order('created_at', { ascending: false });
 
@@ -28,8 +72,8 @@ export async function listInvoices(
     query = query.eq('status', options.status);
   }
 
-  if (options.contactId) {
-    query = query.eq('contact_id', options.contactId);
+  if (options.clientId) {
+    query = query.eq('client_id', options.clientId);
   }
 
   if (options.limit) {
@@ -43,250 +87,206 @@ export async function listInvoices(
   const { data, error } = await query;
 
   if (error) throw error;
-  return data as Invoice[];
+  return data as unknown as Invoice[];
 }
 
 /**
- * Get single invoice with line items
+ * Get a single invoice with its line items and client
  */
 export async function getInvoice(invoiceId: string) {
-  const supabaseAny = createClient() as any;
-  const { data: invoice, error: invoiceError } = await supabaseAny
-    .from('invoices')
-    .select('*')
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('client_invoices')
+    .select('*, clients(id, name, email), invoice_items(*)')
     .eq('id', invoiceId)
+    .single();
+
+  if (error) throw error;
+  return data as unknown as Invoice;
+}
+
+/**
+ * Create a new invoice as a single line item. invoice_number, subtotal,
+ * tax_amount and total are all derived by database triggers once the item
+ * is inserted.
+ */
+export async function createInvoice(
+  businessId: string,
+  input: {
+    clientId?: string | null;
+    title?: string;
+    dueDate?: string;
+    notes?: string;
+    terms?: string;
+    taxRate?: number;
+    discount?: number;
+    amount: number;
+  }
+) {
+  const supabase = createClient();
+
+  const { data: invoice, error: invoiceError } = await supabase
+    .from('client_invoices')
+    .insert({
+      business_id: businessId,
+      client_id: input.clientId || null,
+      title: input.title || null,
+      due_date: input.dueDate || null,
+      notes: input.notes || null,
+      terms: input.terms || null,
+      tax_rate: input.taxRate ?? 0,
+      discount: input.discount ?? 0,
+    } as any)
+    .select()
     .single();
 
   if (invoiceError) throw invoiceError;
 
-  const { data: lineItems, error: itemsError } = await supabaseAny
-    .from('invoice_line_items')
-    .select('*')
-    .eq('invoice_id', invoiceId);
+  const { error: itemError } = await supabase.from('invoice_items').insert({
+    invoice_id: (invoice as any).id,
+    description: input.title || 'Services rendered',
+    quantity: 1,
+    unit_price: input.amount,
+  } as any);
 
-  if (itemsError) throw itemsError;
+  if (itemError) throw itemError;
 
-  return { ...(invoice as Invoice), line_items: lineItems as InvoiceLineItem[] };
+  return getInvoice((invoice as any).id);
 }
 
 /**
- * Create new invoice
+ * Update invoice header fields. To change the billed amount, pass `amount`
+ * — it updates the sole line item's unit_price so the total-recalc trigger
+ * stays in sync; this only works cleanly for single-line-item invoices.
  */
-export async function createInvoice(businessId: string, invoice: Partial<Invoice>) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoices')
-    .insert({
-      ...invoice,
-      business_id: businessId,
-      status: invoice.status || 'draft',
-    } as any)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Invoice;
-}
-
-/**
- * Update invoice
- */
-export async function updateInvoice(invoiceId: string, updates: Partial<Invoice>) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoices')
-    .update(updates as any)
-    .eq('id', invoiceId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Invoice;
-}
-
-/**
- * Delete invoice
- */
-export async function deleteInvoice(invoiceId: string) {
-  const supabaseAny = createClient() as any;
-  const { error } = await supabaseAny
-    .from('invoices')
-    .delete()
-    .eq('id', invoiceId);
-
-  if (error) throw error;
-}
-
-/**
- * Add line item to invoice
- */
-export async function addLineItem(
+export async function updateInvoice(
   invoiceId: string,
-  businessId: string,
-  item: Partial<InvoiceLineItem>
+  updates: {
+    clientId?: string | null;
+    title?: string;
+    dueDate?: string;
+    notes?: string;
+    terms?: string;
+    taxRate?: number;
+    discount?: number;
+    status?: string;
+    amount?: number;
+  }
 ) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoice_line_items')
-    .insert({
-      ...item,
-      invoice_id: invoiceId,
-      business_id: businessId,
-    } as any)
-    .select()
-    .single();
+  const supabase = createClient();
 
-  if (error) throw error;
-  return data as InvoiceLineItem;
-}
+  const headerUpdate: Record<string, any> = {};
+  if (updates.clientId !== undefined) headerUpdate.client_id = updates.clientId;
+  if (updates.title !== undefined) headerUpdate.title = updates.title;
+  if (updates.dueDate !== undefined) headerUpdate.due_date = updates.dueDate;
+  if (updates.notes !== undefined) headerUpdate.notes = updates.notes;
+  if (updates.terms !== undefined) headerUpdate.terms = updates.terms;
+  if (updates.taxRate !== undefined) headerUpdate.tax_rate = updates.taxRate;
+  if (updates.discount !== undefined) headerUpdate.discount = updates.discount;
+  if (updates.status !== undefined) headerUpdate.status = updates.status;
 
-/**
- * Update line item
- */
-export async function updateLineItem(
-  lineItemId: string,
-  updates: Partial<InvoiceLineItem>
-) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoice_line_items')
-    .update(updates as any)
-    .eq('id', lineItemId)
-    .select()
-    .single();
+  if (Object.keys(headerUpdate).length > 0) {
+    const { error } = await supabase
+      .from('client_invoices')
+      .update(headerUpdate)
+      .eq('id', invoiceId);
+    if (error) throw error;
+  }
 
-  if (error) throw error;
-  return data as InvoiceLineItem;
-}
+  if (updates.amount !== undefined) {
+    const { data: items, error: itemsError } = await supabase
+      .from('invoice_items')
+      .select('id')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true })
+      .limit(1);
+    if (itemsError) throw itemsError;
 
-/**
- * Delete line item
- */
-export async function deleteLineItem(lineItemId: string) {
-  const supabaseAny = createClient() as any;
-  const { error } = await supabaseAny
-    .from('invoice_line_items')
-    .delete()
-    .eq('id', lineItemId);
-
-  if (error) throw error;
-}
-
-/**
- * Generate invoice number
- */
-export async function generateInvoiceNumber(businessId: string, prefix = 'INV'): Promise<string> {
-  const supabaseAny = createClient() as any;
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-
-  const { data: existingInvoices } = await supabaseAny
-    .from('invoices')
-    .select('invoice_number')
-    .eq('business_id', businessId)
-    .like('invoice_number', `${prefix}-${year}${month}%`)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  let sequence = 1;
-  if (existingInvoices && existingInvoices.length > 0) {
-    const lastNumber = existingInvoices[0].invoice_number;
-    const match = lastNumber.match(/(\d+)$/);
-    if (match) {
-      sequence = parseInt(match[1]) + 1;
+    if (items && items.length > 0) {
+      const { error } = await supabase
+        .from('invoice_items')
+        .update({ unit_price: updates.amount, quantity: 1 } as any)
+        .eq('id', (items[0] as any).id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('invoice_items').insert({
+        invoice_id: invoiceId,
+        description: updates.title || 'Services rendered',
+        quantity: 1,
+        unit_price: updates.amount,
+      } as any);
+      if (error) throw error;
     }
   }
 
-  return `${prefix}-${year}${month}-${String(sequence).padStart(4, '0')}`;
+  return getInvoice(invoiceId);
+}
+
+/**
+ * Delete invoice (cascades to its line items)
+ */
+export async function deleteInvoice(invoiceId: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from('client_invoices').delete().eq('id', invoiceId);
+  if (error) throw error;
 }
 
 /**
  * Mark invoice as sent
  */
 export async function markInvoiceAsSent(invoiceId: string) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoices')
-    .update({
-      status: 'sent',
-      sent_at: new Date().toISOString(),
-    })
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('client_invoices')
+    .update({ status: 'sent', sent_at: new Date().toISOString() } as any)
     .eq('id', invoiceId)
     .select()
     .single();
 
   if (error) throw error;
-  return data as Invoice;
+  return data as unknown as Invoice;
 }
 
 /**
- * Record invoice payment
+ * Mark invoice as fully paid. There is no per-payment amount tracked on
+ * this schema (no invoice_payments table), so this is all-or-nothing.
  */
-export async function recordInvoicePayment(
-  invoiceId: string,
-  businessId: string,
-  payment: {
-    amount: number;
-    payment_date: string;
-    payment_method: string;
-    reference_id?: string;
-  }
-) {
-  const supabaseAny = createClient() as any;
-
-  // Create payment record
-  const { data: paymentRecord, error: paymentError } = await supabaseAny
-    .from('invoice_payments')
-    .insert({
-      invoice_id: invoiceId,
-      business_id: businessId,
-      ...payment,
-    } as any)
+export async function markInvoiceAsPaid(invoiceId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('client_invoices')
+    .update({ status: 'paid', paid_at: new Date().toISOString() } as any)
+    .eq('id', invoiceId)
     .select()
     .single();
 
-  if (paymentError) throw paymentError;
-
-  // Get invoice to calculate new paid amount
-  const invoice = await getInvoice(invoiceId);
-  const newPaidAmount = (invoice.paid_amount || 0) + payment.amount;
-
-  // Update invoice
-  const newStatus =
-    newPaidAmount >= invoice.total_amount ? 'paid' : 'partially_paid';
-
-  await updateInvoice(invoiceId, {
-    paid_amount: newPaidAmount,
-    status: newStatus,
-    paid_at: newStatus === 'paid' ? new Date().toISOString() : undefined,
-  });
-
-  return paymentRecord;
+  if (error) throw error;
+  return data as unknown as Invoice;
 }
 
 /**
- * Get invoice templates
+ * List the business's clients, for the invoice client picker
  */
-export async function getInvoiceTemplates(businessId: string) {
-  const supabaseAny = createClient() as any;
-  const { data, error } = await supabaseAny
-    .from('invoice_templates')
-    .select('*')
-    .eq('business_id', businessId);
+export async function listClients(businessId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id, name, email')
+    .eq('business_id', businessId)
+    .order('name', { ascending: true });
 
   if (error) throw error;
-  return data as InvoiceTemplate[];
+  return data as unknown as InvoiceClient[];
 }
 
 /**
  * Get invoice statistics
  */
 export async function getInvoiceStats(businessId: string) {
-  const supabaseAny = createClient() as any;
-  const { data: invoices, error } = await supabaseAny
-    .from('invoices')
-    .select('status, total_amount, paid_amount')
+  const supabase = createClient();
+  const { data: invoices, error } = await supabase
+    .from('client_invoices')
+    .select('status, total')
     .eq('business_id', businessId);
 
   if (error) throw error;
@@ -304,15 +304,17 @@ export async function getInvoiceStats(businessId: string) {
 
   if (invoices) {
     invoices.forEach((inv: any) => {
-      stats.total_revenue += inv.total_amount || 0;
-      stats.paid_revenue += inv.paid_amount || 0;
-      stats.outstanding += (inv.total_amount || 0) - (inv.paid_amount || 0);
+      const total = Number(inv.total) || 0;
+      stats.total_revenue += total;
 
       if (inv.status === 'draft') stats.draft++;
       else if (inv.status === 'sent') stats.sent++;
-      else if (inv.status === 'paid') stats.paid++;
-      else if (inv.status === 'overdue') stats.overdue++;
+      else if (inv.status === 'paid') {
+        stats.paid++;
+        stats.paid_revenue += total;
+      } else if (inv.status === 'overdue') stats.overdue++;
     });
+    stats.outstanding = stats.total_revenue - stats.paid_revenue;
   }
 
   return stats;

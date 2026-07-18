@@ -3,18 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Send, CheckCircle2, CircleDollarSign } from 'lucide-react';
-import { useBusinessContext } from '@/lib/context/BusinessContext';
 import {
   getInvoice,
   markInvoiceAsSent,
-  recordInvoicePayment,
+  markInvoiceAsPaid,
 } from '@/lib/services/invoices.service';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { currentBusiness } = useBusinessContext();
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -50,22 +48,13 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
   }
 
   async function handleMarkPaid() {
-    if (!invoice || !currentBusiness) return;
-    const outstanding = (invoice.total_amount || 0) - (invoice.paid_amount || 0);
-    if (outstanding <= 0) return;
-
-    const paymentAmount = Number(window.prompt('Enter payment amount', String(outstanding)) || outstanding);
-    if (isNaN(paymentAmount) || paymentAmount <= 0) return;
+    if (!invoice || invoice.status === 'paid') return;
+    if (!window.confirm(`Mark invoice ${invoice.invoice_number} as fully paid?`)) return;
 
     setActionLoading(true);
     try {
-      await recordInvoicePayment(invoice.id, currentBusiness.id, {
-        amount: paymentAmount,
-        payment_date: new Date().toISOString(),
-        payment_method: 'manual',
-      });
-      const refreshed = await getInvoice(invoice.id);
-      setInvoice(refreshed);
+      const updated = await markInvoiceAsPaid(invoice.id);
+      setInvoice(updated as any);
     } catch (err) {
       console.error('Failed to mark payment:', err);
     } finally {
@@ -107,7 +96,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
     );
   }
 
-  const outstanding = Math.max((invoice.total_amount || 0) - (invoice.paid_amount || 0), 0);
+  const outstanding = invoice.status === 'paid' ? 0 : Number(invoice.total) || 0;
 
   return (
     <div className="space-y-8">
@@ -139,7 +128,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
             disabled={actionLoading || outstanding <= 0}
             className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#07070A] px-5 py-3 text-sm font-semibold text-[#D4AF37] hover:bg-[#D4AF37]/10 transition disabled:opacity-50"
           >
-            <CheckCircle2 className="w-4 h-4" /> Record Payment
+            <CheckCircle2 className="w-4 h-4" /> Mark as Paid
           </button>
         </div>
       </div>
@@ -159,45 +148,45 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
 
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="rounded-3xl bg-[#11151E] p-4">
-              <p className="text-sm text-[#D4AF37]/60">Total Amount</p>
-              <p className="text-xl font-semibold text-white">₦{(invoice.total_amount / 1000000).toFixed(1)}M</p>
+              <p className="text-sm text-[#D4AF37]/60">Subtotal</p>
+              <p className="text-xl font-semibold text-white">₦{Number(invoice.subtotal).toLocaleString('en-NG')}</p>
             </div>
             <div className="rounded-3xl bg-[#11151E] p-4">
-              <p className="text-sm text-[#D4AF37]/60">Paid</p>
-              <p className="text-xl font-semibold text-white">₦{(invoice.paid_amount / 1000000).toFixed(1)}M</p>
+              <p className="text-sm text-[#D4AF37]/60">Total Amount</p>
+              <p className="text-xl font-semibold text-white">₦{Number(invoice.total).toLocaleString('en-NG')}</p>
             </div>
             <div className="rounded-3xl bg-[#11151E] p-4">
               <p className="text-sm text-[#D4AF37]/60">Outstanding</p>
-              <p className="text-xl font-semibold text-white">₦{(outstanding / 1000000).toFixed(1)}M</p>
+              <p className="text-xl font-semibold text-white">₦{outstanding.toLocaleString('en-NG')}</p>
             </div>
           </div>
 
           <div className="rounded-3xl bg-[#11151E] p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Invoice Summary</h2>
-            <p className="text-[#D4AF37]/70 whitespace-pre-wrap">{invoice.metadata?.notes || 'No additional notes provided.'}</p>
+            <p className="text-[#D4AF37]/70 whitespace-pre-wrap">{invoice.notes || 'No additional notes provided.'}</p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-sm text-[#D4AF37]/60">Due Date</p>
-                <p className="text-white">{new Date(invoice.due_date).toLocaleDateString()}</p>
+                <p className="text-white">{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-[#D4AF37]/60">Contact</p>
-                <p className="text-white">{invoice.contact_id || 'Unassigned'}</p>
+                <p className="text-sm text-[#D4AF37]/60">Client</p>
+                <p className="text-white">{invoice.clients?.name || 'Unassigned'}</p>
               </div>
             </div>
           </div>
 
-          {invoice.line_items?.length > 0 && (
+          {invoice.invoice_items?.length > 0 && (
             <div className="rounded-3xl bg-[#11151E] p-6">
               <h2 className="text-lg font-semibold text-white mb-4">Line Items</h2>
               <div className="space-y-3">
-                {invoice.line_items.map((item: any) => (
+                {invoice.invoice_items.map((item: any) => (
                   <div key={item.id} className="rounded-3xl border border-[#D4AF37]/10 bg-[#0E1116] p-4">
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-white font-medium">{item.description}</p>
-                      <p className="text-sm text-[#D4AF37]/70">₦{(item.amount / 1000000).toFixed(1)}M</p>
+                      <p className="text-sm text-[#D4AF37]/70">₦{Number(item.total).toLocaleString('en-NG')}</p>
                     </div>
-                    <p className="text-[#D4AF37]/60 text-sm mt-2">Qty: {item.quantity || 1}</p>
+                    <p className="text-[#D4AF37]/60 text-sm mt-2">Qty: {item.quantity || 1} × ₦{Number(item.unit_price).toLocaleString('en-NG')}</p>
                   </div>
                 ))}
               </div>
@@ -216,7 +205,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
           </div>
           <div className="rounded-3xl bg-[#11151E] p-4">
             <p className="text-sm text-[#D4AF37]/60">Client</p>
-            <p className="text-white mt-2">{invoice.contact_id || 'Unassigned contact'}</p>
+            <p className="text-white mt-2">{invoice.clients?.name || 'Unassigned'}</p>
           </div>
         </aside>
       </div>

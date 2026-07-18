@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { createInvoice, generateInvoiceNumber } from '@/lib/services/invoices.service';
+import { createInvoice, listClients, type InvoiceClient } from '@/lib/services/invoices.service';
 
 export default function InvoiceCreatePage() {
   const router = useRouter();
   const { currentBusiness } = useBusinessContext();
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [status, setStatus] = useState('draft');
+  const [clients, setClients] = useState<InvoiceClient[]>([]);
+  const [clientId, setClientId] = useState('');
+  const [title, setTitle] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -19,11 +20,14 @@ export default function InvoiceCreatePage() {
   useEffect(() => {
     async function initialize() {
       if (!currentBusiness) return;
-      const number = await generateInvoiceNumber(currentBusiness.id);
-      setInvoiceNumber(number);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 14);
       setDueDate(tomorrow.toISOString().split('T')[0]);
+      try {
+        setClients(await listClients(currentBusiness.id));
+      } catch (err) {
+        console.error('Failed to load clients:', err);
+      }
     }
     initialize();
   }, [currentBusiness]);
@@ -36,15 +40,14 @@ export default function InvoiceCreatePage() {
     setError(null);
 
     try {
-      await createInvoice(currentBusiness.id, {
-        invoice_number: invoiceNumber,
-        status: status as any,
-        due_date: dueDate,
-        total_amount: totalAmount,
-        paid_amount: 0,
-        metadata: { notes },
+      const invoice = await createInvoice(currentBusiness.id, {
+        clientId: clientId || null,
+        title: title || undefined,
+        dueDate: dueDate || undefined,
+        notes: notes || undefined,
+        amount: totalAmount,
       });
-      router.push('/dashboard/invoices');
+      router.push(`/dashboard/invoices/${invoice.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invoice');
     } finally {
@@ -71,12 +74,19 @@ export default function InvoiceCreatePage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
-              Invoice Number
-              <input
-                value={invoiceNumber}
-                onChange={(event) => setInvoiceNumber(event.target.value)}
+              Client
+              <select
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
                 className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
-              />
+              >
+                <option value="">No client</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
               Due Date
@@ -91,17 +101,13 @@ export default function InvoiceCreatePage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
-              Status
-              <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
+              Title / Description
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="e.g. Website design retainer"
                 className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
-              >
-                <option value="draft">Draft</option>
-                <option value="sent">Sent</option>
-                <option value="paid">Paid</option>
-                <option value="overdue">Overdue</option>
-              </select>
+              />
             </label>
             <label className="space-y-2 text-sm text-[#D4AF37]/70">
               Total Amount (NGN)
@@ -140,11 +146,11 @@ export default function InvoiceCreatePage() {
             <p className="text-sm text-[#D4AF37]/70">Invoice preview</p>
             <div className="rounded-3xl bg-[#11151E] p-4">
               <p className="text-sm text-[#D4AF37]/50">Invoice number</p>
-              <p className="text-lg font-semibold text-white">{invoiceNumber}</p>
+              <p className="text-lg font-semibold text-white">Assigned on save</p>
             </div>
             <div className="rounded-3xl bg-[#11151E] p-4">
               <p className="text-sm text-[#D4AF37]/50">Expected collection</p>
-              <p className="text-lg font-semibold text-white">₦{(totalAmount / 1000000).toFixed(1)}M</p>
+              <p className="text-lg font-semibold text-white">₦{totalAmount.toLocaleString('en-NG')}</p>
             </div>
           </div>
           <div className="rounded-3xl bg-[#11151E] p-4">
