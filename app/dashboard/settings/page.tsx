@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AlertCircle, CreditCard, Users, Shield, Bell, Check, Sparkles, Settings2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
@@ -9,7 +10,7 @@ import type { Business } from '@/lib/types';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'billing' | 'team' | 'security' | 'notifications'>('general');
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<(Business & { role?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,16 +20,98 @@ export default function SettingsPage() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [notificationsForm, setNotificationsForm] = useState({ emailNotifications: true, marketingUpdates: false, paymentReminders: true });
 
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaEnrollment, setMfaEnrollment] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+
+  async function loadMfaStatus() {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    const { data } = await supabase.auth.mfa.listFactors();
+    const verifiedTotp = data?.totp?.find((f) => f.status === 'verified');
+    setMfaFactorId(verifiedTotp?.id ?? null);
+  }
+
+  async function handleStartEnrollMfa() {
+    setMfaError(null);
+    setMfaLoading(true);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+      if (error) throw error;
+      setMfaEnrollment({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Failed to start 2FA enrollment');
+    } finally {
+      setMfaLoading(false);
+    }
+  }
+
+  async function handleVerifyMfa() {
+    if (!mfaEnrollment || !mfaCode.trim()) return;
+    setMfaError(null);
+    setMfaLoading(true);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: mfaEnrollment.factorId });
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaEnrollment.factorId,
+        challengeId: challenge.id,
+        code: mfaCode.trim(),
+      });
+      if (verifyError) throw verifyError;
+
+      setMfaFactorId(mfaEnrollment.factorId);
+      setMfaEnrollment(null);
+      setMfaCode('');
+      setSuccess('Two-factor authentication enabled');
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Invalid code — try again');
+    } finally {
+      setMfaLoading(false);
+    }
+  }
+
+  async function handleDisableMfa() {
+    if (!mfaFactorId) return;
+    if (!confirm('Disable two-factor authentication?')) return;
+    setMfaError(null);
+    setMfaLoading(true);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaFactorId });
+      if (error) throw error;
+      setMfaFactorId(null);
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Failed to disable 2FA');
+    } finally {
+      setMfaLoading(false);
+    }
+  }
+
   useEffect(() => {
     async function loadData() {
       try {
         const currentUser = await getCurrentUser();
         setProfileForm({ fullName: currentUser?.user_metadata?.full_name || '', email: currentUser?.email || '' });
+        const savedNotifications = currentUser?.user_metadata?.notification_preferences;
+        if (savedNotifications) {
+          setNotificationsForm((prev) => ({ ...prev, ...savedNotifications }));
+        }
 
         const userBusinesses = await listUserBusinesses();
         if (userBusinesses.success && userBusinesses.data) {
           setBusinesses(userBusinesses.data);
         }
+
+        await loadMfaStatus();
       } catch (error) {
         console.error('Failed to load settings:', error);
         setError('Failed to load settings');
@@ -74,9 +157,26 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!passwordForm.currentPassword) {
+      setError('Enter your current password');
+      setSaving(false);
+      return;
+    }
+
     try {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
+
+      // Verify the current password before changing it — updateUser() only
+      // needs an active session and does not check the old password itself.
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: profileForm.email,
+        password: passwordForm.currentPassword,
+      });
+
+      if (verifyError) {
+        throw new Error('Current password is incorrect');
+      }
 
       const { error } = await supabase.auth.updateUser({ password: passwordForm.newPassword });
 
@@ -98,10 +198,16 @@ export default function SettingsPage() {
     setSuccess(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      const { error } = await supabase.auth.updateUser({ data: { notification_preferences: notificationsForm } });
+
+      if (error) throw error;
+
       setSuccess('Notification preferences updated');
     } catch (err) {
-      setError('Failed to update notifications');
+      setError(err instanceof Error ? err.message : 'Failed to update notifications');
     } finally {
       setSaving(false);
     }
@@ -140,7 +246,7 @@ export default function SettingsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard title="Account" value="Ready" description="Profile and access configured" icon={Settings2} accent="gold" trend="Live" />
-        <MetricCard title="Billing" value="Professional" description="Active plan in place" icon={CreditCard} accent="emerald" trend="Secure" />
+        <MetricCard title="Billing" value="Manage" description="View plan and payment details" icon={CreditCard} accent="emerald" trend="Secure" />
         <MetricCard title="Team" value={businesses.length.toString()} description="Businesses connected to your workspace" icon={Users} accent="slate" trend="Managed" />
       </div>
 
@@ -178,22 +284,18 @@ export default function SettingsPage() {
         )}
 
         {activeTab === 'billing' && (
-          <div className="space-y-6">
-            <SectionPanel title="Current plan" subtitle="Your current subscription and payment setup">
-              <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
-                <p className="font-semibold text-white">Professional plan</p>
-                <p className="mt-1 text-sm text-[#F8F9FA]/60">$99/month • Next billing: May 17, 2026</p>
-                <button className="mt-4 rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Change plan</button>
-              </div>
-            </SectionPanel>
-            <SectionPanel title="Payment method" subtitle="Your stored card and billing details">
-              <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
-                <p className="font-semibold text-white">Visa •••• 4242</p>
-                <p className="mt-1 text-sm text-[#F8F9FA]/60">Expires 12/26</p>
-                <button className="mt-4 rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Update payment method</button>
-              </div>
-            </SectionPanel>
-          </div>
+          <SectionPanel title="Plan and payment" subtitle="Manage your subscription and billing details">
+            <div className="rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
+              <p className="font-semibold text-white">Full billing management</p>
+              <p className="mt-1 text-sm text-[#F8F9FA]/60">View your current plan, upgrade or downgrade, and manage payments through Paystack.</p>
+              <Link
+                href="/dashboard/settings/billing"
+                className="mt-4 inline-block rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90"
+              >
+                Open billing settings
+              </Link>
+            </div>
+          </SectionPanel>
         )}
 
         {activeTab === 'team' && (
@@ -202,7 +304,9 @@ export default function SettingsPage() {
               {businesses.length > 0 ? businesses.map((business) => (
                 <div key={business.id} className="rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-4">
                   <p className="font-semibold text-white">{business.name}</p>
-                  <p className="mt-1 text-sm text-[#F8F9FA]/60">You are an admin for this workspace.</p>
+                  <p className="mt-1 text-sm text-[#F8F9FA]/60 capitalize">
+                    You are {business.role ? `a${business.role === 'owner' ? 'n' : ''} ${business.role}` : 'a member'} of this workspace.
+                  </p>
                 </div>
               )) : <p className="text-sm text-[#C8FF00]/60">No connected businesses yet.</p>}
             </div>
@@ -231,7 +335,56 @@ export default function SettingsPage() {
               </form>
             </SectionPanel>
             <SectionPanel title="Two-factor authentication" subtitle="Add another layer of protection to your account">
-              <button className="rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20">Enable 2FA</button>
+              {mfaError && <div className="mb-4 rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{mfaError}</div>}
+
+              {mfaEnrollment ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-[#F8F9FA]/70">Scan this QR code with your authenticator app, then enter the 6-digit code it generates.</p>
+                  <img src={mfaEnrollment.qrCode} alt="2FA QR code" className="h-40 w-40 rounded-lg bg-white p-2" />
+                  <p className="text-xs text-[#C8FF00]/60">Can&apos;t scan? Enter this code manually: <span className="font-mono">{mfaEnrollment.secret}</span></p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      placeholder="123456"
+                      className="w-40 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]"
+                    />
+                    <button
+                      onClick={handleVerifyMfa}
+                      disabled={mfaLoading || !mfaCode.trim()}
+                      className="rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:opacity-60"
+                    >
+                      {mfaLoading ? 'Verifying...' : 'Verify & enable'}
+                    </button>
+                    <button
+                      onClick={() => { setMfaEnrollment(null); setMfaCode(''); setMfaError(null); }}
+                      className="rounded-full border border-[#C8FF00]/10 px-4 py-2 text-sm text-[#F8F9FA]/60 transition hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : mfaFactorId ? (
+                <div className="flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 text-sm text-green-400"><Check className="h-4 w-4" /> Two-factor authentication is enabled</p>
+                  <button
+                    onClick={handleDisableMfa}
+                    disabled={mfaLoading}
+                    className="rounded-full border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
+                  >
+                    Disable 2FA
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleStartEnrollMfa}
+                  disabled={mfaLoading}
+                  className="rounded-full bg-[#C8FF00]/10 px-4 py-2 text-sm font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
+                >
+                  {mfaLoading ? 'Starting...' : 'Enable 2FA'}
+                </button>
+              )}
             </SectionPanel>
           </div>
         )}
