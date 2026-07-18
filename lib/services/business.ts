@@ -116,7 +116,7 @@ export async function getBusiness(businessId: string): Promise<APIResponse<Busin
 // LIST USER BUSINESSES
 // ================================
 
-export async function listUserBusinesses(): Promise<APIResponse<Business[]>> {
+export async function listUserBusinesses(): Promise<APIResponse<(Business & { role?: string })[]>> {
   try {
     const supabase = createClient();
     const user = await getCurrentUser();
@@ -131,7 +131,7 @@ export async function listUserBusinesses(): Promise<APIResponse<Business[]>> {
 
     const { data, error } = await supabase
       .from("business_users")
-      .select("business_id, businesses(*)")
+      .select("business_id, role, businesses(*)")
       .eq("user_id", user.id)
       .eq("status", "active");
 
@@ -139,7 +139,7 @@ export async function listUserBusinesses(): Promise<APIResponse<Business[]>> {
       throw error;
     }
 
-    const businesses = data.map((item: any) => item.businesses) as Business[];
+    const businesses = data.map((item: any) => ({ ...item.businesses, role: item.role })) as (Business & { role?: string })[];
 
     return {
       success: true,
