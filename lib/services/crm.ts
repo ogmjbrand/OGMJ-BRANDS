@@ -433,6 +433,36 @@ export async function updateDeal(
   }
 }
 
+export async function deleteDeal(
+  businessId: string,
+  dealId: string
+): Promise<APIResponse<null>> {
+  try {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("deals")
+      .delete()
+      .eq("id", dealId)
+      .eq("business_id", businessId);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: null,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Deal deletion failed";
+    return {
+      success: false,
+      error: { code: "DELETE_DEAL_ERROR", message },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
 // ================================
 // INTERACTIONS
 // ================================

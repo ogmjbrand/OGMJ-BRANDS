@@ -1,33 +1,55 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { createContact } from '@/lib/services/crm';
+import { createContact, updateContact } from '@/lib/services/crm';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import type { CreateContactInput } from '@/lib/types';
+import type { Contact, CreateContactInput } from '@/lib/types';
 
 interface CreateContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  contact?: Contact | null;
 }
+
+const emptyForm = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  jobTitle: '',
+  companyName: '',
+};
 
 export function CreateContactModal({
   isOpen,
   onClose,
   onSuccess,
+  contact,
 }: CreateContactModalProps) {
   const { currentBusiness } = useBusinessContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    jobTitle: '',
-    companyName: '',
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const isEditing = Boolean(contact);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (contact) {
+      setFormData({
+        firstName: contact.first_name || '',
+        lastName: contact.last_name || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        jobTitle: contact.job_title || '',
+        companyName: contact.company_name || '',
+      });
+    } else {
+      setFormData(emptyForm);
+    }
+    setError(null);
+  }, [isOpen, contact]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,31 +76,31 @@ export function CreateContactModal({
     setLoading(true);
 
     try {
-      const input: CreateContactInput = {
-        business_id: currentBusiness.id,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        job_title: formData.jobTitle || undefined,
-        company_name: formData.companyName || undefined,
-      };
-
-      const result = await createContact(currentBusiness.id, input);
+      const result = isEditing && contact
+        ? await updateContact(currentBusiness.id, contact.id, {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone || undefined,
+            job_title: formData.jobTitle || undefined,
+            company_name: formData.companyName || undefined,
+          })
+        : await createContact(currentBusiness.id, {
+            business_id: currentBusiness.id,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone || undefined,
+            job_title: formData.jobTitle || undefined,
+            company_name: formData.companyName || undefined,
+          } as CreateContactInput);
 
       if (result.success) {
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          jobTitle: '',
-          companyName: '',
-        });
+        setFormData(emptyForm);
         onSuccess();
         onClose();
       } else {
-        setError(result.error?.message || 'Failed to create contact');
+        setError(result.error?.message || `Failed to ${isEditing ? 'update' : 'create'} contact`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -94,7 +116,7 @@ export function CreateContactModal({
       <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Create Contact</h2>
+          <h2 className="text-xl font-semibold text-white">{isEditing ? 'Edit Contact' : 'Create Contact'}</h2>
           <button
             onClick={onClose}
             className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] transition"
@@ -213,7 +235,7 @@ export function CreateContactModal({
               disabled={loading}
               className="flex-1 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-medium hover:bg-[#C8FF00]/90 disabled:opacity-50 transition"
             >
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? (isEditing ? 'Saving...' : 'Creating...') : isEditing ? 'Save Changes' : 'Create'}
             </button>
           </div>
         </form>

@@ -2,36 +2,43 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, DollarSign } from 'lucide-react';
-import { createDeal } from '@/lib/services/crm';
+import { createDeal, updateDeal } from '@/lib/services/crm';
 import { listContacts } from '@/lib/services/crm';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import type { CreateDealInput, Contact } from '@/lib/types';
+import type { CreateDealInput, Contact, Deal } from '@/lib/types';
 
 interface CreateDealModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  deal?: Deal | null;
+  initialStage?: string;
 }
+
+const emptyForm = {
+  contactId: '',
+  title: '',
+  value: '',
+  currency: 'NGN' as const,
+  stage: 'prospecting' as const,
+  expectedCloseDate: '',
+  description: '',
+};
 
 export function CreateDealModal({
   isOpen,
   onClose,
   onSuccess,
+  deal,
+  initialStage,
 }: CreateDealModalProps) {
   const { currentBusiness } = useBusinessContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
-  const [formData, setFormData] = useState({
-    contactId: '',
-    title: '',
-    value: '',
-    currency: 'NGN' as const,
-    stage: 'prospecting' as const,
-    expectedCloseDate: '',
-    description: '',
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const isEditing = Boolean(deal);
 
   const loadContacts = async () => {
     if (!currentBusiness) return;
@@ -55,6 +62,24 @@ export function CreateDealModal({
       loadContacts();
     }
   }, [isOpen, currentBusiness]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (deal) {
+      setFormData({
+        contactId: deal.contact_id || '',
+        title: deal.title || '',
+        value: deal.value != null ? String(deal.value) : '',
+        currency: (deal.currency as any) || 'NGN',
+        stage: (deal.stage as any) || 'prospecting',
+        expectedCloseDate: deal.expected_close_date || '',
+        description: deal.description || '',
+      });
+    } else {
+      setFormData({ ...emptyForm, stage: (initialStage as any) || emptyForm.stage });
+    }
+    setError(null);
+  }, [isOpen, deal, initialStage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -87,33 +112,33 @@ export function CreateDealModal({
     setLoading(true);
 
     try {
-      const input: CreateDealInput = {
-        business_id: currentBusiness.id,
-        contact_id: formData.contactId,
-        title: formData.title,
-        value: value,
-        currency: formData.currency,
-        stage: formData.stage,
-        expected_close_date: formData.expectedCloseDate || undefined,
-        description: formData.description || undefined,
-      };
-
-      const result = await createDeal(currentBusiness.id, input);
+      const result = isEditing && deal
+        ? await updateDeal(currentBusiness.id, deal.id, {
+            contact_id: formData.contactId,
+            title: formData.title,
+            value,
+            currency: formData.currency,
+            stage: formData.stage,
+            expected_close_date: formData.expectedCloseDate || undefined,
+            description: formData.description || undefined,
+          })
+        : await createDeal(currentBusiness.id, {
+            business_id: currentBusiness.id,
+            contact_id: formData.contactId,
+            title: formData.title,
+            value,
+            currency: formData.currency,
+            stage: formData.stage,
+            expected_close_date: formData.expectedCloseDate || undefined,
+            description: formData.description || undefined,
+          } as CreateDealInput);
 
       if (result.success) {
-        setFormData({
-          contactId: '',
-          title: '',
-          value: '',
-          currency: 'NGN',
-          stage: 'prospecting',
-          expectedCloseDate: '',
-          description: '',
-        });
+        setFormData(emptyForm);
         onSuccess();
         onClose();
       } else {
-        setError(result.error?.message || 'Failed to create deal');
+        setError(result.error?.message || `Failed to ${isEditing ? 'update' : 'create'} deal`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -129,7 +154,7 @@ export function CreateDealModal({
       <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-lg w-full mx-4 space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Create Deal</h2>
+          <h2 className="text-xl font-semibold text-white">{isEditing ? 'Edit Deal' : 'Create Deal'}</h2>
           <button
             onClick={onClose}
             className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] transition"
@@ -286,7 +311,7 @@ export function CreateDealModal({
               disabled={loading}
               className="flex-1 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Deal'}
+              {loading ? (isEditing ? 'Saving...' : 'Creating...') : isEditing ? 'Save Changes' : 'Create Deal'}
             </button>
           </div>
         </form>
