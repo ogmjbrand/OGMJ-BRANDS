@@ -65,6 +65,10 @@ export default function VideosPage() {
       setVideoFormError('Video title is required.');
       return;
     }
+    if (!newVideoSourceUrl.trim()) {
+      setVideoFormError('A source URL is required.');
+      return;
+    }
 
     setCreatingVideo(true);
     setVideoFormError(null);
@@ -206,6 +210,7 @@ export default function VideosPage() {
                     Source URL
                     <input
                       type="url"
+                      required
                       value={newVideoSourceUrl}
                       onChange={(e) => setNewVideoSourceUrl(e.target.value)}
                       className="w-full rounded-3xl border border-[#D4AF37]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#D4AF37]"

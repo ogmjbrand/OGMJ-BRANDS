@@ -93,6 +93,11 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Business ID and title are required', 400);
     }
 
+    const filePath = fileUrl || sourceUrl;
+    if (!filePath) {
+      return createErrorResponse('A source URL or file URL is required', 400);
+    }
+
     const supabase = await createServerClient();
 
     // Verify business access
@@ -118,11 +123,12 @@ export async function POST(request: NextRequest) {
         source_url: sourceUrl,
         source_type: sourceType,
         file_url: fileUrl,
+        file_path: filePath,
         thumbnail_url: thumbnailUrl,
         duration_seconds: durationSeconds,
         file_size_bytes: fileSizeBytes,
         status: 'processing',
-        created_by: user.id,
+        uploaded_by: user.id,
       })
       .select()
       .single();
