@@ -19,6 +19,7 @@ import {
   Settings2,
   Menu,
   X,
+  Plug,
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/context/BusinessContext';
@@ -34,6 +35,7 @@ const dashboardNav = [
   { href: '/dashboard/ai', label: 'AI', icon: Cpu },
   { href: '/dashboard/social', label: 'Social', icon: MessageSquare },
   { href: '/dashboard/workflows', label: 'Workflows', icon: Sparkles },
+  { href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
   { href: '/dashboard/support', label: 'Support', icon: LifeBuoy },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings2 },
 ];
