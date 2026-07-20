@@ -20,7 +20,10 @@ export type ContactStatus = "lead" | "prospect" | "customer" | "inactive" | "arc
 export type ContactSource = "website" | "referral" | "email" | "social" | "api" | "manual";
 
 export type DealStatus = "open" | "in_progress" | "won" | "lost";
-export type DealStage = "prospecting" | "qualification" | "proposal" | "negotiation" | "decision";
+// Deal stages are business-defined data (pipeline_stages.name), not a fixed
+// enum — every business gets its own default pipeline with its own stage
+// names/order, fetched via listPipelineStages(). `stage` on a Deal mirrors
+// the resolved stage_id's name for display/filtering convenience.
 
 export type InteractionType = "email" | "call" | "meeting" | "note" | "task";
 
@@ -200,12 +203,14 @@ export interface Deal {
   id: string;
   business_id: string;
   contact_id: string;
+  pipeline_id?: string;
+  stage_id?: string;
   title: string;
   description?: string;
   value: number;
   currency: Currency;
   status: DealStatus;
-  stage: DealStage;
+  stage: string;
   probability: number;
   expected_close_date?: string;
   closed_at?: string;
@@ -214,6 +219,13 @@ export interface Deal {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+}
+
+export interface PipelineStage {
+  id: string;
+  name: string;
+  position: number;
+  color: string;
 }
 
 export interface Interaction {
@@ -689,16 +701,6 @@ export interface CreateContactInput {
   metadata?: Record<string, any>;
 }
 
-export interface CreateDealInput {
-  contact_id: string;
-  title: string;
-  value: number;
-  currency?: Currency;
-  stage?: DealStage;
-  expected_close_date?: string;
-  description?: string;
-}
-
 export interface CreateWebsiteInput {
   name: string;
   description?: string;
@@ -749,7 +751,7 @@ export interface CreateDealInput {
   value: number;
   currency?: Currency;
   status?: DealStatus;
-  stage?: DealStage;
+  stage?: string;
   // Canonical FKs; resolved to the default pipeline's first stage if omitted
   pipeline_id?: string;
   stage_id?: string;

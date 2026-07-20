@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, DollarSign } from 'lucide-react';
-import { createDeal, updateDeal } from '@/lib/services/crm';
+import { createDeal, updateDeal, listPipelineStages } from '@/lib/services/crm';
 import { listContacts } from '@/lib/services/crm';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import type { CreateDealInput, Contact, Deal } from '@/lib/types';
+import type { CreateDealInput, Contact, Deal, PipelineStage } from '@/lib/types';
 
 interface CreateDealModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   deal?: Deal | null;
-  initialStage?: string;
+  initialStageId?: string;
 }
 
 const emptyForm = {
@@ -20,7 +20,7 @@ const emptyForm = {
   title: '',
   value: '',
   currency: 'NGN' as const,
-  stage: 'prospecting' as const,
+  stageId: '',
   expectedCloseDate: '',
   description: '',
 };
@@ -30,13 +30,14 @@ export function CreateDealModal({
   onClose,
   onSuccess,
   deal,
-  initialStage,
+  initialStageId,
 }: CreateDealModalProps) {
   const { currentBusiness } = useBusinessContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [stages, setStages] = useState<PipelineStage[]>([]);
   const [formData, setFormData] = useState(emptyForm);
   const isEditing = Boolean(deal);
 
@@ -56,10 +57,19 @@ export function CreateDealModal({
     }
   };
 
-  // Load contacts when modal opens
+  const loadStages = async () => {
+    if (!currentBusiness) return;
+    const result = await listPipelineStages(currentBusiness.id);
+    if (result.success && result.data) {
+      setStages(result.data.stages);
+    }
+  };
+
+  // Load contacts and real pipeline stages when the modal opens
   useEffect(() => {
     if (isOpen && currentBusiness) {
       loadContacts();
+      loadStages();
     }
   }, [isOpen, currentBusiness]);
 
@@ -71,15 +81,15 @@ export function CreateDealModal({
         title: deal.title || '',
         value: deal.value != null ? String(deal.value) : '',
         currency: (deal.currency as any) || 'NGN',
-        stage: (deal.stage as any) || 'prospecting',
+        stageId: deal.stage_id || '',
         expectedCloseDate: deal.expected_close_date || '',
         description: deal.description || '',
       });
     } else {
-      setFormData({ ...emptyForm, stage: (initialStage as any) || emptyForm.stage });
+      setFormData({ ...emptyForm, stageId: initialStageId || '' });
     }
     setError(null);
-  }, [isOpen, deal, initialStage]);
+  }, [isOpen, deal, initialStageId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -118,7 +128,7 @@ export function CreateDealModal({
             title: formData.title,
             value,
             currency: formData.currency,
-            stage: formData.stage,
+            stage_id: formData.stageId || undefined,
             expected_close_date: formData.expectedCloseDate || undefined,
             description: formData.description || undefined,
           })
@@ -128,7 +138,7 @@ export function CreateDealModal({
             title: formData.title,
             value,
             currency: formData.currency,
-            stage: formData.stage,
+            stage_id: formData.stageId || undefined,
             expected_close_date: formData.expectedCloseDate || undefined,
             description: formData.description || undefined,
           } as CreateDealInput);
@@ -256,16 +266,15 @@ export function CreateDealModal({
                 Stage
               </label>
               <select
-                name="stage"
-                value={formData.stage}
+                name="stageId"
+                value={formData.stageId}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
               >
-                <option value="prospecting">Prospecting</option>
-                <option value="qualification">Qualification</option>
-                <option value="proposal">Proposal</option>
-                <option value="negotiation">Negotiation</option>
-                <option value="decision">Decision</option>
+                {stages.length === 0 && <option value="">Loading stages...</option>}
+                {stages.map((stage) => (
+                  <option key={stage.id} value={stage.id}>{stage.name}</option>
+                ))}
               </select>
             </div>
             <div>
