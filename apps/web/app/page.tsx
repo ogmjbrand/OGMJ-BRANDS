@@ -31,6 +31,8 @@ import {
   BarChart3,
   Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   CircleUserRound,
   Cpu,
   CreditCard,
@@ -342,6 +344,11 @@ const EASE = [0.16, 1, 0.3, 1] as const
 
 // Client-only (WebGL): loaded lazily off the critical path, never on the server.
 const HeroNetworkScene = dynamic(() => import('@/components/three/HeroNetworkScene'), {
+  ssr: false,
+  loading: () => null,
+})
+
+const ServicesCoverflowScene = dynamic(() => import('@/components/three/ServicesCoverflowScene'), {
   ssr: false,
   loading: () => null,
 })
@@ -1005,6 +1012,14 @@ const SERVICE_PHOTOS = [
 ] as const
 
 function ServicesShowcase() {
+  const prefersReduced = useReducedMotion()
+  const [activeIndex, setActiveIndex] = useState(0)
+  const active = SERVICE_PHOTOS[activeIndex]
+
+  function goTo(delta: number) {
+    setActiveIndex((prev) => (prev + delta + SERVICE_PHOTOS.length) % SERVICE_PHOTOS.length)
+  }
+
   return (
     <section id="services" className="border-t border-white/5 px-4 py-24 md:px-10 lg:py-32">
       <div className="mx-auto max-w-[1400px]">
@@ -1015,26 +1030,84 @@ function ServicesShowcase() {
           </h2>
         </Reveal>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICE_PHOTOS.map((service, index) => (
-            <Reveal key={service.title} delay={index * 0.06}>
-              <div className="group relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-white/10">
-                <Image
-                  src={service.src}
-                  alt={service.title}
-                  fill
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                  className="object-cover transition duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">{service.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-content-muted">{service.description}</p>
+        {prefersReduced ? (
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {SERVICE_PHOTOS.map((service, index) => (
+              <Reveal key={service.title} delay={index * 0.06}>
+                <div className="group relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-white/10">
+                  <Image
+                    src={service.src}
+                    alt={service.title}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-6">
+                    <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">{service.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-content-muted">{service.description}</p>
+                  </div>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-14">
+            <div className="relative h-[420px] select-none sm:h-[480px] lg:h-[560px]">
+              <ServicesCoverflowScene photos={SERVICE_PHOTOS} activeIndex={activeIndex} onSelect={setActiveIndex} />
+            </div>
+
+            <div className="mt-4 flex flex-col items-center gap-6 text-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={active.title}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25, ease: EASE }}
+                  className="max-w-lg"
+                >
+                  <h3 className="font-[family-name:var(--font-syne)] text-xl font-bold text-content">{active.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-content-muted">{active.description}</p>
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="flex items-center gap-5">
+                <button
+                  type="button"
+                  onClick={() => goTo(-1)}
+                  aria-label="Previous service"
+                  className="flex size-9 items-center justify-center rounded-full border border-white/10 text-content-muted transition hover:border-gold/40 hover:text-gold"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {SERVICE_PHOTOS.map((service, index) => (
+                    <button
+                      key={service.title}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      aria-label={`Show ${service.title}`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        index === activeIndex ? 'w-6 bg-gold' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => goTo(1)}
+                  aria-label="Next service"
+                  className="flex size-9 items-center justify-center rounded-full border border-white/10 text-content-muted transition hover:border-gold/40 hover:text-gold"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
               </div>
-            </Reveal>
-          ))}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )
