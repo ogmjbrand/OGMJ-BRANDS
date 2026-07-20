@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail, Search, Share2 } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search, Share2, MessageCircle } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -44,6 +44,12 @@ export default function MarketingHubPage() {
           description="Plan your content calendar and draft posts with AI in the Social studio."
           icon={Share2}
           href="/dashboard/social"
+        />
+        <ModuleCard
+          title="WhatsApp Marketing"
+          description="Broadcast short, AI-drafted messages to your contacts over WhatsApp."
+          icon={MessageCircle}
+          href="/dashboard/marketing/whatsapp"
         />
       </div>
     </div>
