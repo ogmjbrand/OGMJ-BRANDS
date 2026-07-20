@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -32,6 +32,12 @@ export default function MarketingHubPage() {
           description="Create and send campaigns to your contacts, with AI-assisted copy and delivery tracking."
           icon={Mail}
           href="/dashboard/marketing/email"
+        />
+        <ModuleCard
+          title="SEO Assistant"
+          description="AI-generated meta tags, keywords, and content gap analysis against your brand strategy."
+          icon={Search}
+          href="/dashboard/marketing/seo"
         />
       </div>
     </div>
