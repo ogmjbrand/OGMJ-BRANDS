@@ -42,8 +42,15 @@ export default function SignupPage() {
         return;
       }
 
-      // Redirect to onboarding on success
-      router.push('/onboarding');
+      // Honor a redirectTo param (e.g. a team invite link) so a brand-new
+      // user can land back where they started instead of always going
+      // through business-creation onboarding; only allow same-origin paths.
+      const redirectTo = new URLSearchParams(window.location.search).get('redirectTo');
+      const target =
+        redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+          ? redirectTo
+          : '/onboarding';
+      router.push(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
     } finally {

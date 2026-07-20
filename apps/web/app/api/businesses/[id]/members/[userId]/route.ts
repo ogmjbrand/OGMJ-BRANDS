@@ -88,6 +88,15 @@ export async function PATCH(
       );
     }
 
+    await (supabase as any).from('activity_logs').insert({
+      business_id: businessId,
+      user_id: user.id,
+      action: 'role_changed',
+      entity_type: 'team_member',
+      entity_id: targetUserId,
+      metadata: { role },
+    });
+
     return NextResponse.json(
       {
         success: true,
@@ -177,6 +186,14 @@ export async function DELETE(
         { status: 400 }
       );
     }
+
+    await (supabase as any).from('activity_logs').insert({
+      business_id: businessId,
+      user_id: user.id,
+      action: 'removed',
+      entity_type: 'team_member',
+      entity_id: targetUserId,
+    });
 
     return NextResponse.json(
       {

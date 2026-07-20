@@ -180,6 +180,16 @@ export async function POST(
 
     // TODO: Send invitation email (do not log the token — it grants access)
 
+    await (supabase as any).from('activity_logs').insert({
+      business_id: businessId,
+      user_id: user.id,
+      action: 'invited',
+      entity_type: 'team_member',
+      entity_id: (data as any)?.id ?? null,
+      entity_name: email,
+      metadata: { role },
+    });
+
     return NextResponse.json(
       {
         success: true,
