@@ -348,7 +348,7 @@ export default function BuilderPage() {
           <h1 className="text-4xl font-bold text-white">Website Builder</h1>
           <p className="text-[#C8FF00]/70 mt-2">Create and manage your websites</p>
         </div>
-        <Dialog open={isCreateWebsiteOpen} onOpenChange={(open) => {
+        <Dialog open={isCreateWebsiteOpen} onOpenChange={(open: boolean) => {
           setIsCreateWebsiteOpen(open);
           if (!open) {
             setEditWebsiteId(null);
