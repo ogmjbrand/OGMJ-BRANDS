@@ -97,6 +97,27 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // A concurrent duplicate submission (e.g. a double-click, or a slow
+      // response that a client retried) can lose the race against
+      // ON CONFLICT (created_by) if it hits businesses_owner_id_unique /
+      // businesses_user_id_unique first — those aren't the named conflict
+      // target, so Postgres raises them as a hard error instead of
+      // resolving via DO UPDATE. Since owner_id/user_id/created_by are
+      // always the same value (set by handle_business_upsert()), this
+      // always means "you already have a business" — fetch and return it
+      // instead of reporting a failure that didn't actually happen.
+      if ((error as any).code === '23505') {
+        const { data: existing } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (existing) {
+          return NextResponse.json({ success: true, data: existing }, { status: 200 });
+        }
+      }
+
       console.error(`❌ [API] Business create/update error:`, error);
       return NextResponse.json(
         { error: error.message || 'Failed to create or update business' },
