@@ -17,6 +17,7 @@ import {
   Webhook,
   Copy,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { SectionPanel } from '@/components/dashboard/EmpireCards';
@@ -26,6 +27,7 @@ import {
   disconnectHubSpot,
   syncHubSpotNow,
   updateHubSpotSettings,
+  getHubSpotInsights,
   HUBSPOT_DEFAULT_FIELD_MAPPINGS,
   OGMJ_FIELD_LABELS,
   type IntegrationRecord,
@@ -92,6 +94,9 @@ function HubSpotCard({
   });
   const [savingMapping, setSavingMapping] = useState(false);
   const [webhookCopied, setWebhookCopied] = useState(false);
+  const [insights, setInsights] = useState<string | null>(null);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   useEffect(() => {
     setFrequency(integration?.config?.syncFrequency || 'manual');
@@ -170,6 +175,18 @@ function HubSpotCard({
     await navigator.clipboard.writeText(url);
     setWebhookCopied(true);
     setTimeout(() => setWebhookCopied(false), 2000);
+  }
+
+  async function handleGenerateInsights() {
+    setGeneratingInsights(true);
+    setInsightsError(null);
+    const result = await getHubSpotInsights(businessId);
+    if (result.success && result.data) {
+      setInsights(result.data.text);
+    } else {
+      setInsightsError(result.error?.message || 'Failed to generate insights');
+    }
+    setGeneratingInsights(false);
   }
 
   return (
@@ -320,6 +337,36 @@ function HubSpotCard({
           >
             {savingMapping ? 'Saving…' : 'Save field mapping'}
           </button>
+        </div>
+      )}
+
+      {isConnected && (
+        <div className="border-t border-white/5 pt-4">
+          <div className="flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.2em] text-[#F8F9FA]/50">
+              <Sparkles className="h-3.5 w-3.5" />
+              AI insights
+            </p>
+            <button
+              type="button"
+              onClick={handleGenerateInsights}
+              disabled={generatingInsights}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-1.5 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
+            >
+              <Sparkles className={`h-3.5 w-3.5 ${generatingInsights ? 'animate-pulse' : ''}`} />
+              {generatingInsights ? 'Analyzing…' : insights ? 'Regenerate' : 'Generate insights'}
+            </button>
+          </div>
+          {insightsError ? <p className="mt-2 text-xs text-red-400">{insightsError}</p> : null}
+          {insights ? (
+            <div className="mt-3 whitespace-pre-wrap rounded-xl bg-[#11151E] px-4 py-3 text-sm leading-relaxed text-[#F8F9FA]/80">
+              {insights}
+            </div>
+          ) : !insightsError ? (
+            <p className="mt-2 text-xs text-[#F8F9FA]/50">
+              Summarize your synced HubSpot contacts and deals — relationship health, at-risk deals, and recommended next actions.
+            </p>
+          ) : null}
         </div>
       )}
 
