@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone, Star, Clapperboard } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone, Star, Clapperboard, Users, Handshake, Brain, Workflow } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -68,6 +68,30 @@ export default function MarketingHubPage() {
           description="Generate a creative brief — concept, visual direction, shot list — for your next video or image campaign."
           icon={Clapperboard}
           href="/dashboard/marketing/creative"
+        />
+        <ModuleCard
+          title="Influencer Marketing"
+          description="Track influencer relationships from first contact to collab, with AI-drafted outreach."
+          icon={Users}
+          href="/dashboard/marketing/influencers"
+        />
+        <ModuleCard
+          title="Affiliate Program"
+          description="Run your own affiliate program — referral codes, commission rates, and sales tracking."
+          icon={Handshake}
+          href="/dashboard/marketing/affiliates"
+        />
+        <ModuleCard
+          title="Automation"
+          description="Build automated marketing workflows — triggers, actions, and sequences — in Workflows."
+          icon={Workflow}
+          href="/dashboard/workflows"
+        />
+        <ModuleCard
+          title="AI CMO Briefing"
+          description="An executive briefing synthesized across every marketing module — wins, concerns, and this week's priorities."
+          icon={Brain}
+          href="/dashboard/marketing/cmo"
         />
       </div>
     </div>
