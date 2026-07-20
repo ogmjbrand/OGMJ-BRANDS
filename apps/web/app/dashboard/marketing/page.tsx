@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone, Star } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -56,6 +56,12 @@ export default function MarketingHubPage() {
           description="Plan campaigns and generate AI ad copy for Meta, Google, LinkedIn, and TikTok."
           icon={Megaphone}
           href="/dashboard/marketing/ads"
+        />
+        <ModuleCard
+          title="Reviews & Reputation"
+          description="Log reviews from every platform in one place and draft on-brand responses with AI."
+          icon={Star}
+          href="/dashboard/marketing/reviews"
         />
       </div>
     </div>
