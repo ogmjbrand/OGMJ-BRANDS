@@ -35,22 +35,48 @@ export async function createBusiness(
     // generates a unique slug and syncs name/business_name; on_business_created
     // adds the owner to business_members (synced to business_users), plus
     // onboarding_progress, default pipeline, and workspace.
+    //
+    // Upsert on owner_id (rather than a plain insert) so a retried/duplicate
+    // submission updates the existing row instead of raising a raw
+    // constraint violation. owner_id/user_id/created_by are always set to
+    // the same value by handle_business_upsert(), so a concurrent duplicate
+    // can still lose the race against this ON CONFLICT target if it hits
+    // businesses_user_id_unique or businesses_created_by_unique first —
+    // the 23505 fallback below recovers from that by fetching the row that
+    // actually won instead of surfacing a failure that didn't happen.
     const { data: business, error: businessError } = await (supabase as any)
       .from("businesses")
-      .insert({
-        name: input.name,
-        industry: input.industry,
-        country: input.country,
-        team_size: input.team_size,
-        currency: input.currency || "NGN",
-        timezone: input.timezone || "UTC",
-        owner_id: user.id,
-        created_by: user.id,
-      })
+      .upsert(
+        {
+          name: input.name,
+          industry: input.industry,
+          country: input.country,
+          team_size: input.team_size,
+          currency: input.currency || "NGN",
+          timezone: input.timezone || "UTC",
+          owner_id: user.id,
+          created_by: user.id,
+        },
+        { onConflict: "owner_id" }
+      )
       .select()
       .single();
 
     if (businessError) {
+      if ((businessError as any).code === "23505") {
+        const { data: existing } = await supabase
+          .from("businesses")
+          .select("*")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (existing) {
+          return {
+            success: true,
+            data: existing as any,
+            timestamp: new Date().toISOString(),
+          };
+        }
+      }
       throw businessError;
     }
 
