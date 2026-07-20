@@ -3,18 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, MoreHorizontal, AlertCircle } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
-import { listDeals, deleteDeal } from '@/lib/services/crm';
+import { listDeals, deleteDeal, listPipelineStages } from '@/lib/services/crm';
 import { CreateDealModal } from '@/components/CreateDealModal';
-import type { Deal } from '@/lib/types';
+import type { Deal, PipelineStage } from '@/lib/types';
 
 export default function DealsPage() {
   const { currentBusiness } = useBusinessContext();
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [stages, setStages] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
-  const [createStage, setCreateStage] = useState<string | undefined>(undefined);
+  const [createStageId, setCreateStageId] = useState<string | undefined>(undefined);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   async function loadDeals() {
@@ -26,15 +27,22 @@ export default function DealsPage() {
     try {
       setLoading(true);
       setError(null);
-      const result = await listDeals(currentBusiness.id, {
-        page: 1,
-        pageSize: 50, // More deals for pipeline view
-      });
+      const [dealsResult, stagesResult] = await Promise.all([
+        listDeals(currentBusiness.id, {
+          page: 1,
+          pageSize: 50, // More deals for pipeline view
+        }),
+        listPipelineStages(currentBusiness.id),
+      ]);
 
-      if (result.success && result.data) {
-        setDeals(result.data.items || []);
+      if (dealsResult.success && dealsResult.data) {
+        setDeals(dealsResult.data.items || []);
       } else {
-        setError(result.error?.message || 'Failed to load deals');
+        setError(dealsResult.error?.message || 'Failed to load deals');
+      }
+
+      if (stagesResult.success && stagesResult.data) {
+        setStages(stagesResult.data.stages);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -65,18 +73,16 @@ export default function DealsPage() {
     }
   }
 
-  function openCreateModalForStage(stage: string) {
+  function openCreateModalForStage(stageId: string) {
     setEditingDeal(null);
-    setCreateStage(stage);
+    setCreateStageId(stageId);
     setShowCreateModal(true);
   }
 
-  const stages = ['prospecting', 'qualification', 'proposal', 'negotiation', 'decision'];
-
-  // Group deals by stage
+  // Group deals by their real stage_id
   const dealsByStage = stages.reduce(
     (acc, stage) => {
-      acc[stage] = deals.filter((d) => d.stage === stage);
+      acc[stage.id] = deals.filter((d) => d.stage_id === stage.id);
       return acc;
     },
     {} as Record<string, Deal[]>
@@ -93,7 +99,7 @@ export default function DealsPage() {
         <button
           onClick={() => {
             setEditingDeal(null);
-            setCreateStage(undefined);
+            setCreateStageId(undefined);
             setShowCreateModal(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition">
@@ -121,25 +127,25 @@ export default function DealsPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 overflow-x-auto pb-4">
           {stages.map((stage) => (
             <div
-              key={stage}
+              key={stage.id}
               className="min-w-[300px] bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl p-4 space-y-4"
             >
               {/* Stage Header */}
               <div>
-                <h3 className="font-semibold text-white capitalize">{stage}</h3>
+                <h3 className="font-semibold text-white">{stage.name}</h3>
                 <p className="text-xs text-[#C8FF00]/50 mt-1">
-                  {dealsByStage[stage].length} deals
+                  {(dealsByStage[stage.id] || []).length} deals
                 </p>
               </div>
 
               {/* Deals List */}
               <div className="space-y-3">
-                {dealsByStage[stage].length === 0 ? (
+                {(dealsByStage[stage.id] || []).length === 0 ? (
                   <div className="p-8 text-center text-[#C8FF00]/50 text-sm">
                     No deals
                   </div>
                 ) : (
-                  dealsByStage[stage].map((deal) => (
+                  dealsByStage[stage.id].map((deal) => (
                     <div
                       key={deal.id}
                       className="relative p-3 bg-[#07070A] rounded-lg border border-[#C8FF00]/10 hover:border-[#C8FF00]/30 transition group"
@@ -204,7 +210,7 @@ export default function DealsPage() {
 
               {/* Add Deal Button */}
               <button
-                onClick={() => openCreateModalForStage(stage)}
+                onClick={() => openCreateModalForStage(stage.id)}
                 className="w-full p-3 border-2 border-dashed border-[#C8FF00]/20 rounded-lg text-[#C8FF00]/50 hover:text-[#C8FF00] hover:border-[#C8FF00]/50 transition text-sm"
               >
                 + Add Deal
@@ -217,10 +223,10 @@ export default function DealsPage() {
       {/* Create Deal Modal */}
       <CreateDealModal
         isOpen={showCreateModal}
-        initialStage={createStage}
+        initialStageId={createStageId}
         onClose={() => {
           setShowCreateModal(false);
-          setCreateStage(undefined);
+          setCreateStageId(undefined);
         }}
         onSuccess={handleCreateSuccess}
       />

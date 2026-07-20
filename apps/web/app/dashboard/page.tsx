@@ -6,7 +6,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { TrendingUp, Users, DollarSign, ShoppingCart, AlertCircle, Sparkles, MessageCircle, Zap, BarChart3, Mail, Package, Rocket, BrainCircuit, ShieldCheck, Workflow, Compass } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { useFeatureFlags } from '@/lib/hooks';
-import { listContacts, listDeals } from '@/lib/services/crm';
+import { listContacts, listDeals, listPipelineStages } from '@/lib/services/crm';
 import { getVideos } from '@/lib/services/videos.service';
 import { getWebsites } from '@/lib/services/builder.service';
 import { MetricCard, ModuleCard, SectionPanel } from '@/components/dashboard/EmpireCards';
@@ -39,11 +39,12 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const [contactsResult, dealsResult, videosResult, websitesResult] = await Promise.all([
+        const [contactsResult, dealsResult, videosResult, websitesResult, stagesResult] = await Promise.all([
           listContacts(businessId, { pageSize: 100 }),
           listDeals(businessId, { pageSize: 100 }),
           getVideos(businessId),
           getWebsites(businessId),
+          listPipelineStages(businessId),
         ]);
 
         const contactsList = contactsResult.success && contactsResult.data ? contactsResult.data.items : [];
@@ -68,12 +69,12 @@ export default function DashboardPage() {
           { month: 'Jun', revenue: totalRevenue },
         ];
 
-        // Pipeline by stage
-        const stages = ['prospecting', 'qualification', 'proposal', 'negotiation', 'decision'];
+        // Pipeline by real stage
+        const stages = stagesResult.success && stagesResult.data ? stagesResult.data.stages : [];
         const pipelineData = stages.map(stage => ({
-          name: stage.charAt(0).toUpperCase() + stage.slice(1),
-          value: dealsList.filter((d: any) => d.stage === stage).length || 0,
-          revenue: dealsList.filter((d: any) => d.stage === stage).reduce((sum: number, d: any) => sum + (d.value || 0), 0) || 0,
+          name: stage.name,
+          value: dealsList.filter((d: any) => d.stage_id === stage.id).length || 0,
+          revenue: dealsList.filter((d: any) => d.stage_id === stage.id).reduce((sum: number, d: any) => sum + (d.value || 0), 0) || 0,
         }));
 
         // Top deals

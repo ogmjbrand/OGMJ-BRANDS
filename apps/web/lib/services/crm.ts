@@ -14,6 +14,7 @@ import type {
   CreateSupportTicketInput,
   APIResponse,
   PaginatedResponse,
+  PipelineStage,
 } from "../types";
 
 // ================================
@@ -236,6 +237,108 @@ export async function deleteContact(
 // DEALS
 // ================================
 
+// Fetches a business's default pipeline and its real stages (id, name,
+// position, color), ordered by position. The pipeline + its stages are
+// auto-created for every business by the on_business_created DB trigger,
+// so this should always resolve for a valid businessId.
+export async function listPipelineStages(
+  businessId: string
+): Promise<APIResponse<{ pipelineId: string; stages: PipelineStage[] }>> {
+  try {
+    const supabase = createClient();
+
+    const { data: pipeline, error: pipelineError } = await supabase
+      .from("pipelines")
+      .select("id")
+      .eq("business_id", businessId)
+      .order("is_default", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (pipelineError) throw pipelineError;
+    if (!pipeline) throw new Error("No pipeline exists for this business");
+
+    const { data: stages, error: stagesError } = await supabase
+      .from("pipeline_stages")
+      .select("id, name, position, color")
+      .eq("pipeline_id", (pipeline as any).id)
+      .order("position", { ascending: true });
+
+    if (stagesError) throw stagesError;
+
+    return {
+      success: true,
+      data: { pipelineId: (pipeline as any).id, stages: (stages as any) || [] },
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch pipeline stages";
+    return {
+      success: false,
+      error: { code: "LIST_PIPELINE_STAGES_ERROR", message },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+// Resolves a deal's canonical stage_id + display stage name together, so
+// they can never drift apart: falls back to the pipeline's first stage
+// (by position) when neither is specified, and always re-derives `stage`
+// (the display/legacy text column) from the resolved stage_id's real name
+// rather than trusting caller-supplied text.
+async function resolveDealStage(
+  supabase: ReturnType<typeof createClient>,
+  businessId: string,
+  pipelineIdInput: string | undefined,
+  stageIdInput: string | undefined
+): Promise<{ pipelineId: string; stageId: string; stageName: string }> {
+  let pipelineId = pipelineIdInput;
+
+  if (!pipelineId) {
+    const { data: pipeline } = await supabase
+      .from("pipelines")
+      .select("id")
+      .eq("business_id", businessId)
+      .order("is_default", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    pipelineId = (pipeline as any)?.id;
+  }
+
+  if (!pipelineId) {
+    throw new Error("No pipeline exists for this business");
+  }
+
+  let stage: { id: string; name: string } | null = null;
+
+  if (stageIdInput) {
+    const { data } = await supabase
+      .from("pipeline_stages")
+      .select("id, name")
+      .eq("id", stageIdInput)
+      .eq("pipeline_id", pipelineId)
+      .maybeSingle();
+    stage = data as any;
+  }
+
+  if (!stage) {
+    const { data } = await supabase
+      .from("pipeline_stages")
+      .select("id, name")
+      .eq("pipeline_id", pipelineId)
+      .order("position", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    stage = data as any;
+  }
+
+  if (!stage) {
+    throw new Error("The pipeline has no stages");
+  }
+
+  return { pipelineId, stageId: stage.id, stageName: stage.name };
+}
+
 export async function createDeal(
   businessId: string,
   input: CreateDealInput
@@ -244,41 +347,12 @@ export async function createDeal(
     const supabase = createClient();
     const user = await getCurrentUser();
 
-    // pipeline_id and stage_id are NOT NULL in the canonical schema;
-    // resolve the business's default pipeline and its first stage when
-    // the caller does not specify them.
-    let pipelineId = input.pipeline_id;
-    let stageId = input.stage_id;
-
-    if (!pipelineId) {
-      const { data: pipeline } = await supabase
-        .from("pipelines")
-        .select("id")
-        .eq("business_id", businessId)
-        .order("is_default", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      pipelineId = (pipeline as any)?.id;
-    }
-
-    if (!pipelineId) {
-      throw new Error("No pipeline exists for this business");
-    }
-
-    if (!stageId) {
-      const { data: stage } = await supabase
-        .from("pipeline_stages")
-        .select("id")
-        .eq("pipeline_id", pipelineId)
-        .order("position", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      stageId = (stage as any)?.id;
-    }
-
-    if (!stageId) {
-      throw new Error("The pipeline has no stages");
-    }
+    const { pipelineId, stageId, stageName } = await resolveDealStage(
+      supabase,
+      businessId,
+      input.pipeline_id,
+      input.stage_id
+    );
 
     const { data, error } = await (supabase as any)
       .from("deals")
@@ -286,6 +360,7 @@ export async function createDeal(
         ...input,
         pipeline_id: pipelineId,
         stage_id: stageId,
+        stage: stageName,
         business_id: businessId,
         created_by: user?.id,
       })
@@ -404,10 +479,24 @@ export async function updateDeal(
     const supabase = createClient();
     const user = await getCurrentUser();
 
+    // If the caller is moving the deal to a different stage, re-derive the
+    // display `stage` name from the real stage_id so the two never drift —
+    // never trust caller-supplied `stage` text on its own.
+    let stageSync: { stage_id: string; stage: string } | null = null;
+    if (updates.stage_id) {
+      const { data: stage } = await supabase
+        .from("pipeline_stages")
+        .select("id, name")
+        .eq("id", updates.stage_id)
+        .maybeSingle();
+      if (stage) stageSync = { stage_id: (stage as any).id, stage: (stage as any).name };
+    }
+
     const { data, error } = await (supabase as any)
       .from("deals")
       .update({
         ...updates,
+        ...(stageSync || {}),
         updated_by: user?.id,
         updated_at: new Date().toISOString(),
       })
