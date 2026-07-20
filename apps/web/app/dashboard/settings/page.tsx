@@ -2,14 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CreditCard, Users, Shield, Bell, Check, Sparkles, Settings2 } from 'lucide-react';
+import { AlertCircle, CreditCard, Users, Shield, Bell, Check, Sparkles, Settings2, Building2 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserBusinesses } from '@/lib/services/business';
+import { getBusinessSettings, updateBusinessSettings } from '@/lib/services/settings.service';
+import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 import type { Business } from '@/lib/types';
 
+const CURRENCIES = ['NGN', 'USD', 'EUR', 'GBP'];
+const TIMEZONES = [
+  'Africa/Lagos',
+  'Africa/Accra',
+  'Africa/Nairobi',
+  'Africa/Johannesburg',
+  'Europe/London',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Dubai',
+];
+
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'general' | 'billing' | 'team' | 'security' | 'notifications'>('general');
+  const { currentBusiness } = useBusinessContext();
+  const [activeTab, setActiveTab] = useState<'general' | 'business' | 'billing' | 'team' | 'security' | 'notifications'>('general');
   const [businesses, setBusinesses] = useState<(Business & { role?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -19,6 +34,75 @@ export default function SettingsPage() {
   const [profileForm, setProfileForm] = useState({ fullName: '', email: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [notificationsForm, setNotificationsForm] = useState({ emailNotifications: true, marketingUpdates: false, paymentReminders: true });
+
+  const [businessForm, setBusinessForm] = useState({
+    name: '',
+    industry: '',
+    country: '',
+    currency: 'NGN',
+    timezone: 'Africa/Lagos',
+    phone: '',
+    brandColor: '#C8FF00',
+  });
+  const [businessLoading, setBusinessLoading] = useState(true);
+  const [businessError, setBusinessError] = useState<string | null>(null);
+  const [businessSuccess, setBusinessSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadBusinessSettings() {
+      if (!currentBusiness) {
+        setBusinessLoading(false);
+        return;
+      }
+      setBusinessLoading(true);
+      const result = await getBusinessSettings(currentBusiness.id);
+      if (result.success && result.data) {
+        setBusinessForm({
+          name: result.data.name || '',
+          industry: result.data.industry || '',
+          country: result.data.country || '',
+          currency: result.data.currency || 'NGN',
+          timezone: result.data.timezone || 'Africa/Lagos',
+          phone: result.data.phone || '',
+          brandColor: result.data.brandColor || '#C8FF00',
+        });
+      } else {
+        setBusinessError(result.error?.message || 'Failed to load business settings');
+      }
+      setBusinessLoading(false);
+    }
+    loadBusinessSettings();
+  }, [currentBusiness]);
+
+  async function handleBusinessUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentBusiness) return;
+    if (!businessForm.name.trim()) {
+      setBusinessError('Business name is required');
+      return;
+    }
+
+    setSaving(true);
+    setBusinessError(null);
+    setBusinessSuccess(null);
+
+    const result = await updateBusinessSettings(currentBusiness.id, {
+      name: businessForm.name.trim(),
+      industry: businessForm.industry.trim() || undefined,
+      country: businessForm.country.trim() || undefined,
+      currency: businessForm.currency,
+      timezone: businessForm.timezone,
+      phone: businessForm.phone.trim() || undefined,
+      brandColor: businessForm.brandColor,
+    });
+
+    if (result.success) {
+      setBusinessSuccess('Business settings updated');
+    } else {
+      setBusinessError(result.error?.message || 'Failed to update business settings');
+    }
+    setSaving(false);
+  }
 
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaEnrollment, setMfaEnrollment] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null);
@@ -215,6 +299,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'general', label: 'General', icon: <Settings2 className="h-4 w-4" /> },
+    { id: 'business', label: 'Business', icon: <Building2 className="h-4 w-4" /> },
     { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
     { id: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
     { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" /> },
@@ -280,6 +365,68 @@ export default function SettingsPage() {
                 {saving ? 'Saving...' : 'Save changes'}
               </button>
             </form>
+          </SectionPanel>
+        )}
+
+        {activeTab === 'business' && (
+          <SectionPanel title="Business profile" subtitle="Details used across invoices, documents and your workspace">
+            {businessLoading ? (
+              <p className="text-sm text-[#C8FF00]/60">Loading business settings...</p>
+            ) : !currentBusiness ? (
+              <p className="text-sm text-[#C8FF00]/60">Select a business to manage its settings.</p>
+            ) : (
+              <form onSubmit={handleBusinessUpdate} className="space-y-6">
+                {businessError && <div className="rounded-[1.1rem] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">{businessError}</div>}
+                {businessSuccess && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{businessSuccess}</div>}
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="businessName" className="mb-2 block text-sm font-medium text-[#C8FF00]">Business name *</label>
+                    <input id="businessName" type="text" value={businessForm.name} onChange={(e) => setBusinessForm((prev) => ({ ...prev, name: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="industry" className="mb-2 block text-sm font-medium text-[#C8FF00]">Industry</label>
+                      <input id="industry" type="text" value={businessForm.industry} onChange={(e) => setBusinessForm((prev) => ({ ...prev, industry: e.target.value }))} placeholder="e.g. Branding, Software, Retail" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                    </div>
+                    <div>
+                      <label htmlFor="country" className="mb-2 block text-sm font-medium text-[#C8FF00]">Country</label>
+                      <input id="country" type="text" value={businessForm.country} onChange={(e) => setBusinessForm((prev) => ({ ...prev, country: e.target.value }))} placeholder="e.g. Nigeria" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="currency" className="mb-2 block text-sm font-medium text-[#C8FF00]">Currency</label>
+                      <select id="currency" value={businessForm.currency} onChange={(e) => setBusinessForm((prev) => ({ ...prev, currency: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]">
+                        {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="timezone" className="mb-2 block text-sm font-medium text-[#C8FF00]">Timezone</label>
+                      <select id="timezone" value={businessForm.timezone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, timezone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]">
+                        {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="businessPhone" className="mb-2 block text-sm font-medium text-[#C8FF00]">Phone</label>
+                      <input id="businessPhone" type="tel" value={businessForm.phone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, phone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                    </div>
+                    <div>
+                      <label htmlFor="brandColor" className="mb-2 block text-sm font-medium text-[#C8FF00]">Brand color</label>
+                      <p className="mb-2 text-xs text-[#C8FF00]/50">Used on your invoices and documents — separate from the dashboard's own theme.</p>
+                      <div className="flex items-center gap-3">
+                        <input id="brandColor" type="color" value={businessForm.brandColor} onChange={(e) => setBusinessForm((prev) => ({ ...prev, brandColor: e.target.value }))} className="h-11 w-14 cursor-pointer rounded-lg border border-[#C8FF00]/10 bg-[#07070A]" />
+                        <input type="text" value={businessForm.brandColor} onChange={(e) => setBusinessForm((prev) => ({ ...prev, brandColor: e.target.value }))} className="flex-1 rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" disabled={saving} className="rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50">
+                  {saving ? 'Saving...' : 'Save changes'}
+                </button>
+              </form>
+            )}
           </SectionPanel>
         )}
 
