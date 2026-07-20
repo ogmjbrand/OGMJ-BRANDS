@@ -22,6 +22,7 @@ import {
   Plug,
   UsersRound,
   Handshake,
+  Store,
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/context/BusinessContext';
@@ -40,6 +41,7 @@ const dashboardNav = [
   { href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
   { href: '/dashboard/team', label: 'Team', icon: UsersRound },
   { href: '/dashboard/partner', label: 'Partner Hub', icon: Handshake },
+  { href: '/dashboard/marketplace', label: 'Marketplace', icon: Store },
   { href: '/dashboard/support', label: 'Support', icon: LifeBuoy },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings2 },
 ];
