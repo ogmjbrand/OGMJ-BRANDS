@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { DM_Sans, Syne } from 'next/font/google'
 import {
@@ -339,6 +340,12 @@ const content: PageContent = {
 
 const EASE = [0.16, 1, 0.3, 1] as const
 
+// Client-only (WebGL): loaded lazily off the critical path, never on the server.
+const HeroNetworkScene = dynamic(() => import('@/components/three/HeroNetworkScene'), {
+  ssr: false,
+  loading: () => null,
+})
+
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
@@ -659,6 +666,11 @@ function Hero({
         />
         <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/85 to-obsidian/40" />
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/60" />
+        {!prefersReduced && (
+          <div className="absolute inset-0 opacity-70 mix-blend-screen">
+            <HeroNetworkScene pointerX={smoothX} pointerY={smoothY} />
+          </div>
+        )}
         <div className="absolute -left-40 -top-40 size-[520px] rounded-full bg-gold/10 blur-[140px]" />
         <div className="absolute -bottom-40 right-0 size-[480px] rounded-full bg-emerald/10 blur-[140px]" />
         <div className="absolute right-1/3 top-0 size-[280px] rounded-full bg-heritage/10 blur-[120px]" />

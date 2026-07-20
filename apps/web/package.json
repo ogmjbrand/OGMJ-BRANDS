@@ -12,6 +12,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
     "@paystack/inline-js": "^2.23.1",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.0",
     "class-variance-authority": "^0.7.1",
@@ -26,6 +28,7 @@
     "react-dom": "18.3.1",
     "recharts": "^2.10.3",
     "tailwind-merge": "^3.6.0",
+    "three": "^0.170.0",
     "zod": "^3.22.4",
     "zustand": "^4.4.0"
   },
@@ -34,6 +37,7 @@
     "@types/paystack__inline-js": "^1.0.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.185.1",
     "autoprefixer": "^10.4.19",
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.38",
