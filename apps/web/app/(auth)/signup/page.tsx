@@ -6,6 +6,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { signUp, signInWithOAuth } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
+
+function getReferralClickId(): string | null {
+  const match = document.cookie.match(/(?:^|; )ogmj_ref=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,6 +46,19 @@ export default function SignupPage() {
       if (result.error) {
         setError(result.error);
         return;
+      }
+
+      // Best-effort referral attribution: if this signup came through a
+      // /r/[code] link, the click id is in a readable cookie. A session
+      // may not exist yet if email confirmation is required, in which
+      // case the RPC's own auth check simply no-ops it.
+      const clickId = getReferralClickId();
+      if (clickId) {
+        try {
+          await createClient().rpc('record_referral_signup', { p_click_id: clickId });
+        } catch {
+          // Non-blocking — referral attribution should never break signup.
+        }
       }
 
       // Honor a redirectTo param (e.g. a team invite link) so a brand-new
