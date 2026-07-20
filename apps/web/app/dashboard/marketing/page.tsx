@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare } from 'lucide-react';
+import { Compass, PenSquare, Mail } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -14,7 +14,7 @@ export default function MarketingHubPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ModuleCard
           title="Brand Strategy"
           description="Answer a short interview and get a full strategy: positioning, personas, SWOT, content pillars, and a 12-month roadmap."
@@ -26,6 +26,12 @@ export default function MarketingHubPage() {
           description="Generate publish-ready blog posts, social captions, email copy, ad copy, and more — grounded in your brand strategy."
           icon={PenSquare}
           href="/dashboard/marketing/content"
+        />
+        <ModuleCard
+          title="Email Marketing"
+          description="Create and send campaigns to your contacts, with AI-assisted copy and delivery tracking."
+          icon={Mail}
+          href="/dashboard/marketing/email"
         />
       </div>
     </div>
