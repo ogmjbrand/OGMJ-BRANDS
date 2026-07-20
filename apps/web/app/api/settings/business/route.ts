@@ -2,6 +2,29 @@ import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 
+// Canonical businesses columns -> the camelCase BusinessSettings shape the
+// frontend service (lib/services/settings.service.ts) expects.
+function transformBusiness(business: any) {
+  return {
+    id: business.id,
+    name: business.name,
+    slug: business.slug,
+    domain: business.domain,
+    customDomain: business.custom_domain,
+    logoUrl: business.logo_url,
+    brandColor: business.brand_color,
+    currency: business.currency,
+    timezone: business.timezone,
+    country: business.country,
+    industry: business.industry,
+    teamSize: business.team_size,
+    phone: business.phone,
+    metadata: business.metadata,
+    createdAt: business.created_at,
+    updatedAt: business.updated_at,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -59,7 +82,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data,
+        data: transformBusiness(data),
       },
       { status: 200 }
     );
@@ -159,7 +182,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data,
+        data: transformBusiness(data),
         message: 'Business settings updated successfully',
       },
       { status: 200 }
