@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone, Star } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search, Share2, MessageCircle, Megaphone, Star, Clapperboard } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -62,6 +62,12 @@ export default function MarketingHubPage() {
           description="Log reviews from every platform in one place and draft on-brand responses with AI."
           icon={Star}
           href="/dashboard/marketing/reviews"
+        />
+        <ModuleCard
+          title="Creative Studio"
+          description="Generate a creative brief — concept, visual direction, shot list — for your next video or image campaign."
+          icon={Clapperboard}
+          href="/dashboard/marketing/creative"
         />
       </div>
     </div>
