@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, PenSquare, Mail, Search } from 'lucide-react';
+import { Compass, PenSquare, Mail, Search, Share2 } from 'lucide-react';
 import { ModuleCard } from '@/components/dashboard/EmpireCards';
 
 export default function MarketingHubPage() {
@@ -38,6 +38,12 @@ export default function MarketingHubPage() {
           description="AI-generated meta tags, keywords, and content gap analysis against your brand strategy."
           icon={Search}
           href="/dashboard/marketing/seo"
+        />
+        <ModuleCard
+          title="Social Media"
+          description="Plan your content calendar and draft posts with AI in the Social studio."
+          icon={Share2}
+          href="/dashboard/social"
         />
       </div>
     </div>
