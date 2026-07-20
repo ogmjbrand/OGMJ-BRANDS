@@ -129,6 +129,20 @@ export async function syncHubSpotNow(businessId: string): Promise<APIResponse<Sy
   }
 }
 
+export async function getHubSpotInsights(businessId: string): Promise<APIResponse<{ text: string; generatedAt: string }>> {
+  try {
+    const response = await fetch("/api/integrations/hubspot/insights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId }),
+    });
+    return parseResponse(response, "HUBSPOT_INSIGHTS_ERROR");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to generate insights";
+    return { success: false, error: { code: "HUBSPOT_INSIGHTS_ERROR", message }, timestamp: new Date().toISOString() };
+  }
+}
+
 export async function updateHubSpotSettings(
   businessId: string,
   input: {
