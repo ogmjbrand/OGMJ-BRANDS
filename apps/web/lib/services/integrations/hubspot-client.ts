@@ -127,6 +127,21 @@ async function hubspotFetch(accessToken: string, path: string, init?: RequestIni
   return res.json();
 }
 
+export async function getHubSpotObject(
+  accessToken: string,
+  objectType: "contacts" | "deals",
+  externalId: string,
+  properties: string[]
+): Promise<HubSpotObject | null> {
+  try {
+    const params = new URLSearchParams({ properties: properties.join(",") });
+    return await hubspotFetch(accessToken, `/crm/v3/objects/${objectType}/${externalId}?${params.toString()}`);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) return null;
+    throw error;
+  }
+}
+
 export async function listHubSpotObjects(
   accessToken: string,
   objectType: "contacts" | "deals",

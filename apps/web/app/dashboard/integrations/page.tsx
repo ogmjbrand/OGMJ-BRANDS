@@ -14,6 +14,9 @@ import {
   Mail,
   Calendar,
   Workflow,
+  Webhook,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { SectionPanel } from '@/components/dashboard/EmpireCards';
@@ -23,6 +26,8 @@ import {
   disconnectHubSpot,
   syncHubSpotNow,
   updateHubSpotSettings,
+  HUBSPOT_DEFAULT_FIELD_MAPPINGS,
+  OGMJ_FIELD_LABELS,
   type IntegrationRecord,
   type IntegrationSyncLog,
 } from '@/lib/services/integrations.service';
@@ -77,10 +82,28 @@ function HubSpotCard({
   const [message, setMessage] = useState<string | null>(null);
   const [frequency, setFrequency] = useState(integration?.config?.syncFrequency || 'manual');
   const [conflictResolution, setConflictResolution] = useState(integration?.config?.conflictResolution || 'newest_wins');
+  const [contactMapping, setContactMapping] = useState<Record<string, string>>({
+    ...HUBSPOT_DEFAULT_FIELD_MAPPINGS.contact,
+    ...(integration?.config?.fieldMappings?.contact || {}),
+  });
+  const [dealMapping, setDealMapping] = useState<Record<string, string>>({
+    ...HUBSPOT_DEFAULT_FIELD_MAPPINGS.deal,
+    ...(integration?.config?.fieldMappings?.deal || {}),
+  });
+  const [savingMapping, setSavingMapping] = useState(false);
+  const [webhookCopied, setWebhookCopied] = useState(false);
 
   useEffect(() => {
     setFrequency(integration?.config?.syncFrequency || 'manual');
     setConflictResolution(integration?.config?.conflictResolution || 'newest_wins');
+    setContactMapping({
+      ...HUBSPOT_DEFAULT_FIELD_MAPPINGS.contact,
+      ...(integration?.config?.fieldMappings?.contact || {}),
+    });
+    setDealMapping({
+      ...HUBSPOT_DEFAULT_FIELD_MAPPINGS.deal,
+      ...(integration?.config?.fieldMappings?.deal || {}),
+    });
   }, [integration]);
 
   const isConnected = !!integration?.isActive;
@@ -126,6 +149,27 @@ function HubSpotCard({
       setMessage(result.error?.message || 'Failed to save settings');
     }
     setSavingSettings(false);
+  }
+
+  async function handleSaveMapping() {
+    setSavingMapping(true);
+    const result = await updateHubSpotSettings(businessId, {
+      fieldMappings: { contact: contactMapping, deal: dealMapping },
+    });
+    if (result.success) {
+      setMessage('Field mapping saved.');
+      onChanged();
+    } else {
+      setMessage(result.error?.message || 'Failed to save field mapping');
+    }
+    setSavingMapping(false);
+  }
+
+  async function handleCopyWebhookUrl() {
+    const url = `${window.location.origin}/api/integrations/hubspot/webhook`;
+    await navigator.clipboard.writeText(url);
+    setWebhookCopied(true);
+    setTimeout(() => setWebhookCopied(false), 2000);
   }
 
   return (
@@ -225,6 +269,83 @@ function HubSpotCard({
           >
             {savingSettings ? 'Saving…' : 'Save sync settings'}
           </button>
+        </div>
+      )}
+
+      {isConnected && (
+        <div className="border-t border-white/5 pt-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-[#F8F9FA]/50">Field mapping</p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[#C8FF00]/80">Contacts</p>
+              {Object.keys(contactMapping).map((field) => (
+                <div key={field} className="flex items-center gap-2">
+                  <span className="w-28 flex-shrink-0 truncate text-xs text-[#F8F9FA]/60">
+                    {OGMJ_FIELD_LABELS[field] || field}
+                  </span>
+                  <input
+                    type="text"
+                    value={contactMapping[field]}
+                    onChange={(e) => setContactMapping((m) => ({ ...m, [field]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[#C8FF00]/80">Deals</p>
+              {Object.keys(dealMapping).map((field) => (
+                <div key={field} className="flex items-center gap-2">
+                  <span className="w-28 flex-shrink-0 truncate text-xs text-[#F8F9FA]/60">
+                    {OGMJ_FIELD_LABELS[field] || field}
+                  </span>
+                  <input
+                    type="text"
+                    value={dealMapping[field]}
+                    onChange={(e) => setDealMapping((m) => ({ ...m, [field]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-[#F8F9FA]/40">
+            Right-hand values are HubSpot internal property names — change them to sync against custom properties.
+          </p>
+          <button
+            type="button"
+            onClick={handleSaveMapping}
+            disabled={savingMapping}
+            className="mt-3 inline-flex w-fit items-center gap-2 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
+          >
+            {savingMapping ? 'Saving…' : 'Save field mapping'}
+          </button>
+        </div>
+      )}
+
+      {isConnected && (
+        <div className="border-t border-white/5 pt-4">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.2em] text-[#F8F9FA]/50">
+            <Webhook className="h-3.5 w-3.5" />
+            Real-time webhooks
+          </p>
+          <p className="text-xs text-[#F8F9FA]/60">
+            To sync instantly instead of waiting for the sync schedule, register this URL as the webhook target in
+            your HubSpot app's developer settings, subscribed to Contact and Deal creation / property change /
+            deletion events.
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="flex-1 truncate rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-[#C8FF00]">
+              /api/integrations/hubspot/webhook
+            </code>
+            <button
+              type="button"
+              onClick={handleCopyWebhookUrl}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 text-[#F8F9FA]/60 transition hover:border-[#C8FF00]/40 hover:text-[#C8FF00]"
+            >
+              {webhookCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
       )}
 

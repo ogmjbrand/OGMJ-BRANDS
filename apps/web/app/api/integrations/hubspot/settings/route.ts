@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, syncFrequency, conflictResolution, enabledObjects } = body;
+    const { businessId, syncFrequency, conflictResolution, enabledObjects, fieldMappings } = body;
 
     if (!businessId) {
       return NextResponse.json({ error: "Business ID required" }, { status: 400 });
@@ -50,11 +50,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "HubSpot is not connected for this business" }, { status: 404 });
     }
 
+    const existingConfig = (integration as any).config || {};
     const nextConfig = {
-      ...((integration as any).config || {}),
+      ...existingConfig,
       ...(syncFrequency ? { syncFrequency } : {}),
       ...(conflictResolution ? { conflictResolution } : {}),
       ...(enabledObjects ? { enabledObjects } : {}),
+      ...(fieldMappings
+        ? {
+            fieldMappings: {
+              ...(existingConfig.fieldMappings || {}),
+              ...fieldMappings,
+            },
+          }
+        : {}),
     };
 
     const { data, error } = await (supabase as any)

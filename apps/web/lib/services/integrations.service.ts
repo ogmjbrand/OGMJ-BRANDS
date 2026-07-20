@@ -38,6 +38,41 @@ export interface SyncRunResult {
   errors: string[];
 }
 
+// Mirrors lib/services/integrations/sync.ts's DEFAULT_FIELD_MAPPINGS —
+// duplicated here (small, static) rather than imported, since that module
+// pulls in the server-only Supabase client and can't be used client-side.
+export const HUBSPOT_DEFAULT_FIELD_MAPPINGS: Record<"contact" | "deal", Record<string, string>> = {
+  contact: {
+    email: "email",
+    first_name: "firstname",
+    last_name: "lastname",
+    phone: "phone",
+    company_name: "company",
+    job_title: "jobtitle",
+    website: "website",
+  },
+  deal: {
+    title: "dealname",
+    value: "amount",
+    close_date: "closedate",
+    description: "description",
+  },
+};
+
+export const OGMJ_FIELD_LABELS: Record<string, string> = {
+  email: "Email",
+  first_name: "First name",
+  last_name: "Last name",
+  phone: "Phone",
+  company_name: "Company",
+  job_title: "Job title",
+  website: "Website",
+  title: "Deal title",
+  value: "Deal value",
+  close_date: "Close date",
+  description: "Description",
+};
+
 async function parseResponse<T>(response: Response, fallbackCode: string): Promise<APIResponse<T>> {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -96,7 +131,12 @@ export async function syncHubSpotNow(businessId: string): Promise<APIResponse<Sy
 
 export async function updateHubSpotSettings(
   businessId: string,
-  input: { syncFrequency?: string; conflictResolution?: string; enabledObjects?: string[] }
+  input: {
+    syncFrequency?: string;
+    conflictResolution?: string;
+    enabledObjects?: string[];
+    fieldMappings?: { contact?: Record<string, string>; deal?: Record<string, string> };
+  }
 ): Promise<APIResponse<{ id: string; config: Record<string, any> }>> {
   try {
     const response = await fetch("/api/integrations/hubspot/settings", {
