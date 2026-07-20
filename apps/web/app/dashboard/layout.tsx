@@ -23,6 +23,7 @@ import {
   UsersRound,
   Handshake,
   Store,
+  Megaphone,
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { BusinessProvider } from '@/lib/context/BusinessContext';
@@ -37,6 +38,7 @@ const dashboardNav = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/ai', label: 'AI', icon: Cpu },
   { href: '/dashboard/social', label: 'Social', icon: MessageSquare },
+  { href: '/dashboard/marketing', label: 'Marketing', icon: Megaphone },
   { href: '/dashboard/workflows', label: 'Workflows', icon: Sparkles },
   { href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
   { href: '/dashboard/team', label: 'Team', icon: UsersRound },
