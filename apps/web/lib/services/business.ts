@@ -70,6 +70,7 @@ export async function createBusiness(
           .eq("owner_id", user.id)
           .maybeSingle();
         if (existing) {
+          await ensureOwnerMembership((existing as any).id, user.id);
           return {
             success: true,
             data: existing as any,
@@ -79,6 +80,15 @@ export async function createBusiness(
       }
       throw businessError;
     }
+
+    // The ON CONFLICT (owner_id) path above only fires an AFTER INSERT
+    // trigger (on_business_created, which creates business_members/
+    // business_users/onboarding_progress/the default pipeline) on a fresh
+    // insert — never on the UPDATE branch of an upsert. A user whose
+    // membership row was ever lost (however that happened) would upsert
+    // successfully here, forever, while still having no way into their own
+    // business. Ensure membership explicitly so this path is self-healing.
+    await ensureOwnerMembership(business.id, user.id);
 
     // Record audit log
     await recordAuditLog({
@@ -553,6 +563,29 @@ export async function acceptInvitation(token: string): Promise<APIResponse<Busin
       error: { code: "ACCEPT_INVITATION_ERROR", message },
       timestamp: new Date().toISOString(),
     };
+  }
+}
+
+// ================================
+// HELPER: ENSURE OWNER MEMBERSHIP
+// ================================
+
+// Idempotent safety net for handle_new_business()'s AFTER INSERT-only
+// membership setup. business_members has its own ON CONFLICT DO NOTHING,
+// and inserting is a no-op when membership already exists (the common
+// case) — this only does real work for the fresh-insert-that-never-fired
+// or update-path edge cases.
+async function ensureOwnerMembership(businessId: string, userId: string) {
+  try {
+    const supabase = createClient();
+    await (supabase as any)
+      .from("business_members")
+      .upsert(
+        { business_id: businessId, user_id: userId, role: "owner" },
+        { onConflict: "business_id,user_id", ignoreDuplicates: true }
+      );
+  } catch (error) {
+    console.error("Error ensuring owner membership:", error);
   }
 }
 
