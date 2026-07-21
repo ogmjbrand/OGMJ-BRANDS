@@ -120,38 +120,21 @@ export function useWorkflows(businessId: string) {
     [fetchWorkflows]
   )
 
-  // There's no execution engine to actually process a workflow's actions —
   // workflow_step_logs only grants clients SELECT (writes are server-side
-  // only). This records that a run was manually triggered and closes it
-  // out immediately, rather than pretending steps executed.
+  // only), so actually executing a workflow's actions happens via
+  // /api/workflows/[id]/run rather than a direct table write here.
   const runWorkflow = useCallback(
-    async (workflowId: string) => {
+    async (workflowId: string, contactId?: string) => {
       try {
-        const supabase = createClient()
-        const now = new Date().toISOString()
-
-        const { error: execError } = await supabase.from('workflow_executions').insert([
-          {
-            workflow_id: workflowId,
-            business_id: businessId,
-            status: 'completed',
-            started_at: now,
-            completed_at: now,
-            context: { trigger: 'manual' },
-          },
-        ])
-        if (execError) throw execError
-
-        const workflow = workflows.find((w) => w.id === workflowId)
-        const { error: updateError } = await supabase
-          .from('workflows')
-          .update({
-            run_count: (workflow?.run_count || 0) + 1,
-            last_run_at: now,
-            updated_at: now,
-          })
-          .eq('id', workflowId)
-        if (updateError) throw updateError
+        const response = await fetch(`/api/workflows/${workflowId}/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contactId }),
+        })
+        const body = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(body?.error || 'Failed to run workflow')
+        }
 
         await fetchWorkflows()
         return null
@@ -162,7 +145,7 @@ export function useWorkflows(businessId: string) {
         return message
       }
     },
-    [businessId, workflows, fetchWorkflows]
+    [fetchWorkflows]
   )
 
   const deleteWorkflow = useCallback(
