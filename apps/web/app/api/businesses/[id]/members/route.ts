@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
+import { getResendClient, isResendConfigured, RESEND_FROM_EMAIL } from '@/lib/email/resend';
 
 export async function GET(
   request: NextRequest,
@@ -178,7 +179,23 @@ export async function POST(
       );
     }
 
-    // TODO: Send invitation email (do not log the token — it grants access)
+    if (isResendConfigured()) {
+      try {
+        const { data: business } = await supabase.from('businesses').select('name').eq('id', businessId).single();
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+        const inviteUrl = `${appUrl}/invite/${token}`;
+        const businessName = (business as any)?.name || 'a business on OGMJ BRANDS';
+
+        await getResendClient().emails.send({
+          from: RESEND_FROM_EMAIL,
+          to: email,
+          subject: `You've been invited to join ${businessName} on OGMJ BRANDS`,
+          html: `<p>You've been invited to join <strong>${businessName}</strong> as a ${role} on OGMJ BRANDS.</p><p><a href="${inviteUrl}">Accept invitation</a></p><p>This link expires in 7 days.</p>`,
+        });
+      } catch (emailError) {
+        console.error('Error sending invitation email:', emailError);
+      }
+    }
 
     await (supabase as any).from('activity_logs').insert({
       business_id: businessId,

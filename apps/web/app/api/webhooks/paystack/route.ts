@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { getResendClient, isResendConfigured, RESEND_FROM_EMAIL } from '@/lib/email/resend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,7 +70,22 @@ export async function POST(request: NextRequest) {
         provider_reference: reference,
       });
 
-      // TODO: Send confirmation email
+      if (isResendConfigured() && customer?.email) {
+        try {
+          const formattedAmount = (amount / 100).toLocaleString('en-US', {
+            style: 'currency',
+            currency: event.data.currency || 'NGN',
+          });
+          await getResendClient().emails.send({
+            from: RESEND_FROM_EMAIL,
+            to: customer.email,
+            subject: 'Payment confirmed — OGMJ BRANDS',
+            html: `<p>Your payment of <strong>${formattedAmount}</strong> was successful.</p><p>Reference: ${reference}</p>`,
+          });
+        } catch (emailError) {
+          console.error('Error sending payment confirmation email:', emailError);
+        }
+      }
       console.log(`Payment confirmed for ${customer.email}`);
     }
 
