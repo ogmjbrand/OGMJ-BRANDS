@@ -24,7 +24,15 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function loadBusinesses() {
       try {
-        const currentUser = await getCurrentUser();
+        // listUserBusinesses() independently re-validates the session itself,
+        // so this call and getCurrentUser() don't depend on each other —
+        // running them in parallel instead of one after another cuts a full
+        // sequential Supabase round trip off the dashboard's cold load.
+        const [currentUser, result] = await Promise.all([
+          getCurrentUser(),
+          listUserBusinesses(),
+        ]);
+
         if (!currentUser) {
           setLoading(false);
           return;
@@ -32,7 +40,6 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
 
         setUser(currentUser as User);
 
-        const result = await listUserBusinesses();
         if (result.success && result.data) {
           setBusinesses(result.data);
           // Set first business as default
