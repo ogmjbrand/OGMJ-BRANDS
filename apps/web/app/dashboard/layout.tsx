@@ -25,8 +25,7 @@ import {
   Store,
   Megaphone,
 } from 'lucide-react';
-import { getCurrentUser } from '@/lib/auth';
-import { BusinessProvider } from '@/lib/context/BusinessContext';
+import { BusinessProvider, useBusinessContext } from '@/lib/context/BusinessContext';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -60,22 +59,20 @@ function DashboardLayoutContent({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // BusinessProvider already validates the session and fetches the user as
+  // part of loading the business context — reusing it here instead of
+  // running a second, uncoordinated getCurrentUser() means the sidebar
+  // shell and the page content resolve off the same fetch instead of the
+  // shell appearing early while the actual content waits on its own
+  // separate, slower chain.
+  const { user, loading } = useBusinessContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    async function checkAuth() {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        router.push('/login');
-        return;
-      }
-      setUser(currentUser);
-      setLoading(false);
+    if (!loading && !user) {
+      router.push('/login');
     }
-    checkAuth();
-  }, [router]);
+  }, [loading, user, router]);
 
   // Close the mobile drawer whenever the route changes
   useEffect(() => {

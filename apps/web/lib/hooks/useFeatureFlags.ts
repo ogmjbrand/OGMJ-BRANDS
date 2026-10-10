@@ -27,26 +27,26 @@ export function useFeatureFlags(businessId: string) {
       setError(null)
       const supabase = createClient()
 
-      // Get the business's active subscription plan
-      const { data: subscriptionData, error: subError } = await supabase
-        .from('subscriptions')
-        .select('plan_id')
-        .eq('business_id', businessId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
+      // Neither query depends on the other's result, so run them in
+      // parallel instead of one after another.
+      const [{ data: subscriptionData, error: subError }, { data: featureData, error: featuresError }] =
+        await Promise.all([
+          supabase
+            .from('subscriptions')
+            .select('plan_id')
+            .eq('business_id', businessId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1),
+          // feature_flags is keyed by `key` with is_enabled + plan/business scoping arrays
+          supabase.from('feature_flags').select('key, is_enabled, enabled_for_plans, enabled_for_businesses'),
+        ])
 
       if (subError) throw subError
+      if (featuresError) throw featuresError
 
       const currentPlanId = subscriptionData?.[0]?.plan_id || 'free'
       setPlanId(currentPlanId)
-
-      // feature_flags is keyed by `key` with is_enabled + plan/business scoping arrays
-      const { data: featureData, error: featuresError } = await supabase
-        .from('feature_flags')
-        .select('key, is_enabled, enabled_for_plans, enabled_for_businesses')
-
-      if (featuresError) throw featuresError
 
       const featureMap: Record<string, boolean> = {}
       featureData?.forEach((f: FeatureFlag) => {
