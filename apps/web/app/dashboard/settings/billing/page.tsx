@@ -217,17 +217,30 @@ export default function BillingPage() {
                   </ul>
 
                   {/* CTA Button */}
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    disabled={isCurrent || loading}
-                    className={`w-full py-3 rounded-lg font-semibold transition ${
-                      isCurrent
-                        ? 'bg-[#C8FF00]/20 text-[#C8FF00] cursor-default'
-                        : 'bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-50'
-                    }`}
-                  >
-                    {isCurrent ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
-                  </button>
+                  {/* A plan priced at 0 (e.g. Enterprise) is sold by quote, not
+                      self-serve — /api/payments/initialize rejects a zero-value
+                      checkout server-side, so route it to Contact instead of a
+                      dead-end "Select Plan" that always errors. */}
+                  {Number(plan.price_ngn) <= 0 ? (
+                    <a
+                      href="/contact"
+                      className="block w-full py-3 rounded-lg font-semibold text-center bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 transition"
+                    >
+                      Contact sales
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={isCurrent || loading}
+                      className={`w-full py-3 rounded-lg font-semibold transition ${
+                        isCurrent
+                          ? 'bg-[#C8FF00]/20 text-[#C8FF00] cursor-default'
+                          : 'bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-50'
+                      }`}
+                    >
+                      {isCurrent ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
+                    </button>
+                  )}
                 </div>
               </div>
             );
