@@ -7,7 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-export const AI_MODEL = 'claude-opus-4-8';
+export const AI_MODEL = 'claude-opus-5-5';
 
 let client: Anthropic | null = null;
 
