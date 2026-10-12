@@ -7,8 +7,30 @@
  * and the only client-supplied input to verify is a transaction id.
  */
 
+import crypto from 'crypto';
+
 export function isFlutterwaveConfigured(): boolean {
   return Boolean(process.env.FLUTTERWAVE_SECRET_KEY);
+}
+
+export function isFlutterwaveWebhookConfigured(): boolean {
+  return Boolean(process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH);
+}
+
+/**
+ * Flutterwave's documented webhook security mechanism is a static secret
+ * hash (not HMAC): you set a "secret hash" string in the Flutterwave
+ * dashboard's webhook settings, and every webhook delivery echoes it
+ * back in the `verif-hash` header — a simple equality check, not a
+ * signature over the body. See Flutterwave's webhook verification docs.
+ */
+export function verifyFlutterwaveWebhookSignature(verifHashHeader: string | null): boolean {
+  const expected = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
+  if (!expected || !verifHashHeader) return false;
+  // Constant-time comparison — this is a shared secret check, not a
+  // public signature, so timing differences matter.
+  if (verifHashHeader.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(verifHashHeader), Buffer.from(expected));
 }
 
 export interface FlutterwaveVerifyResult {

@@ -6,9 +6,10 @@ import { createClient } from '@supabase/supabase-js';
  * This client authenticates with the Supabase SERVICE ROLE key, which
  * bypasses Row Level Security entirely. It exists for exactly one
  * purpose right now: calling the payment-recording webhook RPCs
- * (record_paystack_webhook_charge, record_paystack_webhook_transaction_event)
- * from inside the Paystack webhook route, which has no Supabase user
- * session to authenticate as.
+ * (record_paystack_webhook_charge, record_paystack_webhook_transaction_event,
+ * record_flutterwave_webhook_charge, record_flutterwave_webhook_transaction_event)
+ * from inside the Paystack/Flutterwave webhook routes, which have no
+ * Supabase user session to authenticate as.
  *
  * SECURITY_FIX (C1): those RPCs were previously called using the public
  * anon-key client, which meant they had to be granted EXECUTE to the
