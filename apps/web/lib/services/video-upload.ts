@@ -106,7 +106,19 @@ export function uploadVideoFile({
         contentType: file.type,
         cacheControl: '3600',
       },
-      onError: (error) => reject(error),
+      onError: (error) => {
+        // tus-js-client already retried this (retryDelays above) before
+        // giving up — a DetailedError with no originalResponse means the
+        // connection never completed a round trip at all (not a server
+        // rejection), so surface something a person can act on instead of
+        // the raw "tus: failed to upload chunk..." dump.
+        const isConnectionFailure = error instanceof tus.DetailedError && !error.originalResponse;
+        reject(
+          isConnectionFailure
+            ? new Error('Upload interrupted — the connection dropped partway through. Select the same file again to resume from where it left off.')
+            : error
+        );
+      },
       onProgress: (bytesSent, bytesTotal) => {
         if (onProgress) onProgress(Math.round((bytesSent / bytesTotal) * 100));
       },
