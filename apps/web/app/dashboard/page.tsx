@@ -7,8 +7,8 @@ import { TrendingUp, Users, DollarSign, ShoppingCart, AlertCircle, Sparkles, Mes
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { useFeatureFlags } from '@/lib/hooks';
 import { listContacts, listDeals, listPipelineStages } from '@/lib/services/crm';
-import { getVideos } from '@/lib/services/videos.service';
-import { getWebsites } from '@/lib/services/builder.service';
+import { getRevenueData } from '@/lib/services/analytics.service';
+import { listActivity, type ActivityEntry } from '@/lib/services/team.service';
 import { MetricCard, ModuleCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 
 interface DashboardMetrics {
@@ -16,10 +16,28 @@ interface DashboardMetrics {
   activeDeals: number;
   totalRevenue: number;
   conversionRate: number;
-  revenueData: any[];
+  revenueData: Array<{ month: string; amount: number }>;
   pipelineData: any[];
   topDeals: any[];
-  recentActivities: any[];
+  recentActivities: ActivityEntry[];
+}
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function describeActivity(activity: ActivityEntry): string {
+  const actorName = activity.actor?.name || activity.actor?.email || 'Someone';
+  const entity = activity.entity_name ? ` "${activity.entity_name}"` : '';
+  return `${actorName} ${activity.action.replace(/_/g, ' ')}${entity}`;
 }
 
 export default function DashboardPage() {
@@ -39,18 +57,16 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const [contactsResult, dealsResult, videosResult, websitesResult, stagesResult] = await Promise.all([
+        const [contactsResult, dealsResult, stagesResult, revenueResult, activityResult] = await Promise.all([
           listContacts(businessId, { pageSize: 100 }),
           listDeals(businessId, { pageSize: 100 }),
-          getVideos(businessId),
-          getWebsites(businessId),
           listPipelineStages(businessId),
+          getRevenueData(businessId, '1y'),
+          listActivity(businessId, 5),
         ]);
 
         const contactsList = contactsResult.success && contactsResult.data ? contactsResult.data.items : [];
         const dealsList = dealsResult.success && dealsResult.data ? dealsResult.data.items : [];
-        const videoCount = videosResult.success && videosResult.data ? videosResult.data.videos.length : 0;
-        const websiteCount = websitesResult.success && websitesResult.data ? websitesResult.data.length : 0;
 
         // Calculate metrics
         const totalContacts = contactsList.length;
@@ -59,15 +75,11 @@ export default function DashboardPage() {
         const wonDeals = dealsList.filter((d: any) => d.status === 'won').length;
         const conversionRate = dealsList.length > 0 ? Math.round((wonDeals / dealsList.length) * 100) : 0;
 
-        // Revenue trend (mock data - in production would come from transactions table)
-        const revenueData = [
-          { month: 'Jan', revenue: 0 },
-          { month: 'Feb', revenue: 0 },
-          { month: 'Mar', revenue: 0 },
-          { month: 'Apr', revenue: 0 },
-          { month: 'May', revenue: 0 },
-          { month: 'Jun', revenue: totalRevenue },
-        ];
+        // Revenue trend — real monthly breakdown from completed transactions
+        // + won deals over the last year, via the same endpoint the
+        // Analytics page uses. An empty/zero result here is a true zero
+        // (no revenue recorded yet), not a loading or error state.
+        const revenueData = revenueResult.success && revenueResult.data ? revenueResult.data.monthlyBreakdown : [];
 
         // Pipeline by real stage
         const stages = stagesResult.success && stagesResult.data ? stagesResult.data.stages : [];
@@ -88,33 +100,11 @@ export default function DashboardPage() {
             stage: deal.stage,
           }));
 
-        // Recent activities (mock - would come from interactions table)
-        const recentActivities = [
-          {
-            type: 'deal_created',
-            description: 'New deal created',
-            time: '2 hours ago',
-            icon: '💼',
-          },
-          {
-            type: 'contact_added',
-            description: 'New contact added',
-            time: '4 hours ago',
-            icon: '👤',
-          },
-          {
-            type: 'video_uploaded',
-            description: `${videoCount} videos in library`,
-            time: 'Today',
-            icon: '🎬',
-          },
-          {
-            type: 'website_updated',
-            description: `${websiteCount} websites active`,
-            time: 'Today',
-            icon: '🌐',
-          },
-        ];
+        // Recent activity — real entries from activity_logs (team/business
+        // membership changes today; see /api/businesses/[id]/activity).
+        // An empty result means no activity has been logged yet, not that
+        // loading failed — the empty state below says so explicitly.
+        const recentActivities = activityResult.success && activityResult.data ? activityResult.data : [];
 
         setMetrics({
           totalContacts,
@@ -186,23 +176,29 @@ export default function DashboardPage() {
       <FeatureGatingSection businessId={currentBusiness?.id || ''} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total revenue" value={`₦${(metrics.totalRevenue / 1000000).toFixed(1)}M`} description={`From ${metrics.activeDeals} active deals`} icon={DollarSign} accent="gold" trend="+12%" />
-        <MetricCard title="Active deals" value={metrics.activeDeals.toString()} description="In proposal, negotiation or decision" icon={ShoppingCart} accent="emerald" trend="Healthy" />
-        <MetricCard title="Contacts in CRM" value={metrics.totalContacts.toString()} description="Tracked prospects and customers" icon={Users} accent="slate" trend="Live" />
-        <MetricCard title="Conversion rate" value={`${metrics.conversionRate}%`} description="Deals won versus total opportunities" icon={TrendingUp} accent="gold" trend="Strong" />
+        <MetricCard title="Total revenue" value={`₦${(metrics.totalRevenue / 1000000).toFixed(1)}M`} description={`From ${metrics.activeDeals} active deals`} icon={DollarSign} accent="gold" />
+        <MetricCard title="Active deals" value={metrics.activeDeals.toString()} description="In proposal, negotiation or decision" icon={ShoppingCart} accent="emerald" />
+        <MetricCard title="Contacts in CRM" value={metrics.totalContacts.toString()} description="Tracked prospects and customers" icon={Users} accent="slate" />
+        <MetricCard title="Conversion rate" value={`${metrics.conversionRate}%`} description="Deals won versus total opportunities" icon={TrendingUp} accent="gold" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <SectionPanel title="Revenue intelligence" subtitle="Growth signals and pipeline momentum" actionLabel="Open analytics" actionHref="/dashboard/analytics">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={metrics.revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#C8FF00/20" />
-              <XAxis stroke="#C8FF00/50" />
-              <YAxis stroke="#C8FF00/50" />
-              <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
-              <Line type="monotone" dataKey="revenue" stroke="#C8FF00" strokeWidth={2.8} dot={{ r: 3, fill: '#C8FF00' }} />
-            </LineChart>
-          </ResponsiveContainer>
+          {metrics.revenueData.length === 0 ? (
+            <div className="flex h-[300px] items-center justify-center text-sm text-[#F8F9FA]/40">
+              No revenue recorded yet
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={metrics.revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#C8FF00/20" />
+                <XAxis dataKey="month" stroke="#C8FF00/50" />
+                <YAxis stroke="#C8FF00/50" />
+                <Tooltip contentStyle={{ backgroundColor: '#0E1116', border: '1px solid rgba(200, 255, 0,0.3)' }} labelStyle={{ color: '#C8FF00' }} />
+                <Line type="monotone" dataKey="amount" stroke="#C8FF00" strokeWidth={2.8} dot={{ r: 3, fill: '#C8FF00' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </SectionPanel>
 
         <SectionPanel title="Growth modules" subtitle="Every core operating layer at your fingertips">
@@ -265,17 +261,20 @@ export default function DashboardPage() {
         </SectionPanel>
 
         <SectionPanel title="Operating pulse" subtitle="Key activity and momentum from your stack">
-          <div className="space-y-3">
-            {metrics.recentActivities.map((activity, idx) => (
-              <div key={idx} className="flex items-center gap-3 rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-3">
-                <span className="text-lg">{activity.icon}</span>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">{activity.description}</p>
-                  <p className="text-xs text-[#C8FF00]/60">{activity.time}</p>
+          {metrics.recentActivities.length === 0 ? (
+            <p className="py-6 text-center text-sm text-[#F8F9FA]/40">No recent activity yet</p>
+          ) : (
+            <div className="space-y-3">
+              {metrics.recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-center gap-3 rounded-[1.2rem] border border-[#C8FF00]/10 bg-[#11151E] p-3">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">{describeActivity(activity)}</p>
+                    <p className="text-xs text-[#C8FF00]/60">{formatRelativeTime(activity.created_at)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </SectionPanel>
       </div>
     </div>

@@ -156,7 +156,6 @@ export default function AnalyticsPage() {
       description: 'Revenue generated across the current period',
       icon: DollarSign,
       accent: 'gold' as const,
-      trend: 'Live',
     },
     {
       title: 'Active deals',
@@ -164,7 +163,6 @@ export default function AnalyticsPage() {
       description: 'Opportunities in active motion',
       icon: Target,
       accent: 'emerald' as const,
-      trend: 'Live',
     },
     {
       title: 'New contacts',
@@ -172,7 +170,6 @@ export default function AnalyticsPage() {
       description: 'Fresh prospects and customer touchpoints',
       icon: Users,
       accent: 'slate' as const,
-      trend: 'Live',
     },
     {
       title: 'Conversion rate',
@@ -180,7 +177,6 @@ export default function AnalyticsPage() {
       description: 'Won deals versus total opportunities',
       icon: TrendingUp,
       accent: 'gold' as const,
-      trend: 'Live',
     },
   ];
 

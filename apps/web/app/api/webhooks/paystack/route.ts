@@ -44,31 +44,24 @@ export async function POST(request: NextRequest) {
 
       const supabase = await createServerClient();
 
-      // Update subscription if exists
-      if (metadata?.subscriptionId) {
-        const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + 1);
-
-        await (supabase as any)
-          .from('subscriptions')
-          .update({
-            status: 'active',
-            current_period_end: endDate.toISOString(),
-          })
-          .eq('id', metadata.subscriptionId);
-      }
-
-      // Create transaction record
-      await (supabase as any).from('transactions').insert({
-        business_id: metadata?.businessId,
-        subscription_id: metadata?.subscriptionId,
-        type: 'subscription_charge',
-        amount: amount / 100,
-        currency: event.data.currency,
-        status: 'completed',
-        payment_provider: 'paystack',
-        provider_reference: reference,
+      // This webhook carries no Supabase user session (it's Paystack
+      // calling back directly) — the HMAC signature check above is the
+      // security boundary, not RLS. Rather than add a service-role key,
+      // this SECURITY DEFINER RPC performs the subscription update +
+      // transaction insert as one call (same pattern already used for
+      // the fal.ai render webhook) and is idempotent on provider_reference,
+      // since Paystack can redeliver the same webhook event.
+      const { error: rpcError } = await (supabase as any).rpc('record_paystack_webhook_charge', {
+        p_business_id: metadata?.businessId ?? null,
+        p_subscription_id: metadata?.subscriptionId ?? null,
+        p_reference: reference,
+        p_amount: amount / 100,
+        p_currency: event.data.currency,
       });
+
+      if (rpcError) {
+        console.error('Paystack webhook: failed to record charge', rpcError, { reference, metadata });
+      }
 
       if (isResendConfigured() && customer?.email) {
         try {

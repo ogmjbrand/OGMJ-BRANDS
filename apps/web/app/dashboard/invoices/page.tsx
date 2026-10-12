@@ -90,7 +90,7 @@ export default function InvoicesPage() {
 
       {stats && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Total invoices" value={stats.total_invoices.toString()} description="All invoices in your records" icon={Receipt} accent="gold" trend="Live" />
+          <MetricCard title="Total invoices" value={stats.total_invoices.toString()} description="All invoices in your records" icon={Receipt} accent="gold" />
           <MetricCard title="Total revenue" value={`₦${(stats.total_revenue / 1000000).toFixed(1)}M`} description="Invoice value created" icon={CircleDollarSign} accent="emerald" trend="Tracked" />
           <MetricCard title="Paid" value={`₦${(stats.paid_revenue / 1000000).toFixed(1)}M`} description="Revenue already collected" icon={CircleDollarSign} accent="slate" trend="Healthy" />
           <MetricCard title="Outstanding" value={`₦${(stats.outstanding / 1000000).toFixed(1)}M`} description="Pending collection balance" icon={CircleDollarSign} accent="gold" trend="Watch" />

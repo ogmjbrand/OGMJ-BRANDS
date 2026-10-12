@@ -100,7 +100,7 @@ export default function ProductsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard title="Products" value={products.length.toString()} description="Offers currently in your catalog" icon={Package} accent="gold" trend="Live" />
+        <MetricCard title="Products" value={products.length.toString()} description="Offers currently in your catalog" icon={Package} accent="gold" />
         <MetricCard title="Live offers" value={liveProducts.toString()} description="Products ready for sale or delivery" icon={Tag} accent="emerald" trend="Ready" />
         <MetricCard title="Catalog value" value={`$${totalValue.toFixed(2)}`} description="Combined baseline pricing" icon={DollarSign} accent="slate" trend="Tracked" />
       </div>

@@ -125,8 +125,8 @@ export default function WorkflowsPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard title="Active automations" value={activeCount.toString()} description="High-value flows currently live" icon={PlayCircle} accent="gold" trend="Live" />
-        <MetricCard title="Total workflows" value={workflows.length.toString()} description="Automations in your workspace" icon={Sparkles} accent="emerald" trend="Live" />
+        <MetricCard title="Active automations" value={activeCount.toString()} description="High-value flows currently live" icon={PlayCircle} accent="gold" />
+        <MetricCard title="Total workflows" value={workflows.length.toString()} description="Automations in your workspace" icon={Sparkles} accent="emerald" />
         <MetricCard title="Total runs" value={totalRuns.toString()} description="Times a workflow has been triggered" icon={CheckCircle2} accent="slate" trend="Tracked" />
       </div>
 
