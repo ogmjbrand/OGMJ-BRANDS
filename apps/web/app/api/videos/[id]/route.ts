@@ -134,6 +134,16 @@ export async function DELETE(
 
     await verifyVideoAccess(supabase, user.id, videoId);
 
+    // file_url only holds a storage object path (not an external URL)
+    // when source_type is 'upload' — only remove storage in that case, so
+    // a video linked to an outside URL doesn't trigger a pointless (and
+    // potentially wrong) storage delete.
+    const { data: existingVideo } = await supabase
+      .from('videos')
+      .select('file_url, source_type')
+      .eq('id', videoId)
+      .single();
+
     const { error } = await supabase
       .from('videos')
       .delete()
@@ -141,6 +151,15 @@ export async function DELETE(
 
     if (error) {
       throw new ApiError('Failed to delete video', 500);
+    }
+
+    if ((existingVideo as any)?.source_type === 'upload' && (existingVideo as any)?.file_url) {
+      const { error: storageError } = await supabase.storage
+        .from('videos')
+        .remove([(existingVideo as any).file_url]);
+      if (storageError) {
+        console.error('Failed to remove storage object for deleted video:', storageError);
+      }
     }
 
     return createSuccessResponse({ success: true }, 'Video deleted successfully');
