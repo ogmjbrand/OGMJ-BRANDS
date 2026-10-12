@@ -31,9 +31,13 @@ export function useFeatureFlags(businessId: string) {
       // parallel instead of one after another.
       const [{ data: subscriptionData, error: subError }, { data: featureData, error: featuresError }] =
         await Promise.all([
+          // feature_flags.enabled_for_plans stores plan *slugs* (e.g. "pro"),
+          // not subscriptions.plan_id (a UUID) — join through subscription_plans
+          // to get the slug, or every scoped flag would compare a UUID to a
+          // slug and never match.
           supabase
             .from('subscriptions')
-            .select('plan_id')
+            .select('plan_id, subscription_plans(slug)')
             .eq('business_id', businessId)
             .eq('status', 'active')
             .order('created_at', { ascending: false })
@@ -45,8 +49,9 @@ export function useFeatureFlags(businessId: string) {
       if (subError) throw subError
       if (featuresError) throw featuresError
 
-      const currentPlanId = subscriptionData?.[0]?.plan_id || 'free'
-      setPlanId(currentPlanId)
+      const currentPlanSlug =
+        (subscriptionData?.[0] as any)?.subscription_plans?.slug || 'free'
+      setPlanId(currentPlanSlug)
 
       const featureMap: Record<string, boolean> = {}
       featureData?.forEach((f: FeatureFlag) => {
@@ -55,7 +60,7 @@ export function useFeatureFlags(businessId: string) {
         const scoped = plans.length > 0 || businesses.length > 0
         featureMap[f.key] =
           Boolean(f.is_enabled) &&
-          (!scoped || plans.includes(currentPlanId) || businesses.includes(businessId))
+          (!scoped || plans.includes(currentPlanSlug) || businesses.includes(businessId))
       })
 
       setFeatures(featureMap)
