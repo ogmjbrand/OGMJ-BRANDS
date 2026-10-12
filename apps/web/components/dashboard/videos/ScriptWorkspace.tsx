@@ -5,6 +5,7 @@ import { Sparkles, Loader2, AlertCircle, Info, PlayCircle, RefreshCcw, Trash2, H
 import {
   generateVideoScript,
   listAIVideoProjects,
+  getAIVideoProject,
   updateAIVideoProject,
   deleteAIVideoProject,
   renderAIVideoProject,
@@ -69,6 +70,31 @@ export default function ScriptWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, workspace]);
 
+  // Rendering happens async via a provider webhook, not in the request
+  // that kicked it off — poll for the result while a project is
+  // rendering, capped so a project that never completes doesn't poll
+  // forever.
+  useEffect(() => {
+    if (!selectedProject || selectedProject.status !== 'rendering') return;
+
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      const result = await getAIVideoProject(selectedProject.id);
+      if (result.success && result.data) {
+        setSelectedProject(result.data);
+        setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
+        if (result.data.status !== 'rendering') {
+          clearInterval(interval);
+        }
+      }
+      if (attempts >= 60) clearInterval(interval); // ~5 minutes at 5s intervals
+    }, 5000);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProject?.id, selectedProject?.status]);
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     if (!prompt.trim()) {
@@ -117,13 +143,22 @@ export default function ScriptWorkspace({
   }
 
   async function handleRender() {
-    if (!selectedProject) return;
+    if (!selectedProject?.script) return;
+    const sceneCount = selectedProject.script.scenes.length;
+    const confirmed = confirm(
+      `This will submit ${sceneCount} scene${sceneCount === 1 ? '' : 's'} for AI video generation — each scene is a separate paid render. Continue?`
+    );
+    if (!confirmed) return;
+
     setRendering(true);
     setRenderNotice(null);
     const result = await renderAIVideoProject(selectedProject.id);
     if (!result.success) {
       setRenderNotice(result.error?.message || 'Rendering is not available yet.');
     } else if (result.data) {
+      // 'rendering' here means jobs were submitted, not completed — the
+      // polling effect above picks up the real result as the provider's
+      // webhook delivers each scene.
       setSelectedProject(result.data);
       setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
     }
@@ -280,7 +315,22 @@ export default function ScriptWorkspace({
                   <div key={idx} className="rounded-xl border border-[#C8FF00]/10 bg-[#07070A] p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-[#C8FF00]">Scene {scene.sceneNumber}</span>
-                      <span className="text-xs text-[#C8FF00]/40">{scene.durationSeconds}s</span>
+                      <div className="flex items-center gap-2">
+                        {scene.renderStatus === 'pending' && (
+                          <span className="flex items-center gap-1 text-xs text-amber-300">
+                            <Loader2 className="h-3 w-3 animate-spin" /> Rendering
+                          </span>
+                        )}
+                        {scene.renderStatus === 'completed' && scene.videoUrl && (
+                          <a href={scene.videoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-emerald-300 underline">
+                            <PlayCircle className="h-3 w-3" /> View clip
+                          </a>
+                        )}
+                        {scene.renderStatus === 'failed' && (
+                          <span className="text-xs text-red-400" title={scene.renderError}>Failed</span>
+                        )}
+                        <span className="text-xs text-[#C8FF00]/40">{scene.durationSeconds}s</span>
+                      </div>
                     </div>
                     <p className="text-sm text-white/80">{scene.description}</p>
                     <label className="block text-xs text-[#C8FF00]/50">
@@ -328,6 +378,13 @@ export default function ScriptWorkspace({
                 </div>
               )}
 
+              {selectedProject.status === 'rendering' && (
+                <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+                  <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+                  Rendering in the background — this page checks for updates automatically every few seconds.
+                </div>
+              )}
+
               {selectedProject.status === 'completed' && selectedProject.output_video_url && (
                 <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
                   <PlayCircle className="h-4 w-4 flex-shrink-0" />
@@ -338,18 +395,18 @@ export default function ScriptWorkspace({
               <div className="flex gap-2">
                 <button
                   onClick={handleSaveEdits}
-                  disabled={savingEdits}
+                  disabled={savingEdits || selectedProject.status === 'rendering'}
                   className="flex-1 rounded-xl border border-[#C8FF00]/20 py-2.5 text-sm font-medium text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-60 transition"
                 >
                   {savingEdits ? 'Saving…' : 'Save edits'}
                 </button>
                 <button
                   onClick={handleRender}
-                  disabled={rendering}
+                  disabled={rendering || selectedProject.status === 'rendering'}
                   className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#C8FF00] py-2.5 text-sm font-semibold text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-60 transition"
                 >
-                  {rendering ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                  {rendering ? 'Rendering…' : 'Generate video'}
+                  {rendering || selectedProject.status === 'rendering' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                  {rendering ? 'Submitting…' : selectedProject.status === 'rendering' ? 'Rendering…' : 'Generate video'}
                 </button>
               </div>
             </div>

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
-import { isVideoRenderConfigured, renderVideoFromScenes } from '@/lib/video/render-provider';
+import { isVideoRenderConfigured, submitSceneRender } from '@/lib/video/render-provider';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(
       {
         error: 'No video-generation provider is configured on this deployment',
-        hint: 'REPLICATE_API_TOKEN is not set. Your script is saved and ready — rendering will work once a provider is connected.',
+        hint: 'FAL_KEY is not set. Your script is saved and ready — rendering will work once a provider is connected.',
       },
       { status: 503 }
     );
@@ -51,33 +52,50 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'This project has no scenes to render' }, { status: 400 });
   }
 
-  try {
-    await (supabase as any)
-      .from('ai_video_projects')
-      .update({ status: 'rendering', render_provider: 'replicate', render_error: null, updated_at: new Date().toISOString() })
-      .eq('id', id);
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
+  const webhookToken = crypto.randomBytes(24).toString('hex');
 
-    const result = await renderVideoFromScenes(scenes);
+  // Submissions are independent — one scene's submission failing must not
+  // lose track of other scenes that already reached fal.ai successfully
+  // (their webhook will still fire later), so this never short-circuits
+  // on the first rejection the way Promise.all would.
+  const results = await Promise.allSettled(
+    scenes.map(async (scene, index) => {
+      const webhookUrl = `${appUrl}/api/videos/ai/projects/${id}/render/webhook?token=${webhookToken}&scene=${index}`;
+      const { requestId } = await submitSceneRender(scene, webhookUrl, (project as any).aspect_ratio);
+      return requestId;
+    })
+  );
 
-    const { data: updated, error: updateError } = await (supabase as any)
-      .from('ai_video_projects')
-      .update({ status: 'completed', output_video_url: result.videoUrl, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 400 });
+  const updatedScenes = scenes.map((scene, index) => {
+    const result = results[index];
+    if (result.status === 'fulfilled') {
+      return { ...scene, renderStatus: 'pending', renderRequestId: result.value, videoUrl: undefined, renderError: undefined };
     }
+    const message = result.reason instanceof Error ? result.reason.message : 'Failed to submit this scene';
+    return { ...scene, renderStatus: 'failed', renderRequestId: undefined, videoUrl: undefined, renderError: message };
+  });
 
-    return NextResponse.json({ success: true, data: updated }, { status: 200 });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Render failed';
-    await (supabase as any)
-      .from('ai_video_projects')
-      .update({ status: 'failed', render_error: message, updated_at: new Date().toISOString() })
-      .eq('id', id);
+  const anySubmitted = results.some((r) => r.status === 'fulfilled');
+  const allFailed = results.every((r) => r.status === 'rejected');
 
-    return NextResponse.json({ error: message }, { status: 502 });
+  const { data: updated, error: updateError } = await (supabase as any)
+    .from('ai_video_projects')
+    .update({
+      status: allFailed ? 'failed' : 'rendering',
+      render_provider: 'fal',
+      render_error: allFailed ? 'All scenes failed to submit for rendering' : null,
+      render_webhook_token: anySubmitted ? webhookToken : null,
+      script: { ...(project as any).script, scenes: updatedScenes },
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
+
+  return NextResponse.json({ success: true, data: updated }, { status: allFailed ? 502 : 200 });
 }

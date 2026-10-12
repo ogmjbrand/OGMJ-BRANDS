@@ -14,6 +14,10 @@ export interface AIVideoScene {
   narration: string;
   durationSeconds: number;
   onScreenText?: string | null;
+  renderStatus?: 'pending' | 'completed' | 'failed';
+  renderRequestId?: string;
+  videoUrl?: string;
+  renderError?: string;
 }
 
 export interface AIVideoScript {
@@ -69,6 +73,23 @@ export async function listAIVideoProjects(
     return {
       success: false,
       error: { code: 'AI_VIDEO_ERROR', message: error instanceof Error ? error.message : 'Failed to load projects' },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+export async function getAIVideoProject(projectId: string): Promise<APIResponse<AIVideoProject>> {
+  try {
+    const response = await fetch(`/api/videos/ai/projects/${projectId}`);
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: normalizeError(body, 'Failed to load project'), timestamp: new Date().toISOString() };
+    }
+    return { success: true, data: body.data, timestamp: new Date().toISOString() };
+  } catch (error) {
+    return {
+      success: false,
+      error: { code: 'AI_VIDEO_ERROR', message: error instanceof Error ? error.message : 'Failed to load project' },
       timestamp: new Date().toISOString(),
     };
   }
