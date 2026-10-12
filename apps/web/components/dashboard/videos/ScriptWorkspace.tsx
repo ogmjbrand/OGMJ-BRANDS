@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Loader2, AlertCircle, Info, PlayCircle, RefreshCcw, Trash2, Hash } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Info, PlayCircle, RefreshCcw, Trash2, Hash, Mic } from 'lucide-react';
 import {
   generateVideoScript,
   listAIVideoProjects,
-  getAIVideoProject,
+  checkRenderStatus,
   updateAIVideoProject,
   deleteAIVideoProject,
   renderAIVideoProject,
+  generateVoiceovers,
   type AIVideoProject,
   type AIVideoWorkspace,
   type AIVideoScene,
@@ -55,6 +56,8 @@ export default function ScriptWorkspace({
   const [savingEdits, setSavingEdits] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [renderNotice, setRenderNotice] = useState<string | null>(null);
+  const [generatingVoiceovers, setGeneratingVoiceovers] = useState(false);
+  const [voiceoverNotice, setVoiceoverNotice] = useState<string | null>(null);
 
   async function loadProjects() {
     setLoadingProjects(true);
@@ -71,16 +74,17 @@ export default function ScriptWorkspace({
   }, [businessId, workspace]);
 
   // Rendering happens async via a provider webhook, not in the request
-  // that kicked it off — poll for the result while a project is
-  // rendering, capped so a project that never completes doesn't poll
-  // forever.
+  // that kicked it off — poll while a project is rendering, capped so a
+  // project that never completes doesn't poll forever. Each tick also
+  // actively reconciles against fal.ai's own status API (not just the
+  // cached DB row), so a dropped webhook delivery still gets picked up.
   useEffect(() => {
     if (!selectedProject || selectedProject.status !== 'rendering') return;
 
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts += 1;
-      const result = await getAIVideoProject(selectedProject.id);
+      const result = await checkRenderStatus(selectedProject.id);
       if (result.success && result.data) {
         setSelectedProject(result.data);
         setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
@@ -163,6 +167,26 @@ export default function ScriptWorkspace({
       setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
     }
     setRendering(false);
+  }
+
+  async function handleGenerateVoiceovers() {
+    if (!selectedProject?.script) return;
+    const sceneCount = selectedProject.script.scenes.length;
+    const confirmed = confirm(
+      `This will generate narration audio for ${sceneCount} scene${sceneCount === 1 ? '' : 's'} via ElevenLabs — a paid text-to-speech call per scene. Continue?`
+    );
+    if (!confirmed) return;
+
+    setGeneratingVoiceovers(true);
+    setVoiceoverNotice(null);
+    const result = await generateVoiceovers(selectedProject.id);
+    if (!result.success) {
+      setVoiceoverNotice(result.error?.message || 'Voiceover generation is not available yet.');
+    } else if (result.data) {
+      setSelectedProject(result.data);
+      setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
+    }
+    setGeneratingVoiceovers(false);
   }
 
   async function handleDeleteProject(projectId: string) {
@@ -342,6 +366,12 @@ export default function ScriptWorkspace({
                         className="mt-1 w-full rounded-lg border border-[#C8FF00]/10 bg-[#0E1116] px-2 py-1.5 text-sm text-white outline-none focus:border-[#C8FF00]/40"
                       />
                     </label>
+                    {scene.voiceoverStatus === 'completed' && scene.voiceoverUrl && (
+                      <audio controls src={scene.voiceoverUrl} className="w-full h-8" />
+                    )}
+                    {scene.voiceoverStatus === 'failed' && (
+                      <p className="text-xs text-red-400" title={scene.voiceoverError}>Voiceover failed</p>
+                    )}
                     <label className="block text-xs text-[#C8FF00]/50">
                       Visual prompt
                       <textarea
@@ -378,6 +408,13 @@ export default function ScriptWorkspace({
                 </div>
               )}
 
+              {voiceoverNotice && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  {voiceoverNotice}
+                </div>
+              )}
+
               {selectedProject.status === 'rendering' && (
                 <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
                   <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
@@ -392,13 +429,21 @@ export default function ScriptWorkspace({
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={handleSaveEdits}
                   disabled={savingEdits || selectedProject.status === 'rendering'}
                   className="flex-1 rounded-xl border border-[#C8FF00]/20 py-2.5 text-sm font-medium text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-60 transition"
                 >
                   {savingEdits ? 'Saving…' : 'Save edits'}
+                </button>
+                <button
+                  onClick={handleGenerateVoiceovers}
+                  disabled={generatingVoiceovers || selectedProject.status === 'rendering'}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[#C8FF00]/20 py-2.5 text-sm font-medium text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-60 transition"
+                >
+                  {generatingVoiceovers ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
+                  {generatingVoiceovers ? 'Generating…' : 'Generate voiceovers'}
                 </button>
                 <button
                   onClick={handleRender}

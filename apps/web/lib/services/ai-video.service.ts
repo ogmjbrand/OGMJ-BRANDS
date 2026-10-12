@@ -18,6 +18,9 @@ export interface AIVideoScene {
   renderRequestId?: string;
   videoUrl?: string;
   renderError?: string;
+  voiceoverStatus?: 'pending' | 'completed' | 'failed';
+  voiceoverUrl?: string;
+  voiceoverError?: string;
 }
 
 export interface AIVideoScript {
@@ -182,6 +185,44 @@ export async function renderAIVideoProject(projectId: string): Promise<APIRespon
     return {
       success: false,
       error: { code: 'AI_VIDEO_ERROR', message: error instanceof Error ? error.message : 'Render failed' },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+export async function checkRenderStatus(projectId: string): Promise<APIResponse<AIVideoProject>> {
+  try {
+    const response = await fetch(`/api/videos/ai/projects/${projectId}/render/status`, { method: 'POST' });
+    const body = await response.json();
+    if (!response.ok) {
+      return { success: false, error: normalizeError(body, 'Failed to check render status'), timestamp: new Date().toISOString() };
+    }
+    return { success: true, data: body.data, timestamp: new Date().toISOString() };
+  } catch (error) {
+    return {
+      success: false,
+      error: { code: 'AI_VIDEO_ERROR', message: error instanceof Error ? error.message : 'Failed to check render status' },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+export async function generateVoiceovers(projectId: string): Promise<APIResponse<AIVideoProject>> {
+  try {
+    const response = await fetch(`/api/videos/ai/projects/${projectId}/voiceover`, { method: 'POST' });
+    const body = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        error: { code: 'PROVIDER_NOT_CONFIGURED', message: body?.hint || body?.error || 'Voiceover generation failed' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return { success: true, data: body.data, timestamp: new Date().toISOString() };
+  } catch (error) {
+    return {
+      success: false,
+      error: { code: 'AI_VIDEO_ERROR', message: error instanceof Error ? error.message : 'Voiceover generation failed' },
       timestamp: new Date().toISOString(),
     };
   }

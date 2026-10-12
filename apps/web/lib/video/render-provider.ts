@@ -93,3 +93,52 @@ export function extractVideoUrlFromWebhookPayload(payload: any): string | null {
   ];
   return candidates.find((c) => typeof c === 'string' && c.length > 0) ?? null;
 }
+
+export interface SceneRenderStatus {
+  status: 'IN_QUEUE' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'UNKNOWN';
+  videoUrl: string | null;
+  error: string | null;
+}
+
+/**
+ * Reconciles a scene's render state directly against fal.ai's queue API —
+ * a fallback for the webhook never arriving (dropped delivery, deploy
+ * mid-flight) rather than a replacement for it. Uses the same queue
+ * status/result endpoints fal.ai documents for polling a submitted job.
+ */
+export async function getSceneRenderStatus(requestId: string): Promise<SceneRenderStatus> {
+  const falKey = process.env.FAL_KEY;
+  if (!falKey) {
+    throw new Error('No video-generation provider is configured on this deployment');
+  }
+
+  const statusResponse = await fetch(
+    `${FAL_QUEUE_BASE}/${FAL_MODEL}/requests/${requestId}/status`,
+    { headers: { Authorization: `Key ${falKey}` } }
+  );
+
+  if (!statusResponse.ok) {
+    return { status: 'UNKNOWN', videoUrl: null, error: `fal.ai status check failed (${statusResponse.status})` };
+  }
+
+  const statusData = await statusResponse.json().catch(() => ({}));
+  const status = statusData?.status as SceneRenderStatus['status'] | undefined;
+
+  if (status === 'COMPLETED') {
+    const resultResponse = await fetch(
+      `${FAL_QUEUE_BASE}/${FAL_MODEL}/requests/${requestId}`,
+      { headers: { Authorization: `Key ${falKey}` } }
+    );
+    const resultData = await resultResponse.json().catch(() => ({}));
+    const videoUrl = extractVideoUrlFromWebhookPayload(resultData);
+    return videoUrl
+      ? { status: 'COMPLETED', videoUrl, error: null }
+      : { status: 'FAILED', videoUrl: null, error: 'fal.ai marked the job complete but returned no video URL' };
+  }
+
+  if (status === 'FAILED' || status === 'IN_QUEUE' || status === 'IN_PROGRESS') {
+    return { status, videoUrl: null, error: status === 'FAILED' ? (statusData?.error || 'Render failed') : null };
+  }
+
+  return { status: 'UNKNOWN', videoUrl: null, error: null };
+}
