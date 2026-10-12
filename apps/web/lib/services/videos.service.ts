@@ -19,7 +19,7 @@ export interface Video {
   thumbnailUrl?: string;
   durationSeconds?: number;
   fileSizeBytes?: number;
-  status: 'processing' | 'processed' | 'failed';
+  status: 'uploaded' | 'processing' | 'processed' | 'failed';
   transcription?: string;
   transcriptStatus?: string;
   metadata?: Record<string, any>;

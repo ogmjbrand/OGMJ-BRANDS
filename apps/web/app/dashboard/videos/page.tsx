@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Upload, Play, MoreHorizontal, Zap, AlertCircle, Trash2, RefreshCcw } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Upload, Play, MoreHorizontal, Zap, AlertCircle, Trash2, RefreshCcw, Loader2 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
+import { getCurrentSession } from '@/lib/auth';
 import {
   getVideos,
   createVideo,
@@ -10,6 +11,11 @@ import {
   startVideoProcessing,
 } from '@/lib/services/videos.service';
 import type { Video } from '@/lib/services/videos.service';
+import {
+  validateVideoFile,
+  getVideoDurationSeconds,
+  uploadVideoFile,
+} from '@/lib/services/video-upload';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -27,6 +33,12 @@ export default function VideosPage() {
   const [creatingVideo, setCreatingVideo] = useState(false);
   const [videoFormError, setVideoFormError] = useState<string | null>(null);
   const [operationVideoId, setOperationVideoId] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [fileUploadProgress, setFileUploadProgress] = useState(0);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
 
   async function loadVideos() {
     if (!currentBusiness) {
@@ -95,6 +107,88 @@ export default function VideosPage() {
     setIsDialogOpen(false);
     setCreatingVideo(false);
     loadVideos();
+  }
+
+  async function handleFileSelected(file: File) {
+    if (!currentBusiness) {
+      setFileUploadError('No business selected');
+      return;
+    }
+    // Guard against duplicate submissions (double-click, drop while a
+    // previous upload is still running).
+    if (fileUploading) return;
+
+    const validationError = validateVideoFile(file);
+    if (validationError) {
+      setFileUploadError(validationError.message);
+      return;
+    }
+
+    setFileUploading(true);
+    setFileUploadProgress(0);
+    setFileUploadError(null);
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.access_token) {
+        throw new Error('You must be signed in to upload');
+      }
+
+      const durationSeconds = await getVideoDurationSeconds(file);
+
+      const { path } = await uploadVideoFile({
+        file,
+        businessId: currentBusiness.id,
+        accessToken: session.access_token,
+        onProgress: setFileUploadProgress,
+      });
+
+      const result = await createVideo(currentBusiness.id, {
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        sourceType: 'upload',
+        fileUrl: path,
+        durationSeconds: durationSeconds ?? undefined,
+        fileSizeBytes: file.size,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to save video');
+      }
+
+      await loadVideos();
+    } catch (err) {
+      setFileUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setFileUploading(false);
+      setFileUploadProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  function handleBrowseClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) handleFileSelected(file);
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleFileSelected(file);
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragging(false);
   }
 
   async function handleDeleteVideo(videoId: string) {
@@ -367,14 +461,63 @@ export default function VideosPage() {
           )}
 
           {/* Upload Card */}
-          <div className="border-2 border-dashed border-[#C8FF00]/20 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-[#C8FF00]/40 transition cursor-pointer group">
-            <Upload className="w-12 h-12 text-[#C8FF00]/50 group-hover:text-[#C8FF00] transition mb-3" />
-            <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
-              Upload New Video
-            </p>
-            <p className="text-sm text-[#C8FF00]/50 mt-1">
-              Drag and drop or click to browse
-            </p>
+          <div
+            onClick={fileUploading ? undefined : handleBrowseClick}
+            onDrop={fileUploading ? undefined : handleDrop}
+            onDragOver={fileUploading ? undefined : handleDragOver}
+            onDragLeave={fileUploading ? undefined : handleDragLeave}
+            onKeyDown={(e) => {
+              if (!fileUploading && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                handleBrowseClick();
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Upload new video"
+            className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition group ${
+              fileUploading
+                ? 'border-[#C8FF00]/30 cursor-not-allowed'
+                : isDragging
+                  ? 'border-[#C8FF00] bg-[#C8FF00]/5 cursor-pointer'
+                  : 'border-[#C8FF00]/20 hover:border-[#C8FF00]/40 cursor-pointer'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/mpeg"
+              className="hidden"
+              onChange={handleFileInputChange}
+              disabled={fileUploading}
+            />
+
+            {fileUploading ? (
+              <>
+                <Loader2 className="w-12 h-12 text-[#C8FF00] animate-spin mb-3" />
+                <p className="font-semibold text-white">Uploading… {fileUploadProgress}%</p>
+                <div className="w-full max-w-[200px] h-1.5 rounded-full bg-[#C8FF00]/10 mt-3 overflow-hidden">
+                  <div
+                    className="h-full bg-[#C8FF00] transition-all"
+                    style={{ width: `${fileUploadProgress}%` }}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <Upload className="w-12 h-12 text-[#C8FF00]/50 group-hover:text-[#C8FF00] transition mb-3" />
+                <p className="font-semibold text-white group-hover:text-[#C8FF00] transition">
+                  Upload New Video
+                </p>
+                <p className="text-sm text-[#C8FF00]/50 mt-1">
+                  Drag and drop or click to browse
+                </p>
+              </>
+            )}
+
+            {fileUploadError && (
+              <p className="text-sm text-red-400 mt-3 max-w-[220px]">{fileUploadError}</p>
+            )}
           </div>
         </div>
       </div>
