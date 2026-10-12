@@ -80,7 +80,7 @@ export default function SocialPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard title="Scheduled posts" value={posts.length.toString()} description="Content currently queued" icon={CalendarDays} accent="gold" trend="Live" />
+        <MetricCard title="Scheduled posts" value={posts.length.toString()} description="Content currently queued" icon={CalendarDays} accent="gold" />
         <MetricCard title="Channels" value={`${CHANNELS.length} channels`} description="Available for scheduling" icon={Sparkles} accent="emerald" trend="Ready" />
         <MetricCard
           title="Next publish"

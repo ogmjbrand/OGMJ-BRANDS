@@ -50,7 +50,7 @@ export default function AIPage() {
   const activeAgent = agents.find((a) => a.id === selectedAgent) ?? agents[0];
 
   const quickStats = useMemo(() => [
-    { title: 'Empire agents', value: String(agents.length), description: 'Specialist perspectives on one shared context', icon: Cpu, accent: 'gold' as const, trend: 'Live' },
+    { title: 'Empire agents', value: String(agents.length), description: 'Specialist perspectives on one shared context', icon: Cpu, accent: 'gold' as const },
     { title: 'Model', value: 'Claude Opus', description: 'Frontier intelligence behind every answer', icon: Sparkles, accent: 'emerald' as const, trend: 'Streaming' },
     { title: 'Turnaround', value: 'Seconds', description: 'From question to shippable output', icon: BrainCircuit, accent: 'slate' as const, trend: 'Real-time' },
   ], []);

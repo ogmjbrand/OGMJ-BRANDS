@@ -67,7 +67,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Paid amount does not match the plan price' }, { status: 400 });
     }
 
-    // Reject duplicate verifications for the same Flutterwave reference
+    // Reject duplicate verifications for the same Flutterwave reference.
+    // This pre-check is a convenience for the common case — the real
+    // guarantee is the subscriptions_reference_id_unique DB constraint
+    // below, which closes the race where two concurrent/retried verify
+    // requests both pass this check before either has inserted.
     const { data: existing } = await supabase
       .from('subscriptions')
       .select('id')
@@ -101,10 +105,19 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (subError) {
+      // 23505 = unique_violation — the race the pre-check above can't
+      // close alone: another request for this exact reference won the
+      // insert first. Same outcome as the pre-check catching it.
+      if ((subError as any).code === '23505') {
+        return NextResponse.json({ error: 'This payment has already been processed' }, { status: 409 });
+      }
       return NextResponse.json({ error: subError.message }, { status: 400 });
     }
 
-    await (supabase as any).from('transactions').insert({
+    // Create transaction record. The subscription is already active at
+    // this point — a failure here shouldn't fail the customer's payment,
+    // but it must not be silently swallowed the way it previously was.
+    const { error: txError } = await (supabase as any).from('transactions').insert({
       business_id: businessId,
       subscription_id: subscription.id,
       type: 'subscription_charge',
@@ -114,6 +127,10 @@ export async function POST(request: NextRequest) {
       payment_provider: 'flutterwave',
       provider_reference: verified.txRef,
     });
+
+    if (txError) {
+      console.error('Flutterwave payment succeeded and subscription activated, but transaction record failed to save:', txError, { businessId, subscriptionId: subscription.id, reference: verified.txRef });
+    }
 
     if (isResendConfigured() && verified.customerEmail) {
       try {

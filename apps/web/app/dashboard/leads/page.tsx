@@ -82,7 +82,7 @@ export default function LeadsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <MetricCard title="Total leads" value={(stats?.total_leads || 0).toString()} description="All leads currently tracked" icon={TrendingUp} accent="gold" trend="Live" />
+        <MetricCard title="Total leads" value={(stats?.total_leads || 0).toString()} description="All leads currently tracked" icon={TrendingUp} accent="gold" />
         <MetricCard title="Active" value={(stats?.active_count || 0).toString()} description="Leads still in motion" icon={TrendingUp} accent="emerald" trend="Warm" />
         <MetricCard title="Hot" value={(stats?.hot_count || 0).toString()} description="High-intent opportunities" icon={TrendingUp} accent="slate" trend="Fast" />
         <MetricCard title="Warm" value={(stats?.warm_count || 0).toString()} description="Prospects requiring nurture" icon={TrendingUp} accent="gold" trend="Nurture" />

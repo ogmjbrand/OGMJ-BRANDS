@@ -71,7 +71,7 @@ export default function CrmPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <MetricCard title="Contacts" value={loading ? '—' : contactCount.toString()} description="Active relationships in your CRM" icon={Users} accent="gold" trend="Live" />
+        <MetricCard title="Contacts" value={loading ? '—' : contactCount.toString()} description="Active relationships in your CRM" icon={Users} accent="gold" />
         <MetricCard title="Deals" value={loading ? '—' : dealCount.toString()} description="Open opportunities in motion" icon={Briefcase} accent="emerald" trend="Healthy" />
         <MetricCard title="Search & action" value="Fast" description="Jump into contacts or deals instantly" icon={Search} accent="slate" trend="Ready" />
       </div>

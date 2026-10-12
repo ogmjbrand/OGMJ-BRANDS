@@ -330,7 +330,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard title="Account" value="Ready" description="Profile and access configured" icon={Settings2} accent="gold" trend="Live" />
+        <MetricCard title="Account" value="Ready" description="Profile and access configured" icon={Settings2} accent="gold" />
         <MetricCard title="Billing" value="Manage" description="View plan and payment details" icon={CreditCard} accent="emerald" trend="Secure" />
         <MetricCard title="Team" value={businesses.length.toString()} description="Businesses connected to your workspace" icon={Users} accent="slate" trend="Managed" />
       </div>

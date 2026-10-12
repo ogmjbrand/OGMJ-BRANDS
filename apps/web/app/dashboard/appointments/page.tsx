@@ -179,7 +179,7 @@ export default function AppointmentsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard title="Total appointments" value={appointments.length.toString()} description="Scheduled meetings in your workspace" icon={CalendarDays} accent="gold" trend="Live" />
+        <MetricCard title="Total appointments" value={appointments.length.toString()} description="Scheduled meetings in your workspace" icon={CalendarDays} accent="gold" />
         <MetricCard title="Upcoming" value={upcomingCount.toString()} description="Meetings still ahead on the calendar" icon={Clock3} accent="emerald" trend="Ready" />
         <MetricCard title="Scheduled" value={scheduledCount.toString()} description="Open appointments awaiting attention" icon={CalendarDays} accent="slate" trend="Focus" />
       </div>
