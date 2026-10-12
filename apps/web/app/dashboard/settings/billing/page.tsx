@@ -23,6 +23,28 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function loadFlutterwaveScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).FlutterwaveCheckout) {
+        resolve();
+        return;
+      }
+      const existing = document.querySelector('script[data-flutterwave-inline]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve());
+        existing.addEventListener('error', () => reject(new Error('Failed to load Flutterwave')));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.flutterwave.com/v3.js';
+      script.async = true;
+      script.dataset.flutterwaveInline = 'true';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Flutterwave'));
+      document.body.appendChild(script);
+    });
+  }
+
   useEffect(() => {
     async function loadPlansAndSubscription() {
       setPlansLoading(true);
@@ -49,7 +71,7 @@ export default function BillingPage() {
     loadPlansAndSubscription();
   }, [currentBusiness]);
 
-  const handleSelectPlan = async (planId: string) => {
+  const handlePaystackCheckout = async (planId: string) => {
     if (!currentBusiness) {
       setError('No business selected');
       return;
@@ -64,12 +86,6 @@ export default function BillingPage() {
     setError(null);
 
     try {
-      // Get plan details
-      const plan = plans.find((p) => p.id === planId);
-      if (!plan) {
-        throw new Error('Plan not found');
-      }
-
       // Get current user
       const user = await getCurrentUser();
       if (!user?.email) {
@@ -122,6 +138,81 @@ export default function BillingPage() {
         },
         onError: (err: { message: string }) => {
           setError(err.message || 'Payment failed');
+          setLoading(false);
+        },
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment initialization failed');
+      setLoading(false);
+    }
+  };
+
+  const handleFlutterwaveCheckout = async (planId: string) => {
+    if (!currentBusiness) {
+      setError('No business selected');
+      return;
+    }
+
+    if (planId === currentPlanId) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
+      if (!publicKey) {
+        throw new Error('Flutterwave is not configured on this deployment');
+      }
+
+      // Initialize payment (amount is derived server-side from the plan)
+      const response = await fetch('/api/payments/flutterwave/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: currentBusiness.id, planId }),
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Payment initialization failed');
+      }
+
+      const { txRef, amount, currency, email, meta } = result.data;
+
+      await loadFlutterwaveScript();
+
+      (window as any).FlutterwaveCheckout({
+        public_key: publicKey,
+        tx_ref: txRef,
+        amount,
+        currency,
+        customer: { email },
+        meta,
+        customizations: { title: 'OGMJ BRANDS', description: 'Subscription payment' },
+        callback: async (transaction: { transaction_id: number; status: string }) => {
+          try {
+            if (transaction.status !== 'successful') {
+              throw new Error('Payment was not successful');
+            }
+            const verifyResponse = await fetch('/api/payments/flutterwave/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionId: transaction.transaction_id }),
+            });
+            const verifyResult = await verifyResponse.json();
+
+            if (!verifyResult.success) {
+              throw new Error(verifyResult.error || 'Payment verification failed');
+            }
+
+            window.location.reload();
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Payment verification failed');
+            setLoading(false);
+          }
+        },
+        onclose: () => {
           setLoading(false);
         },
       });
@@ -228,18 +319,30 @@ export default function BillingPage() {
                     >
                       Contact sales
                     </a>
-                  ) : (
+                  ) : isCurrent ? (
                     <button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      disabled={isCurrent || loading}
-                      className={`w-full py-3 rounded-lg font-semibold transition ${
-                        isCurrent
-                          ? 'bg-[#C8FF00]/20 text-[#C8FF00] cursor-default'
-                          : 'bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-50'
-                      }`}
+                      disabled
+                      className="w-full py-3 rounded-lg font-semibold bg-[#C8FF00]/20 text-[#C8FF00] cursor-default"
                     >
-                      {isCurrent ? 'Current Plan' : loading ? 'Processing...' : 'Select Plan'}
+                      Current Plan
                     </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handlePaystackCheckout(plan.id)}
+                        disabled={loading}
+                        className="w-full py-3 rounded-lg font-semibold bg-[#C8FF00] text-[#07070A] hover:bg-[#C8FF00]/90 disabled:opacity-50 transition"
+                      >
+                        {loading ? 'Processing...' : 'Pay with Paystack'}
+                      </button>
+                      <button
+                        onClick={() => handleFlutterwaveCheckout(plan.id)}
+                        disabled={loading}
+                        className="w-full py-3 rounded-lg font-semibold bg-transparent border border-[#C8FF00]/40 text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-50 transition"
+                      >
+                        {loading ? 'Processing...' : 'Pay with Flutterwave'}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
