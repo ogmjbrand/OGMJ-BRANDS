@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Upload, Play, MoreHorizontal, Zap, AlertCircle, Trash2, RefreshCcw, Loader2 } from 'lucide-react';
+import { Upload, Play, MoreHorizontal, Zap, AlertCircle, Trash2, RefreshCcw, Loader2, Library, Wand2, Megaphone, FileText, Scissors } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { getCurrentSession } from '@/lib/auth';
 import {
@@ -18,9 +18,22 @@ import {
 } from '@/lib/services/video-upload';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import ScriptWorkspace from '@/components/dashboard/videos/ScriptWorkspace';
+import ClipStudioWorkspace from '@/components/dashboard/videos/ClipStudioWorkspace';
+
+type StudioTab = 'library' | 'generator' | 'marketing' | 'script_to_video' | 'clips';
+
+const STUDIO_TABS: { id: StudioTab; label: string; icon: typeof Library }[] = [
+  { id: 'library', label: 'Video Library', icon: Library },
+  { id: 'generator', label: 'AI Video Generator', icon: Wand2 },
+  { id: 'marketing', label: 'Marketing Studio', icon: Megaphone },
+  { id: 'script_to_video', label: 'Script-to-Video', icon: FileText },
+  { id: 'clips', label: 'Clip Studio', icon: Scissors },
+];
 
 export default function VideosPage() {
   const { currentBusiness } = useBusinessContext();
+  const [activeTab, setActiveTab] = useState<StudioTab>('library');
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -224,41 +237,104 @@ export default function VideosPage() {
     totalStorage: videos.reduce((sum, video) => sum + (video.fileSizeBytes || 0), 0),
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-center space-y-4">
-          <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
-          <p className="text-[#C8FF00]/70">Loading videos...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-center space-y-4">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
-          <p className="text-red-400">{error}</p>
-          <button
-            onClick={loadVideos}
-            className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold text-white">AI Video Studio</h1>
+        <p className="text-[#C8FF00]/70 mt-2">Upload, generate and repurpose video content in one place</p>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex flex-wrap gap-2 border-b border-[#C8FF00]/10 pb-3">
+        {STUDIO_TABS.map((tab) => {
+          const TabIcon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
+                isActive
+                  ? 'bg-[#C8FF00]/10 text-[#C8FF00] ring-1 ring-inset ring-[#C8FF00]/30'
+                  : 'text-[#C8FF00]/50 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <TabIcon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === 'generator' && (
+        <ScriptWorkspace
+          businessId={currentBusiness?.id || ''}
+          workspace="generator"
+          heading="AI Video Generator"
+          description="Describe the video you want, review the AI-generated storyboard, then render it once a video provider is connected."
+          promptLabel="Describe the video you want"
+          promptPlaceholder="e.g. A 30-second product demo for a skincare brand, warm lighting, close-up shots of the product texture..."
+        />
+      )}
+
+      {activeTab === 'marketing' && (
+        <ScriptWorkspace
+          businessId={currentBusiness?.id || ''}
+          workspace="marketing"
+          heading="AI Marketing Video Studio"
+          description="Product ads, campaigns, brand storytelling and launch videos — grounded in your real brand strategy when available."
+          promptLabel="Describe the product, campaign or offer"
+          promptPlaceholder="e.g. Launch ad for our new Pro plan, targeting small business owners, emphasizing speed and simplicity..."
+        />
+      )}
+
+      {activeTab === 'script_to_video' && (
+        <ScriptWorkspace
+          businessId={currentBusiness?.id || ''}
+          workspace="script_to_video"
+          heading="Script-to-Video"
+          description="Paste an existing script or brief — get a scene breakdown, visual prompts, subtitles and social metadata without losing your words."
+          promptLabel="Paste your script or brief"
+          promptPlaceholder="Paste the script, voiceover copy or brief you already have..."
+        />
+      )}
+
+      {activeTab === 'clips' && (
+        <ClipStudioWorkspace videos={videos} onVideoUpdated={loadVideos} />
+      )}
+
+      {activeTab === 'library' && loading && (
+        <div className="flex items-center justify-center p-12">
+          <div className="text-center space-y-4">
+            <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
+            <p className="text-[#C8FF00]/70">Loading videos...</p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'library' && !loading && error && (
+        <div className="flex items-center justify-center p-12">
+          <div className="text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+            <p className="text-red-400">{error}</p>
+            <button
+              onClick={loadVideos}
+              className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-lg font-semibold hover:bg-[#C8FF00]/90 transition"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'library' && !loading && !error && (
+      <>
+      {/* Library header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white">Videos</h1>
-          <p className="text-[#C8FF00]/70 mt-2">Create viral video content automatically</p>
+          <h2 className="text-xl font-semibold text-white">Video Library</h2>
+          <p className="text-[#C8FF00]/70 mt-1 text-sm">Your uploaded video assets</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -521,6 +597,8 @@ export default function VideosPage() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
