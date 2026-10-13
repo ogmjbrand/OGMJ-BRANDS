@@ -487,6 +487,11 @@ export default function VideosPage() {
                       Processing...
                     </div>
                   )}
+                  {video.status === 'failed' && (
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded">
+                      Failed
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}

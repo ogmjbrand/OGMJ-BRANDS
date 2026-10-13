@@ -127,7 +127,12 @@ export async function POST(request: NextRequest) {
         thumbnail_url: thumbnailUrl,
         duration_seconds: durationSeconds,
         file_size_bytes: fileSizeBytes,
-        status: 'processing',
+        // Nothing has been processed yet at creation time -- 'processing'
+        // was previously set here unconditionally, which showed a
+        // "Processing..." badge the instant a video was uploaded, before
+        // the user had even clicked "Process". Matches the DB column's
+        // own default.
+        status: 'uploaded',
         uploaded_by: user.id,
       })
       .select()
