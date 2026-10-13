@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import './inline-styles.css'
 import PageTransition from '@/components/PageTransition'
@@ -44,6 +45,7 @@ export default function RootLayout({
       </head>
       <body className="bg-obsidian text-white">
         <PageTransition>{children}</PageTransition>
+        <SpeedInsights />
       </body>
     </html>
   )
