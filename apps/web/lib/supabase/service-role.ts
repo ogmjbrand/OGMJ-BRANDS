@@ -17,18 +17,18 @@ import { createClient } from '@supabase/supabase-js';
  * authorization check of their own, that made them callable by anyone
  * on the internet with the (public, shipped-to-the-browser) anon key,
  * completely bypassing this route's own webhook-signature check. The
- * fix is two-sided: the production database migration revokes
- * anon/authenticated EXECUTE on those functions (service_role only,
- * already applied), and this client is what lets the legitimate
- * webhook route keep working after that revocation.
+ * fix is two-sided: the database migration revokes anon/authenticated
+ * EXECUTE on those functions (service_role only, already applied to
+ * production), and this client is what lets the legitimate webhook
+ * routes keep working after that revocation.
  *
  * DO NOT:
  *   - import this from any 'use client' component or anything that
  *     could end up in a client-side bundle
  *   - import this into any route that does not independently verify
- *     the caller first (e.g. a webhook's HMAC signature check) — this
- *     client bypasses RLS entirely, so the route itself is the only
- *     remaining authorization boundary once you use it
+ *     the caller first (e.g. a webhook's HMAC/verif-hash signature
+ *     check) — this client bypasses RLS entirely, so the route itself
+ *     is the only remaining authorization boundary once you use it
  *   - widen its use beyond the specific RPC calls it was introduced
  *     for without a matching security review
  *

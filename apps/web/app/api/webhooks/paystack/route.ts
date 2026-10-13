@@ -67,6 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     const event = JSON.parse(body);
+    // This webhook carries no Supabase user session (it's Paystack
+    // calling back directly) — the HMAC signature check above is the
+    // real security boundary; this client is what lets the verified
+    // webhook reach the now-restricted RPCs. Idempotent on
+    // provider_reference, since Paystack can redeliver any event.
     const supabase = createServiceRoleClient();
 
     if (event.event === 'charge.success') {

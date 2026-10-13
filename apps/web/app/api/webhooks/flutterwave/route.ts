@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient, isServiceRoleConfigured } from '@/lib/supabase/service-role';
 import { isFlutterwaveWebhookConfigured, verifyFlutterwaveWebhookSignature } from '@/lib/payments/flutterwave';
+import { createServiceRoleClient, isServiceRoleConfigured } from '@/lib/supabase/service-role';
 
 /**
  * Flutterwave's documented webhook security mechanism is a static
@@ -19,7 +19,7 @@ import { isFlutterwaveWebhookConfigured, verifyFlutterwaveWebhookSignature } fro
  * still returning 200. Fails closed with a non-2xx response on an RPC
  * failure so Flutterwave retries instead of the event being lost; only
  * the reference and error code are logged, never the full error
- * object, metadata, or customer details.
+ * object, metadata, or customer details. Idempotent on provider_reference.
  */
 export async function POST(request: NextRequest) {
   try {
