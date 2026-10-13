@@ -84,28 +84,73 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
   );
 
-  const updatedScenes = scenes.map((scene, index) => {
+  // Index -> result, keyed by the scene's own sceneNumber rather than raw
+  // array position. ElevenLabs synthesis takes long enough that a
+  // concurrent "Save edits" call can land in between -- re-reading the
+  // scenes fresh below (instead of reusing this stale `scenes` array) and
+  // merging by sceneNumber means a scene the user edited in the meantime
+  // keeps that edit, while still picking up the voiceover result for it.
+  const voiceoverBySceneNumber = new Map<number, { status: 'completed' | 'failed'; voiceoverUrl?: string; voiceoverError?: string }>();
+  scenes.forEach((scene, index) => {
     const result = results[index];
+    const sceneNumber = (scene as any).sceneNumber ?? index + 1;
     if (result.status === 'fulfilled') {
-      return { ...scene, voiceoverStatus: 'completed', voiceoverUrl: result.value, voiceoverError: undefined };
+      voiceoverBySceneNumber.set(sceneNumber, { status: 'completed', voiceoverUrl: result.value });
+    } else {
+      const message = result.reason instanceof Error ? result.reason.message : 'Failed to generate voiceover for this scene';
+      voiceoverBySceneNumber.set(sceneNumber, { status: 'failed', voiceoverError: message });
     }
-    const message = result.reason instanceof Error ? result.reason.message : 'Failed to generate voiceover for this scene';
-    return { ...scene, voiceoverStatus: 'failed', voiceoverUrl: undefined, voiceoverError: message };
   });
 
   const allFailed = results.every((r) => r.status === 'rejected');
 
+  // Re-fetch immediately before writing -- not the `project` read at the
+  // top of this request, which can now be stale -- so a concurrent edit
+  // to narration/onScreenText/etc. during the ElevenLabs calls survives
+  // instead of being silently overwritten by the pre-generation snapshot.
+  const { data: currentProject, error: refetchError } = await supabase
+    .from('ai_video_projects')
+    .select('script, updated_at')
+    .eq('id', id)
+    .single();
+
+  if (refetchError || !currentProject) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  }
+
+  const currentScenes = (((currentProject as any).script?.scenes || []) as Array<Record<string, any>>);
+  const mergedScenes = currentScenes.map((scene, index) => {
+    const sceneNumber = scene.sceneNumber ?? index + 1;
+    const voiceover = voiceoverBySceneNumber.get(sceneNumber);
+    if (!voiceover) return scene;
+    return {
+      ...scene,
+      voiceoverStatus: voiceover.status,
+      voiceoverUrl: voiceover.voiceoverUrl,
+      voiceoverError: voiceover.voiceoverError,
+    };
+  });
+
   const { data: updated, error: updateError } = await (supabase as any)
     .from('ai_video_projects')
     .update({
-      script: { ...(project as any).script, scenes: updatedScenes },
+      script: { ...(currentProject as any).script, scenes: mergedScenes },
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('updated_at', (currentProject as any).updated_at)
     .select()
     .single();
 
   if (updateError) {
+    if (updateError.code === 'PGRST116') {
+      return NextResponse.json(
+        {
+          error: 'This project changed again right as voiceovers finished. Reload and retry -- the generated audio was not saved.',
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
 

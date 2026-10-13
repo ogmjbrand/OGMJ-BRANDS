@@ -54,6 +54,7 @@ export default function ScriptWorkspace({
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const [savingEdits, setSavingEdits] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
   const [renderNotice, setRenderNotice] = useState<string | null>(null);
   const [generatingVoiceovers, setGeneratingVoiceovers] = useState(false);
@@ -139,9 +140,19 @@ export default function ScriptWorkspace({
   async function handleSaveEdits() {
     if (!selectedProject?.script) return;
     setSavingEdits(true);
-    const result = await updateAIVideoProject(selectedProject.id, { script: selectedProject.script });
+    setSaveNotice(null);
+    const result = await updateAIVideoProject(selectedProject.id, {
+      script: selectedProject.script,
+      expectedUpdatedAt: selectedProject.updated_at,
+    });
     if (result.success && result.data) {
+      setSelectedProject(result.data);
       setProjects((prev) => prev.map((p) => (p.id === result.data!.id ? result.data! : p)));
+    } else if (!result.success) {
+      // A conflict means a voiceover/render finished and wrote new scene
+      // data while this edit was in flight -- surface it instead of
+      // silently discarding the user's edit with no feedback at all.
+      setSaveNotice(result.error?.message || 'Failed to save edits.');
     }
     setSavingEdits(false);
   }
@@ -400,6 +411,13 @@ export default function ScriptWorkspace({
                   <p className="text-xs text-[#C8FF00]/50 mt-1.5">{selectedProject.script.hashtags.join(' ')}</p>
                 </div>
               </div>
+
+              {saveNotice && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  {saveNotice}
+                </div>
+              )}
 
               {renderNotice && (
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
