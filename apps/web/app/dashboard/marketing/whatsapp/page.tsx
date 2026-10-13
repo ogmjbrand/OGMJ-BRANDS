@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Sparkles, Send, Trash2, MessageCircle } from 'lucide-react';
+import { Sparkles, Send, Trash2, MessageCircle, FlaskConical } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { SectionPanel } from '@/components/dashboard/EmpireCards';
 import {
@@ -10,6 +10,7 @@ import {
   deleteWhatsAppCampaign,
   sendWhatsAppCampaign,
   generateWhatsAppContent,
+  sendWhatsAppTestMessage,
   type WhatsAppCampaign,
 } from '@/lib/services/whatsapp-marketing.service';
 
@@ -24,6 +25,11 @@ export default function WhatsAppMarketingPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const [form, setForm] = useState({ name: '', body: '', topic: '', statusFilter: '' });
+
+  const [testForm, setTestForm] = useState({ to: '', message: '', confirmConsent: false });
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentBusiness) return;
@@ -85,6 +91,26 @@ export default function WhatsAppMarketingPage() {
     setSendingId(null);
   }
 
+  async function handleTestSend(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentBusiness || !testForm.to.trim() || !testForm.message.trim() || !testForm.confirmConsent) return;
+    setTestSending(true);
+    setTestError(null);
+    setTestResult(null);
+    const result = await sendWhatsAppTestMessage({
+      businessId: currentBusiness.id,
+      to: testForm.to.trim(),
+      message: testForm.message.trim(),
+      confirmConsent: testForm.confirmConsent,
+    });
+    if (result.success && result.data) {
+      setTestResult(`Submitted to Twilio (sid: ${result.data.sid ?? 'n/a'}). ${result.data.note}`);
+    } else {
+      setTestError(result.error?.message || 'Failed to send test message');
+    }
+    setTestSending(false);
+  }
+
   async function handleDelete(id: string) {
     if (!confirm('Delete this draft campaign?')) return;
     await deleteWhatsAppCampaign(id);
@@ -100,6 +126,60 @@ export default function WhatsAppMarketingPage() {
           Twilio WhatsApp Business number.
         </p>
       </div>
+
+      <SectionPanel
+        title={
+          <span className="inline-flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-amber-400" />
+            Test connection
+            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+              Sandbox / Testing
+            </span>
+          </span>
+        }
+        subtitle="Send a single message to verify the Twilio connection before using broadcasts. Requires sending to be explicitly enabled on the deployment, and a number that has joined the Twilio sandbox (or an approved WhatsApp sender)."
+      >
+        <form onSubmit={handleTestSend} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              required
+              placeholder="Recipient phone, E.164 (e.g. +2348012345678)"
+              value={testForm.to}
+              onChange={(e) => setTestForm((f) => ({ ...f, to: e.target.value }))}
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            />
+          </div>
+          <textarea
+            required
+            rows={2}
+            maxLength={1600}
+            placeholder="Test message"
+            value={testForm.message}
+            onChange={(e) => setTestForm((f) => ({ ...f, message: e.target.value }))}
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+          />
+          <label className="flex items-start gap-2 text-xs text-[#F8F9FA]/60">
+            <input
+              type="checkbox"
+              checked={testForm.confirmConsent}
+              onChange={(e) => setTestForm((f) => ({ ...f, confirmConsent: e.target.checked }))}
+              className="mt-0.5"
+            />
+            I confirm I have consent to message this recipient on WhatsApp.
+          </label>
+          <button
+            type="submit"
+            disabled={testSending || !testForm.confirmConsent}
+            className="inline-flex items-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-400/20 disabled:opacity-60"
+          >
+            <FlaskConical className="h-4 w-4" />
+            {testSending ? 'Sending…' : 'Send test message'}
+          </button>
+          {testError ? <p className="text-xs text-red-400">{testError}</p> : null}
+          {testResult ? <p className="text-xs text-[#10B981]">{testResult}</p> : null}
+        </form>
+      </SectionPanel>
 
       <SectionPanel title="New broadcast">
         <form onSubmit={handleCreate} className="space-y-3">

@@ -15,12 +15,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const supabase = await createServerClient();
 
-    const { data: existing } = await supabase.from('whatsapp_campaigns').select('status').eq('id', id).single();
+    const { data: existing } = await supabase.from('whatsapp_campaigns').select('status, business_id').eq('id', id).single();
     if (!existing) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
     if ((existing as any).status !== 'draft') {
       return NextResponse.json({ error: 'Only draft campaigns can be edited' }, { status: 400 });
+    }
+
+    // RLS already scopes whatsapp_campaigns to is_business_member(), but
+    // check explicitly too -- consistent with every other route here,
+    // and it turns a silent RLS-filtered no-op into an honest 403
+    // instead of a misleading "not found" for a campaign that does
+    // exist, just not in a business this user belongs to.
+    const { data: membership } = await supabase
+      .from('business_users')
+      .select('role')
+      .eq('business_id', (existing as any).business_id)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const updates: Record<string, unknown> = {};
@@ -55,6 +72,27 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { id } = await params;
     const supabase = await createServerClient();
+
+    const { data: existing } = await supabase.from('whatsapp_campaigns').select('status, business_id').eq('id', id).single();
+    if (!existing) {
+      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+    }
+
+    const { data: membership } = await supabase
+      .from('business_users')
+      .select('role')
+      .eq('business_id', (existing as any).business_id)
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    if ((existing as any).status !== 'draft') {
+      return NextResponse.json({ error: 'Only draft campaigns can be deleted' }, { status: 400 });
+    }
 
     const { error } = await supabase.from('whatsapp_campaigns').delete().eq('id', id).eq('status', 'draft');
 

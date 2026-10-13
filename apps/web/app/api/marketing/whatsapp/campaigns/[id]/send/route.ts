@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
-import { isTwilioConfigured, sendWhatsAppMessage } from '@/lib/whatsapp/twilio';
+import { isTwilioConfigured, isTwilioSendingEnabled, sendWhatsAppMessage } from '@/lib/whatsapp/twilio';
+import { checkRateLimit } from '@/lib/utils/rate-limit';
+
+// A bulk campaign send can reach far more people in one call than the
+// ad-hoc single-send endpoint (which caps at 20/hour) -- cap it by total
+// recipients dispatched per business per hour, not by call count, since
+// a single campaign with thousands of contacts would otherwise sail
+// through a per-call limit while blasting out thousands of messages.
+const CAMPAIGN_RATE_LIMIT = { endpoint: 'whatsapp:campaign-send', limit: 500, windowMinutes: 60 };
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -14,7 +22,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json(
         {
           error: 'WhatsApp sending is not configured',
-          hint: 'TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_FROM are not set on this deployment.',
+          hint: 'TWILIO_ACCOUNT_SID, TWILIO_API_KEY_SID, TWILIO_API_KEY_SECRET, and TWILIO_WHATSAPP_FROM are not all set on this deployment.',
+        },
+        { status: 503 }
+      );
+    }
+
+    if (!isTwilioSendingEnabled()) {
+      return NextResponse.json(
+        {
+          error: 'WhatsApp sending has not been enabled on this deployment',
+          hint: 'This integration is in sandbox/testing mode. Set TWILIO_WHATSAPP_ENABLED=true once the Twilio sandbox (or WhatsApp sender number) has been verified.',
         },
         { status: 503 }
       );
@@ -69,14 +87,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'No matching recipients with a phone number' }, { status: 400 });
     }
 
-    await (supabase as any).from('whatsapp_campaigns').update({ status: 'sending' }).eq('id', id);
+    const rateLimit = await checkRateLimit({
+      businessId: (campaign as any).business_id,
+      incrementBy: recipients.length,
+      ...CAMPAIGN_RATE_LIMIT,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.error || 'This business has reached its WhatsApp campaign sending limit for this hour. Try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // Two "Send" calls for the same draft campaign can both reach this
+    // point having each read status === 'draft' above, before either
+    // writes -- without a precondition on that write, both would go on
+    // to message every recipient a second time. Requiring the row to
+    // still be 'draft' at the moment of claiming it means only one call
+    // can win; the loser gets a clean conflict and never sends anything.
+    const { data: claimed, error: claimError } = await (supabase as any)
+      .from('whatsapp_campaigns')
+      .update({ status: 'sending' })
+      .eq('id', id)
+      .eq('status', 'draft')
+      .select()
+      .single();
+
+    if (claimError || !claimed) {
+      return NextResponse.json({ error: 'This campaign has already been sent' }, { status: 409 });
+    }
 
     let sent = 0;
     let failed = 0;
 
     for (const contact of recipients) {
       try {
-        const result = await sendWhatsAppMessage(contact.phone, (campaign as any).message);
+        const result = await sendWhatsAppMessage({ to: contact.phone, body: (campaign as any).message });
 
         await (supabase as any).from('whatsapp_sends').insert({
           campaign_id: id,
@@ -86,6 +132,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           status: result.error ? 'failed' : 'sent',
           twilio_message_sid: result.sid,
           error_message: result.error,
+          sent_by: user.id,
           sent_at: result.error ? null : new Date().toISOString(),
         });
 
@@ -100,6 +147,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           phone: contact.phone,
           status: 'failed',
           error_message: err instanceof Error ? err.message : 'Send failed',
+          sent_by: user.id,
         });
       }
     }
