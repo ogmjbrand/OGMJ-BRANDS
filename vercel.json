@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/cron/reconcile-video-renders",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
