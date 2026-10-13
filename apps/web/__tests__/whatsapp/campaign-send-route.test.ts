@@ -30,6 +30,8 @@ let contactsRows: Array<{ id: string; phone: string }> = [];
 let existingSentContactIds: string[] = [];
 let alreadySentQueryShouldError = false;
 const sendsInserted: any[] = [];
+let sentInsertFailuresRemaining = 0;
+let sentInsertAttemptCount = 0;
 const sendWhatsAppMessageMock = vi.fn();
 const checkRateLimitMock = vi.fn();
 
@@ -72,6 +74,13 @@ function makeSupabaseMock() {
             return builder;
           },
           insert(values: any) {
+            if (values.status === 'sent') {
+              sentInsertAttemptCount += 1;
+              if (sentInsertFailuresRemaining > 0) {
+                sentInsertFailuresRemaining -= 1;
+                return Promise.resolve({ error: { message: 'connection reset by peer' } });
+              }
+            }
             sendsInserted.push(values);
             return Promise.resolve({ error: null });
           },
@@ -159,6 +168,8 @@ function reset(overrides: Record<string, any> = {}) {
   ];
   existingSentContactIds = [];
   alreadySentQueryShouldError = false;
+  sentInsertFailuresRemaining = 0;
+  sentInsertAttemptCount = 0;
   sendsInserted.length = 0;
   sendWhatsAppMessageMock.mockReset();
   sendWhatsAppMessageMock.mockResolvedValue({ sid: 'SM123', status: 'queued', error: null });
@@ -342,5 +353,91 @@ describe('POST /api/marketing/whatsapp/campaigns/[id]/send', () => {
     expect(res.status).toBe(500);
     expect(sendWhatsAppMessageMock).not.toHaveBeenCalled();
     expect(campaignRow.status).toBe('draft'); // never claimed
+  });
+
+  // --- Message persistence: provider acceptance + DB failure, retries --
+  describe('whatsapp_sends persistence for a Twilio-accepted message', () => {
+    it('REGRESSION FIX: retries a transient persistence failure and still counts the message as sent once it succeeds', async () => {
+      sentInsertFailuresRemaining = 2; // fails twice, succeeds on the 3rd attempt
+
+      const { POST } = await import('@/app/api/marketing/whatsapp/campaigns/[id]/send/route');
+      const res = await POST(makeRequest(), { params: Promise.resolve({ id: 'camp-1' }) });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data.sent).toBe(2);
+      expect(body.data.unrecorded).toBe(0);
+      expect(sentInsertAttemptCount).toBeGreaterThanOrEqual(3); // retried at least for contact-1
+      expect(sendsInserted.filter((s) => s.status === 'sent')).toHaveLength(2);
+    });
+
+    it('REGRESSION FIX: a Twilio-accepted message that can never be persisted is reported as "unrecorded", never as "failed", and is not resent within the same call', async () => {
+      sentInsertFailuresRemaining = 999; // exhausts every retry attempt, for every contact
+
+      const { POST } = await import('@/app/api/marketing/whatsapp/campaigns/[id]/send/route');
+      const res = await POST(makeRequest(), { params: Promise.resolve({ id: 'camp-1' }) });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data.sent).toBe(0);
+      expect(body.data.failed).toBe(0); // Twilio did not reject these -- must not be reported as provider failures
+      expect(body.data.unrecorded).toBe(2);
+      expect(body.data.warning).toContain('could not be recorded');
+      // Twilio was only ever called once per contact -- an unrecorded
+      // outcome must never trigger an automatic resend to the same
+      // contact within this request.
+      expect(sendWhatsAppMessageMock).toHaveBeenCalledTimes(2);
+      // The campaign must not be marked 'failed' -- Twilio accepted
+      // every message; marking it 'failed' would misrepresent the
+      // provider outcome and could invite an unsafe full resend.
+      expect(campaignRow.status).toBe('sent');
+    });
+
+    it('a provider-rejected message is still recorded as failed even if a transient insert error occurs (best-effort, not retried)', async () => {
+      sendWhatsAppMessageMock.mockResolvedValue({ sid: null, status: null, error: 'The "To" number is not currently reachable' });
+
+      const { POST } = await import('@/app/api/marketing/whatsapp/campaigns/[id]/send/route');
+      const res = await POST(makeRequest(), { params: Promise.resolve({ id: 'camp-1' }) });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data.failed).toBe(2);
+      expect(body.data.unrecorded).toBe(0);
+      expect(campaignRow.status).toBe('failed');
+    });
+
+    it('a mix of sent, failed, and unrecorded outcomes is reported accurately in one call', async () => {
+      reset({
+        status: 'draft',
+      });
+      contactsRows = [
+        { id: 'contact-1', phone: '+2348012345678' },
+        { id: 'contact-2', phone: '+2348012345679' },
+        { id: 'contact-3', phone: '+2348012345680' },
+      ];
+      sendWhatsAppMessageMock
+        .mockResolvedValueOnce({ sid: 'SM1', status: 'queued', error: null }) // accepted by Twilio
+        .mockResolvedValueOnce({ sid: null, status: null, error: 'Rejected by carrier' }) // provider rejection
+        .mockResolvedValueOnce({ sid: 'SM3', status: 'queued', error: null }); // accepted by Twilio
+      // Exactly enough persistence failures to exhaust one contact's
+      // retries (3 attempts) before the budget runs out -- whichever of
+      // the two Twilio-accepted contacts hits the retry loop first ends
+      // up unrecorded, and the other persists normally on its first
+      // attempt. Which one lands which way isn't the point: exactly one
+      // sent, one unrecorded, one failed, is.
+      sentInsertFailuresRemaining = 3;
+
+      const { POST } = await import('@/app/api/marketing/whatsapp/campaigns/[id]/send/route');
+      const res = await POST(makeRequest(), { params: Promise.resolve({ id: 'camp-1' }) });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data.sent).toBe(1);
+      expect(body.data.failed).toBe(1);
+      expect(body.data.unrecorded).toBe(1);
+      expect(body.data.total).toBe(3);
+      // Not every recipient failed, so the campaign is 'sent', not 'failed'.
+      expect(campaignRow.status).toBe('sent');
+    });
   });
 });

@@ -163,28 +163,45 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     let sent = 0;
     let failed = 0;
+    // Twilio accepted the message (billed, in-flight to the recipient),
+    // but every attempt to persist that fact in whatsapp_sends failed.
+    // This is NOT "failed" -- Twilio did not reject it -- and must never
+    // be reported or retried as one: this app's only defense against
+    // double-sending a resumed/retried campaign is the 'sent' row the
+    // alreadySent filter above looks for, so losing that row silently
+    // would make a future retry resend a message that already went out.
+    let unrecorded = 0;
+
+    // Persisting a Twilio-accepted send is worth retrying past a
+    // transient DB blip -- unlike persisting a *rejected* send (handled
+    // best-effort below), losing this record has a real safety
+    // consequence, not just a reporting gap.
+    const PERSIST_RETRY_ATTEMPTS = 3;
+    const PERSIST_RETRY_DELAY_MS = 100;
+    async function insertSentRecordWithRetry(values: Record<string, any>): Promise<boolean> {
+      for (let attempt = 1; attempt <= PERSIST_RETRY_ATTEMPTS; attempt++) {
+        const { error } = await (supabase as any).from('whatsapp_sends').insert(values);
+        if (!error) return true;
+        if (attempt < PERSIST_RETRY_ATTEMPTS) {
+          await new Promise((resolve) => setTimeout(resolve, PERSIST_RETRY_DELAY_MS));
+        }
+      }
+      return false;
+    }
 
     for (const contact of recipients) {
+      let result: Awaited<ReturnType<typeof sendWhatsAppMessage>>;
       try {
-        const result = await sendWhatsAppMessage({ to: contact.phone, body: (campaign as any).message });
-
-        await (supabase as any).from('whatsapp_sends').insert({
-          campaign_id: id,
-          business_id: (campaign as any).business_id,
-          contact_id: contact.id,
-          phone: contact.phone,
-          status: result.error ? 'failed' : 'sent',
-          twilio_message_sid: result.sid,
-          error_message: result.error,
-          sent_by: user.id,
-          sent_at: result.error ? null : new Date().toISOString(),
-        });
-
-        if (result.error) failed++;
-        else sent++;
+        result = await sendWhatsAppMessage({ to: contact.phone, body: (campaign as any).message });
       } catch (err) {
+        // sendWhatsAppMessage itself throwing (not a Twilio-returned
+        // error) means we don't know whether Twilio ever saw this
+        // request -- treat as a rejected send, the same as any other
+        // provider failure. A failed insert here is a reporting gap,
+        // not a double-send risk: a retry would simply re-attempt a
+        // contact nothing confirms was ever messaged.
         failed++;
-        await (supabase as any).from('whatsapp_sends').insert({
+        const { error: insertError } = await (supabase as any).from('whatsapp_sends').insert({
           campaign_id: id,
           business_id: (campaign as any).business_id,
           contact_id: contact.id,
@@ -193,19 +210,81 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           error_message: err instanceof Error ? err.message : 'Send failed',
           sent_by: user.id,
         });
+        if (insertError) {
+          console.error(`WhatsApp campaign ${id}: failed to record a failed send for contact ${contact.id}: ${insertError.message}`);
+        }
+        continue;
+      }
+
+      if (result.error) {
+        failed++;
+        const { error: insertError } = await (supabase as any).from('whatsapp_sends').insert({
+          campaign_id: id,
+          business_id: (campaign as any).business_id,
+          contact_id: contact.id,
+          phone: contact.phone,
+          status: 'failed',
+          twilio_message_sid: result.sid,
+          error_message: result.error,
+          sent_by: user.id,
+        });
+        if (insertError) {
+          console.error(`WhatsApp campaign ${id}: failed to record a failed send for contact ${contact.id}: ${insertError.message}`);
+        }
+        continue;
+      }
+
+      const persisted = await insertSentRecordWithRetry({
+        campaign_id: id,
+        business_id: (campaign as any).business_id,
+        contact_id: contact.id,
+        phone: contact.phone,
+        status: 'sent',
+        twilio_message_sid: result.sid,
+        error_message: null,
+        sent_by: user.id,
+        sent_at: new Date().toISOString(),
+      });
+
+      if (persisted) {
+        sent++;
+      } else {
+        unrecorded++;
+        // Never log phone numbers or message content -- the Twilio SID
+        // and our own opaque IDs are enough for manual reconciliation.
+        console.error(
+          `WhatsApp campaign ${id}: Twilio accepted a message (sid ${result.sid}) for contact ${contact.id} but it could not be recorded after ${PERSIST_RETRY_ATTEMPTS} attempts. Manual reconciliation needed -- do not resend automatically.`
+        );
       }
     }
 
     await (supabase as any)
       .from('whatsapp_campaigns')
       .update({
+        // unrecorded sends were still accepted by Twilio -- counting
+        // them as a provider failure here would be false, and could
+        // make a 'failed' campaign look safe to simply resend in full.
         status: failed === recipients.length ? 'failed' : 'sent',
         sent_at: new Date().toISOString(),
         recipient_count: recipients.length,
       })
       .eq('id', id);
 
-    return NextResponse.json({ success: true, data: { sent, failed, total: recipients.length } }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          sent,
+          failed,
+          unrecorded,
+          total: recipients.length,
+          ...(unrecorded > 0
+            ? { warning: `${unrecorded} message(s) were accepted by Twilio but could not be recorded. They were not resent. Check server logs for the affected Twilio message SIDs and reconcile manually.` }
+            : {}),
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error sending WhatsApp campaign:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
