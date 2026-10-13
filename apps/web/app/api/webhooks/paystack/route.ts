@@ -1,8 +1,22 @@
-import { createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { getResendClient, isResendConfigured, RESEND_FROM_EMAIL } from '@/lib/email/resend';
+import { verifyPaystackWebhookSignature } from '@/lib/payments/paystack';
+import { createServiceRoleClient, isServiceRoleConfigured } from '@/lib/supabase/service-role';
 
+/**
+ * HOTFIX (production incident): the payment_rpc_authorization_fix
+ * migration correctly restricted record_paystack_webhook_charge (and
+ * its sibling RPCs) to service_role only, closing an anon-callable
+ * authorization bypass. But this route was still calling that RPC
+ * with the anon-key request client, which lost EXECUTE on the
+ * migration's apply -- meaning every real Paystack webhook since then
+ * silently failed to record its transaction while still returning 200,
+ * so Paystack never retried. This restores the intended trusted path
+ * without reopening the anon-callable bypass: the HMAC signature check
+ * below is still the real authorization boundary, this client is only
+ * what lets a request that's already proven legitimate reach the
+ * now-restricted RPC.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
@@ -23,34 +37,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify webhook signature (HMAC-SHA512)
-    const hash = crypto
-      .createHmac('sha512', paystackSecretKey)
-      .update(body)
-      .digest('hex');
-
-    if (hash !== signature) {
+    if (!verifyPaystackWebhookSignature(body, signature, paystackSecretKey)) {
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
       );
     }
 
-    const event = JSON.parse(body);
+    // Signature verified above -- only now do we even check whether the
+    // trusted path to record it is available, so an unauthenticated
+    // request never learns anything about service-role configuration
+    // state before it's proven to be a legitimate, signed delivery.
+    //
+    // Fails closed with a non-2xx response (not a silent 200): Paystack
+    // retries a non-200 response on its documented schedule (live mode:
+    // every 3 minutes for the first 4 attempts, then hourly for 72
+    // hours), so a misconfigured deployment gets retried deliveries
+    // instead of silently losing them.
+    if (!isServiceRoleConfigured()) {
+      console.error('Paystack webhook: SUPABASE_SERVICE_ROLE_KEY is not configured on this deployment');
+      return NextResponse.json({ error: 'Webhook processing is not configured' }, { status: 503 });
+    }
 
-    // Handle charge.success event
+    const event = JSON.parse(body);
+    const supabase = createServiceRoleClient();
+
     if (event.event === 'charge.success') {
       const { reference, customer, amount, metadata } = event.data;
 
-      const supabase = await createServerClient();
-
-      // This webhook carries no Supabase user session (it's Paystack
-      // calling back directly) — the HMAC signature check above is the
-      // security boundary, not RLS. Rather than add a service-role key,
-      // this SECURITY DEFINER RPC performs the subscription update +
-      // transaction insert as one call (same pattern already used for
-      // the fal.ai render webhook) and is idempotent on provider_reference,
-      // since Paystack can redeliver the same webhook event.
       const { error: rpcError } = await (supabase as any).rpc('record_paystack_webhook_charge', {
         p_business_id: metadata?.businessId ?? null,
         p_subscription_id: metadata?.subscriptionId ?? null,
@@ -60,9 +74,19 @@ export async function POST(request: NextRequest) {
       });
 
       if (rpcError) {
-        console.error('Paystack webhook: failed to record charge', rpcError, { reference, metadata });
+        // Do not acknowledge success when the transaction wasn't
+        // actually recorded -- a non-2xx here tells Paystack to retry
+        // delivery on its own schedule instead of this event being
+        // silently lost. Only the reference and error code are logged,
+        // never the full error object, metadata, or customer details.
+        console.error('Paystack webhook: failed to record charge', { reference, code: rpcError.code });
+        return NextResponse.json({ error: 'Failed to record transaction' }, { status: 500 });
       }
 
+      // The charge is already safely recorded at this point (idempotent
+      // on provider_reference, so a retried delivery is a safe no-op).
+      // A failure to send the confirmation email is best-effort and
+      // must not change the response Paystack sees.
       if (isResendConfigured() && customer?.email) {
         try {
           const formattedAmount = (amount / 100).toLocaleString('en-US', {
@@ -76,10 +100,9 @@ export async function POST(request: NextRequest) {
             html: `<p>Your payment of <strong>${formattedAmount}</strong> was successful.</p><p>Reference: ${reference}</p>`,
           });
         } catch (emailError) {
-          console.error('Error sending payment confirmation email:', emailError);
+          console.error('Error sending payment confirmation email:', emailError instanceof Error ? emailError.message : 'unknown error');
         }
       }
-      console.log(`Payment confirmed for ${customer.email}`);
     }
 
     return NextResponse.json(
@@ -87,12 +110,10 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Webhook error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
-
-
