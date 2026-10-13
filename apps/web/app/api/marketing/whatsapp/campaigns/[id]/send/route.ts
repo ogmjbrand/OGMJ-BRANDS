@@ -82,9 +82,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: contactsError.message }, { status: 400 });
     }
 
-    const recipients = (contacts as any[]) ?? [];
+    let recipients = (contacts as any[]) ?? [];
     if (recipients.length === 0) {
       return NextResponse.json({ error: 'No matching recipients with a phone number' }, { status: 400 });
+    }
+
+    // Defense against duplicating a message to someone who already
+    // received it. Nothing currently resets a 'sending'/'failed' campaign
+    // back to 'draft' -- the atomic claim below is what actually prevents
+    // a double-send today -- but this is what makes it SAFE if a future
+    // resume/retry path (or a manual DB fix after a crash mid-send) ever
+    // re-invokes this route for a campaign that's partially sent: anyone
+    // already recorded as 'sent' for this campaign is skipped, never
+    // messaged a second time.
+    const { data: alreadySent } = await supabase
+      .from('whatsapp_sends')
+      .select('contact_id')
+      .eq('campaign_id', id)
+      .eq('status', 'sent');
+    const alreadySentContactIds = new Set(((alreadySent as any[]) ?? []).map((r) => r.contact_id));
+    recipients = recipients.filter((r) => !alreadySentContactIds.has(r.id));
+
+    if (recipients.length === 0) {
+      return NextResponse.json({ error: 'Every matching recipient has already been sent this campaign' }, { status: 400 });
     }
 
     const rateLimit = await checkRateLimit({
@@ -113,7 +133,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .select()
       .single();
 
-    if (claimError || !claimed) {
+    if (claimError) {
+      // PGRST116 ("no rows returned") is exactly what a failed claim
+      // looks like -- the WHERE status = 'draft' matched nothing because
+      // another request already won it. Anything else is a genuine
+      // database error, not a conflict, and must not be reported (or
+      // treated) as one -- no messages have been sent either way.
+      if (claimError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'This campaign has already been sent' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Failed to start sending this campaign. Nothing was sent.' }, { status: 500 });
+    }
+    if (!claimed) {
       return NextResponse.json({ error: 'This campaign has already been sent' }, { status: 409 });
     }
 
