@@ -95,11 +95,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // re-invokes this route for a campaign that's partially sent: anyone
     // already recorded as 'sent' for this campaign is skipped, never
     // messaged a second time.
-    const { data: alreadySent } = await supabase
+    //
+    // Fails closed like the rate-limit check below: a query error here
+    // must not silently fall back to "nobody's been sent yet" -- that
+    // would defeat the whole point of this safety net the one time it
+    // would actually matter (a DB hiccup during a resumed/retried send).
+    const { data: alreadySent, error: alreadySentError } = await supabase
       .from('whatsapp_sends')
       .select('contact_id')
       .eq('campaign_id', id)
       .eq('status', 'sent');
+
+    if (alreadySentError) {
+      return NextResponse.json(
+        { error: 'Failed to verify which recipients already received this campaign. Nothing was sent.' },
+        { status: 500 }
+      );
+    }
+
     const alreadySentContactIds = new Set(((alreadySent as any[]) ?? []).map((r) => r.contact_id));
     recipients = recipients.filter((r) => !alreadySentContactIds.has(r.id));
 

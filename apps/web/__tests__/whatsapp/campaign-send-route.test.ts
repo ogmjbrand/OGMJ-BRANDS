@@ -28,6 +28,7 @@ import { NextRequest } from 'next/server';
 const campaignRow: Record<string, any> = {};
 let contactsRows: Array<{ id: string; phone: string }> = [];
 let existingSentContactIds: string[] = [];
+let alreadySentQueryShouldError = false;
 const sendsInserted: any[] = [];
 const sendWhatsAppMessageMock = vi.fn();
 const checkRateLimitMock = vi.fn();
@@ -61,6 +62,10 @@ function makeSupabaseMock() {
             const builder: any = {
               eq() { return builder; },
               then(resolve: any) {
+                if (alreadySentQueryShouldError) {
+                  resolve({ data: null, error: { message: 'connection reset by peer' } });
+                  return;
+                }
                 resolve({ data: existingSentContactIds.map((contact_id) => ({ contact_id })), error: null });
               },
             };
@@ -153,6 +158,7 @@ function reset(overrides: Record<string, any> = {}) {
     { id: 'contact-2', phone: '+2348012345679' },
   ];
   existingSentContactIds = [];
+  alreadySentQueryShouldError = false;
   sendsInserted.length = 0;
   sendWhatsAppMessageMock.mockReset();
   sendWhatsAppMessageMock.mockResolvedValue({ sid: 'SM123', status: 'queued', error: null });
@@ -326,5 +332,15 @@ describe('POST /api/marketing/whatsapp/campaigns/[id]/send', () => {
     expect(res.status).toBe(400);
     expect(sendWhatsAppMessageMock).not.toHaveBeenCalled();
     expect(campaignRow.status).toBe('draft'); // never claimed -- nothing to send
+  });
+
+  it('REGRESSION FIX: fails closed (500, zero messages) if the already-sent lookup itself errors, instead of silently treating it as "nobody sent yet"', async () => {
+    alreadySentQueryShouldError = true;
+    const { POST } = await import('@/app/api/marketing/whatsapp/campaigns/[id]/send/route');
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: 'camp-1' }) });
+
+    expect(res.status).toBe(500);
+    expect(sendWhatsAppMessageMock).not.toHaveBeenCalled();
+    expect(campaignRow.status).toBe('draft'); // never claimed
   });
 });
