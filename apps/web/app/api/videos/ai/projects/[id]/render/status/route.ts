@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
-import { getSceneRenderStatus, isVideoRenderConfigured } from '@/lib/video/render-provider';
+import { isVideoRenderConfigured } from '@/lib/video/render-provider';
+import { reconcileProjectScenes } from '@/lib/video/reconcile-render';
 
 /**
  * Reconciles a project's scenes directly against fal.ai's queue API.
@@ -46,48 +47,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const scenes = ((project as any).script?.scenes || []) as Array<Record<string, any>>;
-  const pendingIndices = scenes
-    .map((scene, index) => ({ scene, index }))
-    .filter(({ scene }) => scene.renderStatus === 'pending' && scene.renderRequestId);
+  const outcome = await reconcileProjectScenes(scenes, (project as any).output_video_url ?? null);
 
-  if (pendingIndices.length === 0) {
+  if (!outcome.changed) {
     return NextResponse.json({ success: true, data: project });
   }
-
-  const results = await Promise.allSettled(
-    pendingIndices.map(({ scene }) => getSceneRenderStatus(scene.renderRequestId))
-  );
-
-  let changed = false;
-  const updatedScenes = [...scenes];
-  pendingIndices.forEach(({ index }, i) => {
-    const result = results[i];
-    if (result.status !== 'fulfilled') return;
-    const { status, videoUrl, error } = result.value;
-    if (status === 'COMPLETED' && videoUrl) {
-      updatedScenes[index] = { ...updatedScenes[index], renderStatus: 'completed', videoUrl, renderError: undefined };
-      changed = true;
-    } else if (status === 'FAILED') {
-      updatedScenes[index] = { ...updatedScenes[index], renderStatus: 'failed', renderError: error || 'Render failed' };
-      changed = true;
-    }
-    // IN_QUEUE / IN_PROGRESS / UNKNOWN — leave as pending, nothing to update yet.
-  });
-
-  if (!changed) {
-    return NextResponse.json({ success: true, data: project });
-  }
-
-  const allDone = updatedScenes.every((s) => s.renderStatus === 'completed' || s.renderStatus === 'failed');
-  const anyCompleted = updatedScenes.some((s) => s.renderStatus === 'completed');
-  const newStatus = allDone ? (anyCompleted ? 'completed' : 'failed') : 'rendering';
 
   const { data: updated, error: updateError } = await (supabase as any)
     .from('ai_video_projects')
     .update({
-      status: newStatus,
-      output_video_url: newStatus === 'completed' ? updatedScenes.find((s) => s.videoUrl)?.videoUrl ?? null : (project as any).output_video_url,
-      script: { ...(project as any).script, scenes: updatedScenes },
+      status: outcome.newStatus,
+      output_video_url: outcome.outputVideoUrl,
+      script: { ...(project as any).script, scenes: outcome.updatedScenes },
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
