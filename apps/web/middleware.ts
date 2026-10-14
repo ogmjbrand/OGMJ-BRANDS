@@ -2,6 +2,18 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// A session refresh (supabase.auth.getUser()) writes its rotated cookies
+// only onto `res`. Every redirect below returns a brand-new NextResponse,
+// so those cookies must be copied over explicitly or they're silently
+// dropped -- leaving the browser holding stale tokens.
+function redirectWithSessionCookies(url: URL, sessionResponse: NextResponse) {
+  const redirectResponse = NextResponse.redirect(url)
+  for (const cookie of sessionResponse.cookies.getAll()) {
+    redirectResponse.cookies.set(cookie)
+  }
+  return redirectResponse
+}
+
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next()
 
@@ -32,19 +44,19 @@ export async function middleware(req: NextRequest) {
   // ── Legacy auth redirects: support /auth/login and /auth/signup ─────────────
   if (path === '/auth/login') {
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url, res)
   }
 
   if (path === '/auth/signup') {
     url.pathname = '/signup'
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url, res)
   }
 
   // ── Auth routes: redirect logged-in users away ──────────────────────────────
   const authRoutes = ['/login', '/signup', '/auth']
   if (user && authRoutes.some(r => path.startsWith(r))) {
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url, res)
   }
 
   // ── Protected routes: redirect guests to login ───────────────────────────────
@@ -54,21 +66,32 @@ export async function middleware(req: NextRequest) {
   if (!user && isProtected) {
     url.pathname = '/login'
     url.searchParams.set('redirectTo', path)
-    return NextResponse.redirect(url)
+    return redirectWithSessionCookies(url, res)
   }
 
   // ── Onboarding gate: if user has no business, send to onboarding ─────────────
   // (only enforced when going to /dashboard, not /onboarding itself)
   // my_businesses covers both owned businesses and team memberships.
   if (user && path.startsWith('/dashboard')) {
-    const { data: businesses } = await supabase
+    const { data: businesses, error: businessesError } = await supabase
       .from('my_businesses')
       .select('id')
       .limit(1)
 
+    // A query/RLS error is not proof the user has no business -- on the
+    // real happy path they do. Treating it as "no business" would throw a
+    // legitimate user into an onboarding redirect loop. This gate is a UX
+    // nudge, not a security boundary (protected routes above already
+    // reject unauthenticated requests), so fail open: let the request
+    // through rather than guess wrong.
+    if (businessesError) {
+      console.error('middleware: my_businesses lookup failed, skipping onboarding gate', businessesError.message)
+      return res
+    }
+
     if (!businesses || businesses.length === 0) {
       url.pathname = '/onboarding'
-      return NextResponse.redirect(url)
+      return redirectWithSessionCookies(url, res)
     }
   }
 
@@ -78,7 +101,3 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|ico|css|js)$).*)'],
 }
-
-
-
-
