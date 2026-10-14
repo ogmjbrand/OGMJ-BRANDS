@@ -5,6 +5,15 @@ import { Check, AlertCircle } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { getCurrentUser } from '@/lib/auth';
 
+// Paystack is the primary provider (listed first, styled as the default
+// action); Flutterwave remains available as a secondary option — kept
+// configured and working, not removed. Flip to false to hide it instantly
+// without touching the underlying integration if it's ever needed. Also
+// gated on the public key actually being set, so a deployment that never
+// configured Flutterwave doesn't show a button that only fails at click-time.
+const FLUTTERWAVE_ENABLED = true;
+const FLUTTERWAVE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY);
+
 interface Plan {
   id: string;
   name: string;
@@ -335,13 +344,15 @@ export default function BillingPage() {
                       >
                         {loading ? 'Processing...' : 'Pay with Paystack'}
                       </button>
-                      <button
-                        onClick={() => handleFlutterwaveCheckout(plan.id)}
-                        disabled={loading}
-                        className="w-full py-3 rounded-lg font-semibold bg-transparent border border-[#C8FF00]/40 text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-50 transition"
-                      >
-                        {loading ? 'Processing...' : 'Pay with Flutterwave'}
-                      </button>
+                      {FLUTTERWAVE_ENABLED && FLUTTERWAVE_CONFIGURED ? (
+                        <button
+                          onClick={() => handleFlutterwaveCheckout(plan.id)}
+                          disabled={loading}
+                          className="w-full py-3 rounded-lg font-semibold bg-transparent border border-[#C8FF00]/40 text-[#C8FF00] hover:bg-[#C8FF00]/10 disabled:opacity-50 transition"
+                        >
+                          {loading ? 'Processing...' : 'Pay with Flutterwave'}
+                        </button>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -363,7 +374,7 @@ export default function BillingPage() {
             },
             {
               q: 'What payment methods do you accept?',
-              a: 'We accept all major credit cards via Paystack and Flutterwave, ensuring secure payments globally.',
+              a: 'We accept all major credit and debit cards via Paystack, with Flutterwave available as an alternative — both processed securely.',
             },
             {
               q: 'Do you offer refunds?',

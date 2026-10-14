@@ -122,4 +122,40 @@ describe('Paystack webhook route — hotfix behavior', () => {
     expect(res.status).toBe(200);
     expect(rpcMock).not.toHaveBeenCalled();
   });
+
+  it('records a charge.failed event and returns 200 when the RPC succeeds', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    const { POST } = await import('@/app/api/webhooks/paystack/route');
+    const body = JSON.stringify({ event: 'charge.failed', data: { reference: 'rf1', amount: 1000, currency: 'NGN', metadata: {} } });
+    const res = await POST(makeRequest(body, sign(body)));
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalledWith('record_paystack_webhook_transaction_event', expect.objectContaining({ p_reference: 'rf1', p_status: 'failed' }));
+  });
+
+  it('REGRESSION FIX (dual-provider rework): charge.failed RPC failure returns a non-2xx, not a silent 200', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'permission denied', code: '42501' } });
+    const { POST } = await import('@/app/api/webhooks/paystack/route');
+    const body = JSON.stringify({ event: 'charge.failed', data: { reference: 'rf2', amount: 1000, currency: 'NGN', metadata: {} } });
+    const res = await POST(makeRequest(body, sign(body)));
+    expect(res.status).not.toBe(200);
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
+
+  it('records a refund.processed event and returns 200 when the RPC succeeds', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    const { POST } = await import('@/app/api/webhooks/paystack/route');
+    const body = JSON.stringify({ event: 'refund.processed', data: { transaction_reference: 'rr1', amount: 1000, currency: 'NGN', metadata: {} } });
+    const res = await POST(makeRequest(body, sign(body)));
+    expect(res.status).toBe(200);
+    expect(rpcMock).toHaveBeenCalledWith('record_paystack_webhook_transaction_event', expect.objectContaining({ p_reference: 'rr1', p_status: 'refunded' }));
+  });
+
+  it('REGRESSION FIX (dual-provider rework): refund.processed RPC failure returns a non-2xx, not a silent 200', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'permission denied', code: '42501' } });
+    const { POST } = await import('@/app/api/webhooks/paystack/route');
+    const body = JSON.stringify({ event: 'refund.processed', data: { transaction_reference: 'rr2', amount: 1000, currency: 'NGN', metadata: {} } });
+    const res = await POST(makeRequest(body, sign(body)));
+    expect(res.status).not.toBe(200);
+    expect(res.status).toBeGreaterThanOrEqual(500);
+  });
 });

@@ -16,6 +16,13 @@ import { createServiceRoleClient, isServiceRoleConfigured } from '@/lib/supabase
  * below is still the real authorization boundary, this client is only
  * what lets a request that's already proven legitimate reach the
  * now-restricted RPC.
+ *
+ * charge.failed/refund.processed recording (added for dual-provider
+ * parity with Flutterwave) follows the exact same fail-closed
+ * convention as charge.success below: a failed RPC write returns a
+ * non-2xx so Paystack retries instead of the event being silently
+ * lost, and only the reference + error code are logged, never the
+ * full error object or metadata.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     const event = JSON.parse(body);
+    // This webhook carries no Supabase user session (it's Paystack
+    // calling back directly) — the HMAC signature check above is the
+    // real security boundary; this client is what lets the verified
+    // webhook reach the now-restricted RPCs. Idempotent on
+    // provider_reference, since Paystack can redeliver any event.
     const supabase = createServiceRoleClient();
 
     if (event.event === 'charge.success') {
@@ -102,6 +114,48 @@ export async function POST(request: NextRequest) {
         } catch (emailError) {
           console.error('Error sending payment confirmation email:', emailError instanceof Error ? emailError.message : 'unknown error');
         }
+      }
+    } else if (event.event === 'charge.failed') {
+      // Recorded for visibility only — a failed charge never created a
+      // subscription in the first place, so there's nothing to revoke.
+      const { reference, amount, currency, metadata } = event.data;
+      const { error: rpcError } = await (supabase as any).rpc('record_paystack_webhook_transaction_event', {
+        p_business_id: metadata?.businessId ?? null,
+        p_reference: reference,
+        p_amount: amount ? amount / 100 : null,
+        p_currency: currency,
+        p_status: 'failed',
+      });
+      if (rpcError) {
+        console.error('Paystack webhook: failed to record failed-charge event', { reference, code: rpcError.code });
+        return NextResponse.json({ error: 'Failed to record transaction event' }, { status: 500 });
+      }
+    } else if (event.event === 'refund.processed') {
+      // Recorded for visibility only — deliberately does not touch
+      // subscription status or access. What should happen to a
+      // business's access on refund is a product decision this
+      // integration does not make on its own.
+      //
+      // Paystack's refund payload field names are defensively checked
+      // (not verified against live docs from this environment) — the
+      // first real refund webhook should be checked against what
+      // actually arrives.
+      const data = event.data ?? {};
+      const reference = data.transaction_reference ?? data.reference ?? data?.transaction?.reference ?? null;
+      const amount = data.amount ?? data?.transaction?.amount ?? null;
+      const currency = data.currency ?? data?.transaction?.currency ?? null;
+      const metadata = data.metadata ?? data?.transaction?.metadata ?? {};
+
+      const { error: rpcError } = await (supabase as any).rpc('record_paystack_webhook_transaction_event', {
+        p_business_id: metadata?.businessId ?? null,
+        p_reference: reference,
+        p_amount: amount ? amount / 100 : null,
+        p_currency: currency,
+        p_status: 'refunded',
+      });
+      if (rpcError) {
+        console.error('Paystack webhook: failed to record refund event', { reference, code: rpcError.code });
+        return NextResponse.json({ error: 'Failed to record transaction event' }, { status: 500 });
       }
     }
 
