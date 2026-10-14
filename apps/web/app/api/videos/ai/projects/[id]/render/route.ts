@@ -35,6 +35,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 
+  // The UI only disables "Generate video" client-side while status is
+  // 'rendering' -- nothing server-side stopped a second call (a second
+  // tab, a fast double-click before React re-renders, or a direct API
+  // call) from resubmitting every scene while the first submission is
+  // still in flight. That second call would generate a brand-new
+  // render_webhook_token and unconditionally overwrite the one the
+  // first submission's scenes are already using, so when fal.ai later
+  // delivers the first submission's real webhook with the now-stale
+  // token, complete_video_scene_render rejects it as invalid -- silently
+  // losing that render forever, on top of paying fal.ai twice for the
+  // same scenes.
+  if ((project as any).status === 'rendering') {
+    return NextResponse.json(
+      { error: 'This project is already rendering. Wait for it to finish before submitting again.' },
+      { status: 409 }
+    );
+  }
+
   // Never pretend a video was generated when no provider is configured —
   // report the honest state instead of a fake success.
   if (!isVideoRenderConfigured()) {
@@ -50,6 +68,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const scenes = ((project as any).script?.scenes || []) as { visualPrompt: string; durationSeconds: number }[];
   if (scenes.length === 0) {
     return NextResponse.json({ error: 'This project has no scenes to render' }, { status: 400 });
+  }
+
+  // Claim 'rendering' atomically BEFORE paying for any fal.ai submission,
+  // not just before the final write. Two render calls can both pass the
+  // status check above before either writes; without this, the loser
+  // would still have already submitted (and paid for) every scene to
+  // fal.ai only to have its DB write rejected. Requiring updated_at to
+  // still match means only one request can win the claim -- the other
+  // gets a clean 409 and never calls fal.ai at all.
+  const { error: claimError } = await (supabase as any)
+    .from('ai_video_projects')
+    .update({ status: 'rendering', updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('updated_at', (project as any).updated_at)
+    .select()
+    .single();
+
+  if (claimError) {
+    if (claimError.code === 'PGRST116') {
+      return NextResponse.json(
+        { error: 'This project changed right before rendering could start. Reload and try again.' },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: claimError.message }, { status: 400 });
   }
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, '');
@@ -79,6 +122,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const anySubmitted = results.some((r) => r.status === 'fulfilled');
   const allFailed = results.every((r) => r.status === 'rejected');
 
+  // This project now exclusively owns the 'rendering' claim from above,
+  // so no further CAS is needed on this write -- nothing else can have
+  // changed updated_at in between (the webhook can't fire before fal.ai
+  // has even returned a request id, and the UI can't submit again while
+  // status is 'rendering').
   const { data: updated, error: updateError } = await (supabase as any)
     .from('ai_video_projects')
     .update({
