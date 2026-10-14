@@ -79,6 +79,25 @@ export async function sendWhatsAppCampaign(id: string): Promise<APIResponse<{ se
   }
 }
 
+export async function sendWhatsAppTestMessage(input: {
+  businessId: string;
+  to: string;
+  message: string;
+  confirmConsent: boolean;
+}): Promise<APIResponse<{ sid: string | null; status: string | null; note: string }>> {
+  try {
+    const response = await fetch("/api/marketing/whatsapp/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    return parseResponse(response, "SEND_WHATSAPP_MESSAGE_ERROR");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to send message";
+    return { success: false, error: { code: "SEND_WHATSAPP_MESSAGE_ERROR", message }, timestamp: new Date().toISOString() };
+  }
+}
+
 export async function generateWhatsAppContent(businessId: string, topic: string): Promise<APIResponse<{ message: string }>> {
   try {
     const response = await fetch("/api/marketing/whatsapp/generate", {
