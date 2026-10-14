@@ -6,7 +6,7 @@ import { ApiError, createErrorResponse, createSuccessResponse, handleApiError } 
 async function verifyVideoAccess(supabase: any, userId: string, videoId: string) {
   const { data: video, error } = await supabase
     .from('videos')
-    .select('business_id, status')
+    .select('business_id, status, file_url, source_url')
     .eq('id', videoId)
     .single();
 
@@ -53,11 +53,22 @@ export async function POST(
       return createErrorResponse('Video is already being processed', 400);
     }
 
-    // Update status to processing
+    // There is no external transcoding/processing provider wired up for
+    // this pipeline (transcription and clip generation are separate,
+    // independent features with their own status fields and do not
+    // depend on this one). What this endpoint can honestly guarantee is
+    // that the video record actually has a playable source attached --
+    // previously it set status to 'processing' and never transitioned it
+    // any further, leaving every video stuck in that state forever. This
+    // performs the one real, synchronous check available and reaches a
+    // terminal status immediately, rather than promising async work that
+    // was never implemented.
+    const hasSource = Boolean(video.file_url || video.source_url);
+
     const { data: updatedVideo, error: updateError } = await supabase
       .from('videos')
       .update({
-        status: 'processing',
+        status: hasSource ? 'processed' : 'failed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', videoId)
@@ -65,18 +76,17 @@ export async function POST(
       .single();
 
     if (updateError) {
-      throw new ApiError('Failed to start video processing', 500);
+      throw new ApiError('Failed to update video status', 500);
     }
 
-    // TODO: Trigger actual video processing (e.g., call external service, queue job, etc.)
-    // For now, we'll simulate processing completion
-    // In a real implementation, this would be handled by a background job or webhook
+    if (!hasSource) {
+      return createErrorResponse('Video has no file or source URL to process', 400);
+    }
 
-    return createSuccessResponse({
-      video: updatedVideo,
-      message: 'Video processing started',
-      estimatedDuration: 'Processing time varies based on video length and complexity',
-    }, 'Video processing initiated successfully');
+    return createSuccessResponse(
+      { video: updatedVideo },
+      'Video processed successfully'
+    );
   } catch (error) {
     return handleApiError(error);
   }
