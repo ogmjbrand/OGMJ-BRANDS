@@ -130,7 +130,7 @@ export async function generateVideoScript(input: {
 
 export async function updateAIVideoProject(
   projectId: string,
-  input: { title?: string; script?: AIVideoScript }
+  input: { title?: string; script?: AIVideoScript; expectedUpdatedAt?: string }
 ): Promise<APIResponse<AIVideoProject>> {
   try {
     const response = await fetch(`/api/videos/ai/projects/${projectId}`, {
@@ -140,7 +140,8 @@ export async function updateAIVideoProject(
     });
     const body = await response.json();
     if (!response.ok) {
-      return { success: false, error: normalizeError(body, 'Failed to update project'), timestamp: new Date().toISOString() };
+      const code = response.status === 409 ? 'CONFLICT' : 'AI_VIDEO_ERROR';
+      return { success: false, error: { ...normalizeError(body, 'Failed to update project'), code }, timestamp: new Date().toISOString() };
     }
     return { success: true, data: body.data, timestamp: new Date().toISOString() };
   } catch (error) {

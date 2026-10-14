@@ -54,20 +54,33 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (accessError) return accessError;
 
   const body = await request.json();
-  const { title, script } = body;
+  const { title, script, expectedUpdatedAt } = body;
 
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (title !== undefined) updateData.title = title;
   if (script !== undefined) updateData.script = script;
 
-  const { data, error } = await (supabase as any)
-    .from('ai_video_projects')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
+  // Saving a script is a whole-column overwrite of whatever the client has
+  // locally -- if voiceover or render generation wrote new scene data
+  // (voiceoverUrl, videoUrl, renderStatus) after this client last fetched,
+  // an unconditional overwrite here would silently discard it with no
+  // error raised. When the client sends the updated_at it last saw,
+  // require that it still matches before writing, instead of guessing.
+  let query = (supabase as any).from('ai_video_projects').update(updateData).eq('id', id);
+  if (expectedUpdatedAt !== undefined) {
+    query = query.eq('updated_at', expectedUpdatedAt);
+  }
+  const { data, error } = await query.select().single();
 
   if (error) {
+    if (expectedUpdatedAt !== undefined && error.code === 'PGRST116') {
+      return NextResponse.json(
+        {
+          error: 'This project changed elsewhere (a voiceover or render likely finished) before your edit could save. Reload the project and reapply your changes.',
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
