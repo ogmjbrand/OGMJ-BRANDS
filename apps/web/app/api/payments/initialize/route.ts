@@ -5,7 +5,6 @@ import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 interface PaystackInitializePayload {
   businessId: string;
   planId: string;
-  metadata?: Record<string, any>;
 }
 
 export async function POST(request: NextRequest) {
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: PaystackInitializePayload = await request.json();
-    const { businessId, planId, metadata = {} } = body;
+    const { businessId, planId } = body;
 
     if (!businessId || !planId) {
       return NextResponse.json(
@@ -77,8 +76,19 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: amountKobo,
         email: user.email,
+        // SECURITY: metadata sent to Paystack must be built entirely
+        // server-side, with no client-supplied keys of any kind. The
+        // webhook route trusts a `subscriptionId` key in this metadata
+        // (when present) to decide which subscription row to activate
+        // -- a prior version of this route spread an attacker-supplied
+        // `metadata` object in here, which let a client inject that key
+        // and point the webhook at an arbitrary business's subscription.
+        // No legitimate caller has ever sent custom metadata (the only
+        // caller, the billing page, sends just businessId/planId), so
+        // this is a pure allowlist of the three fields the rest of the
+        // payment flow actually relies on -- never widen this back to
+        // an object spread of request input.
         metadata: {
-          ...metadata,
           businessId,
           planId,
           userId: user.id,
