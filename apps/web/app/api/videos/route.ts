@@ -127,11 +127,12 @@ export async function POST(request: NextRequest) {
         thumbnail_url: thumbnailUrl,
         duration_seconds: durationSeconds,
         file_size_bytes: fileSizeBytes,
-        // Nothing has been processed yet at creation time -- 'processing'
-        // was previously set here unconditionally, which showed a
-        // "Processing..." badge the instant a video was uploaded, before
-        // the user had even clicked "Process". Matches the DB column's
-        // own default.
+        // The upload itself is already done by the time this row is
+        // created (the file is sitting in storage, or sourceUrl points at
+        // an existing asset) — it has nothing queued against it yet, so
+        // it starts "uploaded", not "processing". Nothing in this codebase
+        // ever moved a "processing" row forward, so marking it that from
+        // creation left every video stuck on that status forever.
         status: 'uploaded',
         uploaded_by: user.id,
       })
@@ -147,4 +148,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
-
