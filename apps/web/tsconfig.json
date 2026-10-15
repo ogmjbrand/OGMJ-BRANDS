@@ -38,8 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "open-design"
+    "open-design",
+    "**/*.test.ts"
   ]
 }
-
-
