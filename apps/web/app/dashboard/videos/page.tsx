@@ -46,6 +46,7 @@ export default function VideosPage() {
   const [creatingVideo, setCreatingVideo] = useState(false);
   const [videoFormError, setVideoFormError] = useState<string | null>(null);
   const [operationVideoId, setOperationVideoId] = useState<string | null>(null);
+  const [processErrors, setProcessErrors] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -216,9 +217,20 @@ export default function VideosPage() {
 
   async function handleProcessVideo(videoId: string) {
     setOperationVideoId(videoId);
+    setProcessErrors((prev) => {
+      const next = { ...prev };
+      delete next[videoId];
+      return next;
+    });
     const result = await startVideoProcessing(videoId);
     if (result.success) {
-      loadVideos();
+      await loadVideos();
+    } else {
+      setProcessErrors((prev) => ({ ...prev, [videoId]: result.error?.message || 'Processing failed.' }));
+      // The failure already landed in the DB (status + reason) — refresh
+      // so the badge and retry button reflect it instead of the stale
+      // "processing" state this card last rendered.
+      await loadVideos();
     }
     setOperationVideoId(null);
   }
@@ -488,7 +500,10 @@ export default function VideosPage() {
                     </div>
                   )}
                   {video.status === 'failed' && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded-sm">
+                    <div
+                      className="absolute top-2 left-2 px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded-sm"
+                      title={(video.metadata?.processingError as string) || 'Processing failed'}
+                    >
                       Failed
                     </div>
                   )}
@@ -521,10 +536,16 @@ export default function VideosPage() {
                   <div className="flex flex-wrap gap-2 pt-2">
                     <button
                       onClick={() => handleProcessVideo(video.id)}
-                      disabled={video.status === 'processing' || operationVideoId === video.id}
+                      disabled={video.status === 'processing' || video.status === 'processed' || operationVideoId === video.id}
                       className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/20 text-[#C8FF00] rounded-sm text-sm font-medium hover:bg-[#C8FF00]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {operationVideoId === video.id ? 'Working…' : 'Process'}
+                      {operationVideoId === video.id
+                        ? 'Working…'
+                        : video.status === 'failed'
+                          ? 'Retry'
+                          : video.status === 'processed'
+                            ? 'Processed'
+                            : 'Process'}
                     </button>
                     <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded-sm text-sm font-medium hover:bg-[#C8FF00]/20 transition">
                       Clip
@@ -536,6 +557,10 @@ export default function VideosPage() {
                       Delete
                     </button>
                   </div>
+
+                  {processErrors[video.id] && (
+                    <p className="text-xs text-red-400">{processErrors[video.id]}</p>
+                  )}
                 </div>
               </div>
             ))
@@ -607,5 +632,3 @@ export default function VideosPage() {
     </div>
   );
 }
-
-
