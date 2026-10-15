@@ -131,10 +131,10 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-[#C8FF00]/20 rounded w-1/3 mb-8"></div>
+          <div className="h-8 bg-[#C8FF00]/20 rounded-sm w-1/3 mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-[#C8FF00]/20 rounded"></div>
+              <div key={i} className="h-32 bg-[#C8FF00]/20 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Build your empire from one premium operating surface.</h1>
             <p className="mt-3 text-base leading-7 text-[#F8F9FA]/70">Track revenue, orchestrate growth, move deals, launch campaigns and keep every team aligned in real time.</p>
           </div>
-          <div className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+          <div className="rounded-3xl border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
             <p className="font-semibold text-white">Business health score</p>
             <p className="mt-2">Excellent momentum with strong conversion signals and rising automation coverage.</p>
           </div>
@@ -349,10 +349,10 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
                   className="backdrop-blur-md bg-[#0E1116]/50 border border-[#C8FF00]/20 rounded-lg p-4 hover:border-[#C8FF00]/50 hover:bg-[#0E1116]/70 transition text-left group"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 bg-[#C8FF00]/20 group-hover:bg-[#C8FF00]/30 rounded transition">
+                    <div className="p-2 bg-[#C8FF00]/20 group-hover:bg-[#C8FF00]/30 rounded-sm transition">
                       <Icon className="w-5 h-5 text-[#C8FF00]" />
                     </div>
-                    <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">Active</span>
+                    <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded-sm">Active</span>
                   </div>
                   <h3 className="font-semibold text-white text-sm">{feature.name}</h3>
                   <p className="text-xs text-[#C8FF00]/70 mt-1">{feature.description}</p>
@@ -375,10 +375,10 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
                   className="backdrop-blur-md bg-[#0E1116]/30 border border-[#C8FF00]/10 rounded-lg p-4 opacity-60"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 bg-[#C8FF00]/10 rounded">
+                    <div className="p-2 bg-[#C8FF00]/10 rounded-sm">
                       <Icon className="w-5 h-5 text-[#C8FF00]/50" />
                     </div>
-                    <span className="text-xs px-2 py-1 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded">
+                    <span className="text-xs px-2 py-1 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded-sm">
                       {feature.badge}
                     </span>
                   </div>
@@ -386,7 +386,7 @@ function FeatureGatingSection({ businessId }: { businessId: string }) {
                   <p className="text-xs text-[#C8FF00]/50 mt-1">{feature.description}</p>
                   <a
                     href="/dashboard/settings/billing"
-                    className="mt-3 inline-block text-xs px-2 py-1 bg-[#C8FF00]/20 text-[#C8FF00]/70 rounded hover:bg-[#C8FF00]/30"
+                    className="mt-3 inline-block text-xs px-2 py-1 bg-[#C8FF00]/20 text-[#C8FF00]/70 rounded-sm hover:bg-[#C8FF00]/30"
                   >
                     Upgrade Plan
                   </a>

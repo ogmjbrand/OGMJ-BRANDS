@@ -28,7 +28,7 @@ export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
   ) => {
     const baseStyles = `
       relative rounded-2xl backdrop-blur-md border border-white/10 
-      bg-white/[0.02] overflow-hidden transition-all duration-300
+      bg-white/2 overflow-hidden transition-all duration-300
     `;
 
     const variants = {
@@ -107,7 +107,7 @@ export const BorderAnimatedCard = React.forwardRef<HTMLDivElement, GlassCardProp
       >
         {/* Animated gradient border */}
         <motion.div
-          className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#C8FF00]/30 via-transparent to-[#C8FF00]/30"
+          className="absolute inset-0 rounded-2xl bg-linear-to-r from-[#C8FF00]/30 via-transparent to-[#C8FF00]/30"
           animate={{
             backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
           }}
@@ -118,7 +118,7 @@ export const BorderAnimatedCard = React.forwardRef<HTMLDivElement, GlassCardProp
         />
 
         {/* Content */}
-        <div className="relative bg-[#0E1116] rounded-2xl backdrop-blur-sm p-6">
+        <div className="relative bg-[#0E1116] rounded-2xl backdrop-blur-xs p-6">
           {children}
         </div>
       </motion.div>

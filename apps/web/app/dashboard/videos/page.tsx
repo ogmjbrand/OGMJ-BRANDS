@@ -360,7 +360,7 @@ export default function VideosPage() {
                     type="text"
                     value={newVideoTitle}
                     onChange={(e) => setNewVideoTitle(e.target.value)}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                     placeholder="Enter video title"
                     required
                   />
@@ -371,7 +371,7 @@ export default function VideosPage() {
                     value={newVideoDescription}
                     onChange={(e) => setNewVideoDescription(e.target.value)}
                     rows={4}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                     placeholder="Video description"
                   />
                 </label>
@@ -383,7 +383,7 @@ export default function VideosPage() {
                       required
                       value={newVideoSourceUrl}
                       onChange={(e) => setNewVideoSourceUrl(e.target.value)}
-                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                       placeholder="https://"
                     />
                   </label>
@@ -394,7 +394,7 @@ export default function VideosPage() {
                       min={0}
                       value={newVideoDuration}
                       onChange={(e) => setNewVideoDuration(e.target.value)}
-                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                       placeholder="120"
                     />
                   </label>
@@ -406,7 +406,7 @@ export default function VideosPage() {
                     min={0}
                     value={newVideoFileSize}
                     onChange={(e) => setNewVideoFileSize(e.target.value)}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                     placeholder="42000000"
                   />
                 </label>
@@ -477,18 +477,18 @@ export default function VideosPage() {
                   </div>
 
                   {/* Duration */}
-                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs font-semibold rounded">
+                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs font-semibold rounded-sm">
                     {formatDuration(video.durationSeconds)}
                   </div>
 
                   {/* Status Badge */}
                   {video.status === 'processing' && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500/20 text-amber-300 text-xs font-medium rounded">
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500/20 text-amber-300 text-xs font-medium rounded-sm">
                       Processing...
                     </div>
                   )}
                   {video.status === 'failed' && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded">
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded-sm">
                       Failed
                     </div>
                   )}
@@ -522,16 +522,16 @@ export default function VideosPage() {
                     <button
                       onClick={() => handleProcessVideo(video.id)}
                       disabled={video.status === 'processing' || operationVideoId === video.id}
-                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/20 text-[#C8FF00] rounded-sm text-sm font-medium hover:bg-[#C8FF00]/30 transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {operationVideoId === video.id ? 'Working…' : 'Process'}
                     </button>
-                    <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded text-sm font-medium hover:bg-[#C8FF00]/20 transition">
+                    <button className="flex-1 min-w-[120px] px-3 py-1.5 bg-[#C8FF00]/10 text-[#C8FF00]/50 rounded-sm text-sm font-medium hover:bg-[#C8FF00]/20 transition">
                       Clip
                     </button>
                     <button
                       onClick={() => handleDeleteVideo(video.id)}
-                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-red-500/10 text-red-400 rounded text-sm font-medium hover:bg-red-500/20 transition"
+                      className="flex-1 min-w-[120px] px-3 py-1.5 bg-red-500/10 text-red-400 rounded-sm text-sm font-medium hover:bg-red-500/20 transition"
                     >
                       Delete
                     </button>

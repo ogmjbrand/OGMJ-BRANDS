@@ -161,7 +161,7 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -185,15 +185,15 @@ export default function SupportPage() {
                   {formError && <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{formError}</div>}
                   <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Subject
-                    <input type="text" value={newTicketSubject} onChange={(e) => setNewTicketSubject(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" placeholder="Enter the ticket title" required />
+                    <input type="text" value={newTicketSubject} onChange={(e) => setNewTicketSubject(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]" placeholder="Enter the ticket title" required />
                   </label>
                   <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Description
-                    <textarea value={newTicketDescription} onChange={(e) => setNewTicketDescription(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]" rows={5} placeholder="Describe the issue, request, or question." />
+                    <textarea value={newTicketDescription} onChange={(e) => setNewTicketDescription(e.target.value)} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]" rows={5} placeholder="Describe the issue, request, or question." />
                   </label>
                   <label className="space-y-2 text-sm text-[#C8FF00]/70">
                     Priority
-                    <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]">
+                    <select value={newTicketPriority} onChange={(e) => setNewTicketPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')} className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -221,9 +221,9 @@ export default function SupportPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#C8FF00]/50" />
-            <input type="text" placeholder="Search by ticket number, title, or contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-full border border-[#C8FF00]/10 bg-[#07070A] py-2 pl-10 pr-4 text-white outline-none focus:border-[#C8FF00]" />
+            <input type="text" placeholder="Search by ticket number, title, or contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-full border border-[#C8FF00]/10 bg-[#07070A] py-2 pl-10 pr-4 text-white outline-hidden focus:border-[#C8FF00]" />
           </div>
-          <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]">
+          <select id="status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-hidden focus:border-[#C8FF00]">
             <option value="">All status</option>
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>
@@ -231,7 +231,7 @@ export default function SupportPage() {
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
           </select>
-          <select id="priority-filter" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]">
+          <select id="priority-filter" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-hidden focus:border-[#C8FF00]">
             <option value="">All priority</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>

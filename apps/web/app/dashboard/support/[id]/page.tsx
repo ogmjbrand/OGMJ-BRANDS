@@ -177,7 +177,7 @@ export default function SupportTicketDetailPage() {
               value={ticket.status}
               disabled={updatingStatus}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className={`rounded-full border-none px-3 py-1.5 text-xs font-medium capitalize outline-none disabled:opacity-60 ${getStatusColor(ticket.status)}`}
+              className={`rounded-full border-none px-3 py-1.5 text-xs font-medium capitalize outline-hidden disabled:opacity-60 ${getStatusColor(ticket.status)}`}
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s} className="bg-[#0E1116] text-white">{s.replace('_', ' ')}</option>
@@ -187,7 +187,7 @@ export default function SupportTicketDetailPage() {
               value={ticket.priority}
               disabled={updatingStatus}
               onChange={(e) => handlePriorityChange(e.target.value)}
-              className={`rounded-full border-none px-3 py-1.5 text-xs font-medium capitalize outline-none disabled:opacity-60 ${getPriorityColor(ticket.priority)}`}
+              className={`rounded-full border-none px-3 py-1.5 text-xs font-medium capitalize outline-hidden disabled:opacity-60 ${getPriorityColor(ticket.priority)}`}
             >
               {PRIORITY_OPTIONS.map((p) => (
                 <option key={p} value={p} className="bg-[#0E1116] text-white">{p}</option>
@@ -228,7 +228,7 @@ export default function SupportTicketDetailPage() {
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
             placeholder="Write a reply..."
-            className="flex-1 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none placeholder:text-[#F8F9FA]/40 focus:border-[#C8FF00]"
+            className="flex-1 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-hidden placeholder:text-[#F8F9FA]/40 focus:border-[#C8FF00]"
           />
           <button
             onClick={handleSendReply}

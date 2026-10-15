@@ -82,7 +82,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+          <form onSubmit={handleSubmit} className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
             <h2 className="text-xl font-semibold text-white">Send us a message</h2>
 
             {status === 'success' && (
@@ -110,7 +110,7 @@ export default function ContactPage() {
                     required={field.required}
                     value={form[field.id as keyof typeof form]}
                     onChange={(e) => setForm({ ...form, [field.id]: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#0B1119] px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-gold/50"
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#0B1119] px-4 py-3 text-white placeholder-slate-500 outline-hidden focus:border-gold/50"
                   />
                 </div>
               ))}
@@ -124,7 +124,7 @@ export default function ContactPage() {
                   rows={5}
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#0B1119] px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-gold/50"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#0B1119] px-4 py-3 text-white placeholder-slate-500 outline-hidden focus:border-gold/50"
                   placeholder="Tell us about your business and what you're looking for..."
                 />
               </div>

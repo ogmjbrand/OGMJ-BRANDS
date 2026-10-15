@@ -108,7 +108,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
               <select
                 value={clientId}
                 onChange={(event) => setClientId(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               >
                 <option value="">No client</option>
                 {clients.map((client) => (
@@ -124,7 +124,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
                 type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               />
             </label>
           </div>
@@ -135,7 +135,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               />
             </label>
             <label className="space-y-2 text-sm text-[#C8FF00]/70">
@@ -143,7 +143,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
               <select
                 value={status}
                 onChange={(event) => setStatus(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               >
                 <option value="draft">Draft</option>
                 <option value="sent">Sent</option>
@@ -161,7 +161,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
               min={0}
               value={totalAmount}
               onChange={(event) => setTotalAmount(Number(event.target.value))}
-              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
             />
           </label>
 
@@ -171,7 +171,7 @@ export default function InvoiceEditPage({ params }: { params: { id: string } }) 
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={5}
-              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
             />
           </label>
 

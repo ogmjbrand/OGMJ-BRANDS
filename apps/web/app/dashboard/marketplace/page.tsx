@@ -19,7 +19,7 @@ function formatMoney(amount: number, currency: string) {
 function ListingCard({ listing, onOrder }: { listing: MarketplaceListing; onOrder: (listing: MarketplaceListing) => void }) {
   const price = listing.sale_price ?? listing.price;
   return (
-    <div className="flex flex-col rounded-[1.5rem] border border-white/10 bg-[#0E1116]/90 p-5">
+    <div className="flex flex-col rounded-3xl border border-white/10 bg-[#0E1116]/90 p-5">
       {listing.is_featured ? (
         <span className="mb-3 inline-flex w-fit items-center rounded-full border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#C8FF00]">
           Featured
@@ -111,7 +111,7 @@ function OrderModal({
             onChange={(e) => setRequirements(e.target.value)}
             rows={4}
             placeholder="Tell OGMJ anything relevant before we start…"
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
           {error ? <p className="text-xs text-red-400">{error}</p> : null}
           <button

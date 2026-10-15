@@ -257,7 +257,7 @@ function HubSpotCard({
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               <option value="manual">Manual only</option>
               <option value="hourly">Every hour</option>
@@ -271,7 +271,7 @@ function HubSpotCard({
             <select
               value={conflictResolution}
               onChange={(e) => setConflictResolution(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               <option value="newest_wins">Newest record wins</option>
               <option value="hubspot_wins">HubSpot always wins</option>
@@ -297,14 +297,14 @@ function HubSpotCard({
               <p className="text-xs font-semibold text-[#C8FF00]/80">Contacts</p>
               {Object.keys(contactMapping).map((field) => (
                 <div key={field} className="flex items-center gap-2">
-                  <span className="w-28 flex-shrink-0 truncate text-xs text-[#F8F9FA]/60">
+                  <span className="w-28 shrink-0 truncate text-xs text-[#F8F9FA]/60">
                     {OGMJ_FIELD_LABELS[field] || field}
                   </span>
                   <input
                     type="text"
                     value={contactMapping[field]}
                     onChange={(e) => setContactMapping((m) => ({ ...m, [field]: e.target.value }))}
-                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                   />
                 </div>
               ))}
@@ -313,14 +313,14 @@ function HubSpotCard({
               <p className="text-xs font-semibold text-[#C8FF00]/80">Deals</p>
               {Object.keys(dealMapping).map((field) => (
                 <div key={field} className="flex items-center gap-2">
-                  <span className="w-28 flex-shrink-0 truncate text-xs text-[#F8F9FA]/60">
+                  <span className="w-28 shrink-0 truncate text-xs text-[#F8F9FA]/60">
                     {OGMJ_FIELD_LABELS[field] || field}
                   </span>
                   <input
                     type="text"
                     value={dealMapping[field]}
                     onChange={(e) => setDealMapping((m) => ({ ...m, [field]: e.target.value }))}
-                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                    className="w-full rounded-lg border border-white/10 bg-[#11151E] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                   />
                 </div>
               ))}
@@ -388,7 +388,7 @@ function HubSpotCard({
             <button
               type="button"
               onClick={handleCopyWebhookUrl}
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 text-[#F8F9FA]/60 transition hover:border-[#C8FF00]/40 hover:text-[#C8FF00]"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 text-[#F8F9FA]/60 transition hover:border-[#C8FF00]/40 hover:text-[#C8FF00]"
             >
               {webhookCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </button>

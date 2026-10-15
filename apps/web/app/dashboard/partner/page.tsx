@@ -188,7 +188,7 @@ export default function PartnerPage() {
                 placeholder="Amount"
                 value={payoutForm.amount}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, amount: e.target.value }))}
-                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
               />
               <input
                 type="text"
@@ -196,7 +196,7 @@ export default function PartnerPage() {
                 placeholder="Bank name"
                 value={payoutForm.bankName}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, bankName: e.target.value }))}
-                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
               />
               <input
                 type="text"
@@ -204,7 +204,7 @@ export default function PartnerPage() {
                 placeholder="Account number"
                 value={payoutForm.accountNumber}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, accountNumber: e.target.value }))}
-                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
               />
               <input
                 type="text"
@@ -212,7 +212,7 @@ export default function PartnerPage() {
                 placeholder="Account name"
                 value={payoutForm.accountName}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, accountName: e.target.value }))}
-                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
               />
               <button
                 type="submit"

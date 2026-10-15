@@ -124,7 +124,7 @@ export default function ReviewsPage() {
             <select
               value={form.platform}
               onChange={(e) => setForm((f) => ({ ...f, platform: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {REVIEW_PLATFORMS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -137,12 +137,12 @@ export default function ReviewsPage() {
               placeholder="Reviewer name (optional)"
               value={form.reviewerName}
               onChange={(e) => setForm((f) => ({ ...f, reviewerName: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <select
               value={form.rating}
               onChange={(e) => setForm((f) => ({ ...f, rating: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {[5, 4, 3, 2, 1].map((r) => (
                 <option key={r} value={r}>
@@ -157,7 +157,7 @@ export default function ReviewsPage() {
             placeholder="Review text"
             value={form.reviewText}
             onChange={(e) => setForm((f) => ({ ...f, reviewText: e.target.value }))}
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
           <button
             type="submit"
@@ -205,7 +205,7 @@ export default function ReviewsPage() {
                           rows={3}
                           value={drafts[r.id]}
                           onChange={(e) => setDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
-                          className="w-full rounded-lg border border-white/10 bg-[#07070A] px-3 py-2 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                          className="w-full rounded-lg border border-white/10 bg-[#07070A] px-3 py-2 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                         />
                         <button
                           type="button"
@@ -219,7 +219,7 @@ export default function ReviewsPage() {
                     ) : null}
                   </div>
 
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {!r.response_text ? (
                       <button
                         type="button"

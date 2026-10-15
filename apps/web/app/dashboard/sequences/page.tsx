@@ -43,7 +43,7 @@ export default function SequencesPage() {
   if (!businessId) return <div className="p-6">Loading...</div>
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] p-6">
+    <div className="min-h-screen bg-linear-to-br from-[#07070A] via-[#0E1116] to-[#07070A] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -62,7 +62,7 @@ export default function SequencesPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50">
             <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-lg p-6 w-full max-w-md">
               <h2 className="text-2xl font-bold text-white mb-4">Create New Sequence</h2>
               <input
@@ -70,18 +70,18 @@ export default function SequencesPage() {
                 placeholder="Sequence name"
                 value={newSequenceName}
                 onChange={(e) => setNewSequenceName(e.target.value)}
-                className="w-full px-4 py-2 bg-[#0E1116] border border-[#C8FF00]/20 rounded text-white mb-4"
+                className="w-full px-4 py-2 bg-[#0E1116] border border-[#C8FF00]/20 rounded-sm text-white mb-4"
               />
               <div className="flex gap-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 border border-[#C8FF00]/20 rounded text-white hover:bg-[#C8FF00]/10"
+                  className="flex-1 px-4 py-2 border border-[#C8FF00]/20 rounded-sm text-white hover:bg-[#C8FF00]/10"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateSequence}
-                  className="flex-1 px-4 py-2 bg-[#C8FF00] text-black rounded font-semibold hover:bg-[#C8FF00]/90"
+                  className="flex-1 px-4 py-2 bg-[#C8FF00] text-black rounded-sm font-semibold hover:bg-[#C8FF00]/90"
                 >
                   Create
                 </button>
@@ -100,7 +100,7 @@ export default function SequencesPage() {
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#C8FF00]/20 rounded">
+                  <div className="p-2 bg-[#C8FF00]/20 rounded-sm">
                     <Mail className="w-5 h-5 text-[#C8FF00]" />
                   </div>
                   <div>
@@ -115,7 +115,7 @@ export default function SequencesPage() {
               </div>
 
               {/* Stats */}
-              <div className="flex items-center gap-4 mb-4 p-3 bg-[#C8FF00]/5 rounded">
+              <div className="flex items-center gap-4 mb-4 p-3 bg-[#C8FF00]/5 rounded-sm">
                 <div>
                   <p className="text-[#C8FF00]/50 text-xs">Enrolled</p>
                   <p className="text-xl font-bold text-white">{sequence.total_enrolled ?? 0}</p>
@@ -130,16 +130,16 @@ export default function SequencesPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => updateStatus(sequence.id, sequence.status === 'active' ? 'paused' : 'active')}
-                  className="flex-1 px-3 py-2 bg-[#C8FF00]/10 hover:bg-[#C8FF00]/20 border border-[#C8FF00]/30 rounded text-[#C8FF00] font-semibold text-sm transition"
+                  className="flex-1 px-3 py-2 bg-[#C8FF00]/10 hover:bg-[#C8FF00]/20 border border-[#C8FF00]/30 rounded-sm text-[#C8FF00] font-semibold text-sm transition"
                 >
                   {sequence.status === 'active' ? 'Pause' : 'Launch'}
                 </button>
-                <button className="flex-1 px-3 py-2 bg-[#C8FF00] hover:bg-[#C8FF00]/90 text-black rounded font-semibold text-sm transition">
+                <button className="flex-1 px-3 py-2 bg-[#C8FF00] hover:bg-[#C8FF00]/90 text-black rounded-sm font-semibold text-sm transition">
                   Edit
                 </button>
                 <button
                   onClick={() => deleteSequence(sequence.id)}
-                  className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded text-red-500 transition"
+                  className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-sm text-red-500 transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -154,7 +154,7 @@ export default function SequencesPage() {
             <p className="text-[#C8FF00]/50 mb-4">No sequences yet</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-2 bg-[#C8FF00] text-black rounded font-semibold hover:bg-[#C8FF00]/90"
+              className="px-6 py-2 bg-[#C8FF00] text-black rounded-sm font-semibold hover:bg-[#C8FF00]/90"
             >
               Create Your First Sequence
             </button>

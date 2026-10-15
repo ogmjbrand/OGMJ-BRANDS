@@ -65,7 +65,7 @@ export default function SocialPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <CalendarDays className="h-4 w-4" /> Social studio
@@ -99,7 +99,7 @@ export default function SocialPage() {
               rows={5}
               value={newMessage}
               onChange={(event) => setNewMessage(event.target.value)}
-              className="w-full rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-none transition focus:border-[#C8FF00]"
+              className="w-full rounded-[1.35rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-hidden transition focus:border-[#C8FF00]"
               placeholder="Write the message for your next social post..."
             />
             <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
@@ -108,7 +108,7 @@ export default function SocialPage() {
                 <select
                   value={newChannel}
                   onChange={(event) => setNewChannel(event.target.value)}
-                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden"
                 >
                   {CHANNELS.map((channel) => (
                     <option key={channel}>{channel}</option>
@@ -121,7 +121,7 @@ export default function SocialPage() {
                   type="date"
                   value={newDate}
                   onChange={(event) => setNewDate(event.target.value)}
-                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none"
+                  className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden"
                 />
               </label>
               <button

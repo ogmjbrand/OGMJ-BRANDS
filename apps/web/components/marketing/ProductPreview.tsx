@@ -55,7 +55,7 @@ export default function ProductPreview() {
         return (
           <div
             key={preview.title}
-            className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#0B1119]/95 shadow-2xl shadow-black/30"
+            className="overflow-hidden rounded-4xl border border-white/10 bg-[#0B1119]/95 shadow-2xl shadow-black/30"
           >
             <div className="border-b border-white/10 bg-[#06090F] px-6 py-4">
               <div className="flex items-center gap-3">

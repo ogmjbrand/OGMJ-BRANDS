@@ -116,19 +116,19 @@ export default function InfluencersPage() {
               placeholder="Name"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <input
               type="text"
               placeholder="@handle"
               value={form.handle}
               onChange={(e) => setForm((f) => ({ ...f, handle: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <select
               value={form.platform}
               onChange={(e) => setForm((f) => ({ ...f, platform: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {INFLUENCER_PLATFORMS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -142,7 +142,7 @@ export default function InfluencersPage() {
               placeholder="Followers"
               value={form.followersCount}
               onChange={(e) => setForm((f) => ({ ...f, followersCount: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
           <button
@@ -183,7 +183,7 @@ export default function InfluencersPage() {
                       <div className="mt-2 rounded-lg bg-[#07070A] p-2.5 text-xs text-[#F8F9FA]/70">{outreach[inf.id]}</div>
                     ) : null}
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleGenerateOutreach(inf)}
@@ -196,7 +196,7 @@ export default function InfluencersPage() {
                     <select
                       value={inf.status}
                       onChange={(e) => handleStatusChange(inf.id, e.target.value)}
-                      className="rounded-lg border border-white/10 bg-[#07070A] px-2 py-1 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                      className="rounded-lg border border-white/10 bg-[#07070A] px-2 py-1 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                     >
                       {INFLUENCER_STATUSES.map((s) => (
                         <option key={s} value={s}>

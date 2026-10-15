@@ -176,7 +176,7 @@ export function CreateDealModal({
         {/* Error */}
         {error && (
           <div className="p-3 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex gap-2">
-            <AlertCircle className="w-4 h-4 text-[#FF6B6B] flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-[#FF6B6B] shrink-0 mt-0.5" />
             <p className="text-sm text-[#FF6B6B]">{error}</p>
           </div>
         )}
@@ -193,7 +193,7 @@ export function CreateDealModal({
               value={formData.contactId}
               onChange={handleChange}
               disabled={loadingContacts}
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00] disabled:opacity-50"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-hidden focus:border-[#C8FF00] disabled:opacity-50"
             >
               <option value="">
                 {loadingContacts ? 'Loading contacts...' : 'Select a contact'}
@@ -217,7 +217,7 @@ export function CreateDealModal({
               value={formData.title}
               onChange={handleChange}
               placeholder="Website Development Project"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
             />
           </div>
 
@@ -237,7 +237,7 @@ export function CreateDealModal({
                   placeholder="50000"
                   min="0"
                   step="0.01"
-                  className="w-full pl-10 pr-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+                  className="w-full pl-10 pr-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
                 />
               </div>
             </div>
@@ -249,7 +249,7 @@ export function CreateDealModal({
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-hidden focus:border-[#C8FF00]"
               >
                 <option value="NGN">NGN (₦)</option>
                 <option value="USD">USD ($)</option>
@@ -269,7 +269,7 @@ export function CreateDealModal({
                 name="stageId"
                 value={formData.stageId}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-hidden focus:border-[#C8FF00]"
               >
                 {stages.length === 0 && <option value="">Loading stages...</option>}
                 {stages.map((stage) => (
@@ -286,7 +286,7 @@ export function CreateDealModal({
                 name="expectedCloseDate"
                 value={formData.expectedCloseDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white focus:outline-hidden focus:border-[#C8FF00]"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ export function CreateDealModal({
               onChange={handleChange}
               placeholder="Deal details and requirements..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00] resize-none"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00] resize-none"
             />
           </div>
 

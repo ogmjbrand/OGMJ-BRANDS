@@ -105,7 +105,7 @@ export default function WorkflowsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -191,7 +191,7 @@ export default function WorkflowsPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-[1.6rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <h2 className="mb-4 text-2xl font-bold text-white">Create New Workflow</h2>
 
@@ -207,7 +207,7 @@ export default function WorkflowsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. New Lead Nurture"
-                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                 />
               </label>
               <label className="block space-y-2 text-sm text-[#C8FF00]/70">
@@ -217,7 +217,7 @@ export default function WorkflowsPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   placeholder="What does this automation do?"
-                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                 />
               </label>
               <label className="block space-y-2 text-sm text-[#C8FF00]/70">
@@ -225,7 +225,7 @@ export default function WorkflowsPage() {
                 <select
                   value={triggerType}
                   onChange={(e) => setTriggerType(e.target.value)}
-                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                  className="w-full rounded-2xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                 >
                   {TRIGGER_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>

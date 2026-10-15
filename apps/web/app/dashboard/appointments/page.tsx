@@ -160,7 +160,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -240,7 +240,7 @@ export default function AppointmentsPage() {
                 placeholder="Title *"
                 value={newAppt.title}
                 onChange={(e) => setNewAppt((prev) => ({ ...prev, title: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -249,7 +249,7 @@ export default function AppointmentsPage() {
                     type="datetime-local"
                     value={newAppt.startTime}
                     onChange={(e) => setNewAppt((prev) => ({ ...prev, startTime: e.target.value }))}
-                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
                   />
                 </div>
                 <div>
@@ -258,7 +258,7 @@ export default function AppointmentsPage() {
                     type="datetime-local"
                     value={newAppt.endTime}
                     onChange={(e) => setNewAppt((prev) => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
                   />
                 </div>
               </div>
@@ -267,21 +267,21 @@ export default function AppointmentsPage() {
                 placeholder="Location"
                 value={newAppt.location}
                 onChange={(e) => setNewAppt((prev) => ({ ...prev, location: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <input
                 type="url"
                 placeholder="Meeting URL (optional)"
                 value={newAppt.meetingUrl}
                 onChange={(e) => setNewAppt((prev) => ({ ...prev, meetingUrl: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <textarea
                 placeholder="Notes"
                 rows={3}
                 value={newAppt.description}
                 onChange={(e) => setNewAppt((prev) => ({ ...prev, description: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <div className="flex gap-3 pt-2">
                 <button

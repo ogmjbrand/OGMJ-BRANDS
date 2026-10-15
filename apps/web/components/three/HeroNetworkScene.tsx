@@ -108,7 +108,7 @@ export default function HeroNetworkScene({ pointerX, pointerY }: HeroNetworkScen
       camera={{ position: [0, 0, 7], fov: 45 }}
       dpr={[1, 1.5]}
       gl={{ alpha: true, antialias: true }}
-      className="!absolute !inset-0"
+      className="absolute! inset-0!"
     >
       <NetworkField pointerX={pointerX} pointerY={pointerY} />
     </Canvas>

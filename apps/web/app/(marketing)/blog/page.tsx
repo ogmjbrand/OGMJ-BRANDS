@@ -26,7 +26,7 @@ export default function BlogPage() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group block rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-gold/30 hover:-translate-y-0.5"
+              className="group block rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-gold/30 hover:-translate-y-0.5"
             >
               <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-wider text-slate-400">
                 <span className="rounded-full bg-gold/10 px-3 py-1 text-gold">{post.category}</span>

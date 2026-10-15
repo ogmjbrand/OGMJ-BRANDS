@@ -111,7 +111,7 @@ export default function DealsPage() {
       {/* Error Alert */}
       {error && (
         <div className="p-4 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-[#FF6B6B] flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#FF6B6B] shrink-0 mt-0.5" />
           <p className="text-[#FF6B6B] text-sm">{error}</p>
         </div>
       )}

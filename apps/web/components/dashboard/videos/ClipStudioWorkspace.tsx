@@ -86,7 +86,7 @@ export default function ClipStudioWorkspace({ videos, onVideoUpdated }: ClipStud
                 <>
                   {notice && (
                     <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
-                      <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <Info className="h-4 w-4 shrink-0 mt-0.5" />
                       {notice}
                     </div>
                   )}

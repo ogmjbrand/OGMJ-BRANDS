@@ -118,7 +118,7 @@ export default function SignupPage() {
       {/* Error Alert */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
@@ -136,7 +136,7 @@ export default function SignupPage() {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your name"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]/60 transition"
             />
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]/60 transition"
             />
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]/60 transition"
             />
           </div>
           <p className="text-xs text-[#C8FF00]/50 mt-1">At least 8 characters</p>
@@ -185,7 +185,7 @@ export default function SignupPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]/60 transition"
             />
           </div>
         </div>

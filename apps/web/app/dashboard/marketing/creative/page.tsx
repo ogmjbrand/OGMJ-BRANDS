@@ -114,12 +114,12 @@ export default function CreativeStudioPage() {
               placeholder="Brief title"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <select
               value={form.format}
               onChange={(e) => setForm((f) => ({ ...f, format: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {CREATIVE_FORMATS.map((f) => (
                 <option key={f.value} value={f.value}>
@@ -132,7 +132,7 @@ export default function CreativeStudioPage() {
               placeholder="Platform (optional, e.g. Instagram Reels)"
               value={form.platform}
               onChange={(e) => setForm((f) => ({ ...f, platform: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
 
@@ -142,13 +142,13 @@ export default function CreativeStudioPage() {
               placeholder="Campaign / topic (e.g. 'Launch of the new collection')"
               value={form.topic}
               onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
-              className="flex-1 rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="flex-1 rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <button
               type="button"
               onClick={handleGenerateAI}
               disabled={generatingAI || !form.topic.trim()}
-              className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
             >
               <Sparkles className={`h-3.5 w-3.5 ${generatingAI ? 'animate-pulse' : ''}`} />
               {generatingAI ? 'Directing…' : 'Generate brief'}
@@ -218,12 +218,12 @@ export default function CreativeStudioPage() {
                       <span className={STATUS_STYLE[b.status] || 'text-[#F8F9FA]/40'}>{b.status.replace('_', ' ')}</span>
                     </p>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {b.status !== 'complete' ? (
                       <select
                         value={b.status}
                         onChange={(e) => handleStatusChange(b.id, e.target.value)}
-                        className="rounded-lg border border-white/10 bg-[#07070A] px-2 py-1 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                        className="rounded-lg border border-white/10 bg-[#07070A] px-2 py-1 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                       >
                         {['draft', 'ready', 'in_production', 'complete'].map((s) => (
                           <option key={s} value={s}>

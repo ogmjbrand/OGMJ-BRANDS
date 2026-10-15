@@ -125,7 +125,7 @@ export default function AdsMarketingPage() {
               placeholder="Campaign name"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <input
               type="number"
@@ -134,12 +134,12 @@ export default function AdsMarketingPage() {
               placeholder="Daily budget (optional)"
               value={form.budgetAmount}
               onChange={(e) => setForm((f) => ({ ...f, budgetAmount: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <select
               value={form.platform}
               onChange={(e) => setForm((f) => ({ ...f, platform: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {AD_PLATFORMS.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -150,7 +150,7 @@ export default function AdsMarketingPage() {
             <select
               value={form.objective}
               onChange={(e) => setForm((f) => ({ ...f, objective: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {AD_OBJECTIVES.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -166,14 +166,14 @@ export default function AdsMarketingPage() {
               placeholder="Product / offer (for AI copy)"
               value={form.product}
               onChange={(e) => setForm((f) => ({ ...f, product: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <input
               type="text"
               placeholder="Target audience (optional)"
               value={form.audience}
               onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
 
@@ -249,7 +249,7 @@ export default function AdsMarketingPage() {
                       {c.metrics ? ` · ${c.metrics.impressions} impr. · ${c.metrics.clicks} clicks · ${c.currency} ${c.metrics.spend} spent` : ''}
                     </p>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {c.status === 'draft' || c.status === 'paused' ? (
                       <button
                         type="button"

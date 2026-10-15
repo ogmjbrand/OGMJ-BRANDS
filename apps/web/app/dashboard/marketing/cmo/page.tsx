@@ -72,7 +72,7 @@ export default function CMOPage() {
                 <ul className="space-y-2">
                   {briefing.wins.map((w, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-[#F8F9FA]/80">
-                      <TrendingUp className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#10B981]" />
+                      <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-[#10B981]" />
                       {w}
                     </li>
                   ))}
@@ -87,7 +87,7 @@ export default function CMOPage() {
                 <ul className="space-y-2">
                   {briefing.concerns.map((c, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-[#F8F9FA]/80">
-                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" />
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                       {c}
                     </li>
                   ))}
@@ -103,7 +103,7 @@ export default function CMOPage() {
               <ol className="space-y-2">
                 {briefing.priorities.map((p, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-[#F8F9FA]/80">
-                    <Target className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C8FF00]" />
+                    <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#C8FF00]" />
                     {p}
                   </li>
                 ))}
