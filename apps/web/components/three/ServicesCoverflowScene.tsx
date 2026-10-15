@@ -134,7 +134,7 @@ export default function ServicesCoverflowScene({ photos, activeIndex, onSelect }
       camera={{ position: [0, 0, 6.4], fov: 38 }}
       dpr={[1, 1.75]}
       gl={{ alpha: true, antialias: true }}
-      className="!absolute !inset-0"
+      className="absolute! inset-0!"
     >
       <ambientLight intensity={1} />
       <Suspense fallback={null}>

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 
 const dashboardWidgetVariants = cva(
   cn(
-    'rounded-2xl border bg-gradient-to-br',
+    'rounded-2xl border bg-linear-to-br',
     'from-[#0E1116] to-[#07070A]',
     'p-6 transition-all duration-300',
     'hover:border-[#C8FF00]/40'
@@ -85,7 +85,7 @@ export const DashboardWidget = React.forwardRef<HTMLDivElement, DashboardWidgetP
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3 flex-1">
-            {icon && <div className="text-[#C8FF00] flex-shrink-0">{icon}</div>}
+            {icon && <div className="text-[#C8FF00] shrink-0">{icon}</div>}
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-white truncate">{title}</h3>
               {subtitle && (
@@ -93,7 +93,7 @@ export const DashboardWidget = React.forwardRef<HTMLDivElement, DashboardWidgetP
               )}
             </div>
           </div>
-          {action && <div className="flex-shrink-0 ml-4">{action}</div>}
+          {action && <div className="shrink-0 ml-4">{action}</div>}
         </div>
 
         {/* Content */}

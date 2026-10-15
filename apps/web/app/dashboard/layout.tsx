@@ -81,7 +81,7 @@ function DashboardLayoutContent({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-[#07070A] via-[#0E1116] to-[#07070A] flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="inline-block w-8 h-8 border-4 border-[#C8FF00]/20 border-t-[#C8FF00] rounded-full animate-spin"></div>
           <p className="text-[#C8FF00]/70">Loading...</p>
@@ -91,9 +91,9 @@ function DashboardLayoutContent({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
+    <div className="min-h-screen bg-linear-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#C8FF00]/10 bg-[#0E1116]/95 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[#C8FF00]/10 bg-[#0E1116]/95 px-4 py-3 backdrop-blur-sm lg:hidden">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-[#C8FF00]/10">
             <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={36} height={36} className="h-full w-full object-cover" />
@@ -116,7 +116,7 @@ function DashboardLayoutContent({
       {/* Overlay for mobile drawer */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -129,7 +129,7 @@ function DashboardLayoutContent({
         }`}
       >
         <div className="p-6 space-y-8">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
+          <div className="rounded-4xl border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-3xl bg-gold/10">
@@ -172,7 +172,7 @@ function DashboardLayoutContent({
             })}
           </nav>
 
-          <div className="rounded-[2rem] border border-white/10 bg-[#07070A] p-4 shadow-lg shadow-black/20">
+          <div className="rounded-4xl border border-white/10 bg-[#07070A] p-4 shadow-lg shadow-black/20">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#C8FF00]/15 text-gold">
                 <span className="text-sm font-semibold">{user?.email?.[0].toUpperCase() || 'U'}</span>

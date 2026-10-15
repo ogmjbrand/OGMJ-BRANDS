@@ -381,7 +381,7 @@ export default function BuilderPage() {
                     type="text"
                     value={newWebsiteName}
                     onChange={(e) => setNewWebsiteName(e.target.value)}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                     placeholder="Brand site, storefront, landing page"
                     required
                   />
@@ -392,7 +392,7 @@ export default function BuilderPage() {
                     value={newWebsiteDescription}
                     onChange={(e) => setNewWebsiteDescription(e.target.value)}
                     rows={4}
-                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                    className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
                     placeholder="One sentence summary of the website"
                   />
                 </label>
@@ -409,7 +409,7 @@ export default function BuilderPage() {
 
       {/* Info Banner */}
       <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg flex gap-3">
-        <Globe className="w-5 h-5 text-blue-400 flex-shrink-0" />
+        <Globe className="w-5 h-5 text-blue-400 shrink-0" />
         <div className="text-sm text-blue-400">
           <p className="font-semibold">Free domain included</p>
           <p className="text-blue-400/70 mt-1">Every website gets a free .ogmj.co subdomain</p>
@@ -434,7 +434,7 @@ export default function BuilderPage() {
               <div className="p-6 border-b border-[#C8FF00]/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#C8FF00]/20 to-[#07070A] rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-linear-to-br from-[#C8FF00]/20 to-[#07070A] rounded-lg flex items-center justify-center">
                       <Globe className="w-6 h-6 text-[#C8FF00]" />
                     </div>
                     <div>
@@ -458,21 +458,21 @@ export default function BuilderPage() {
                     <button
                       title="Edit website"
                       onClick={() => handleEditWebsite(website)}
-                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
+                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded-sm transition"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       title="Delete website"
                       onClick={() => handleDeleteWebsite(website.id)}
-                      className="p-2 text-red-400/70 hover:text-red-400 hover:bg-red-400/10 rounded transition"
+                      className="p-2 text-red-400/70 hover:text-red-400 hover:bg-red-400/10 rounded-sm transition"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                     <button
                       title="Show pages"
                       onClick={() => toggleWebsiteExpansion(website.id)}
-                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
+                      className="p-2 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded-sm transition"
                     >
                       <FileText className="w-4 h-4" />
                     </button>
@@ -503,14 +503,14 @@ export default function BuilderPage() {
                           placeholder="Page Title"
                           value={newPageTitle}
                           onChange={(e) => setNewPageTitle(e.target.value)}
-                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-none"
+                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-sm text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-hidden"
                         />
                         <input
                           type="text"
                           placeholder="Page Slug (e.g., about)"
                           value={newPageSlug}
                           onChange={(e) => setNewPageSlug(e.target.value)}
-                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-none"
+                          className="px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-sm text-white placeholder-[#C8FF00]/50 focus:border-[#C8FF00] focus:outline-hidden"
                         />
                       </div>
                       {pageActionError && (
@@ -521,7 +521,7 @@ export default function BuilderPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSavePage(website.id)}
-                          className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded text-sm font-medium hover:bg-[#C8FF00]/90 transition"
+                          className="px-4 py-2 bg-[#C8FF00] text-[#07070A] rounded-sm text-sm font-medium hover:bg-[#C8FF00]/90 transition"
                         >
                           {editPageId ? 'Save Page' : 'Create Page'}
                         </button>
@@ -530,7 +530,7 @@ export default function BuilderPage() {
                             setCreatingPage(null);
                             handleCancelPageEdit();
                           }}
-                          className="px-4 py-2 bg-[#C8FF00]/10 text-[#C8FF00]/70 rounded text-sm font-medium hover:bg-[#C8FF00]/20 transition"
+                          className="px-4 py-2 bg-[#C8FF00]/10 text-[#C8FF00]/70 rounded-sm text-sm font-medium hover:bg-[#C8FF00]/20 transition"
                         >
                           Cancel
                         </button>
@@ -567,21 +567,21 @@ export default function BuilderPage() {
                               <button
                                 onClick={() => handlePublishPage(page.id, website.id)}
                                 disabled={page.status === 'published'}
-                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 title="Publish Page"
                               >
                                 <ExternalLink className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => handleEditPage(page, website.id)}
-                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded transition"
+                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded-sm transition"
                                 title="Edit Page"
                               >
                                 <Edit className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => handleDeletePage(page.id, website.id)}
-                                className="p-1 text-red-400/50 hover:text-red-400 hover:bg-red-400/10 rounded transition"
+                                className="p-1 text-red-400/50 hover:text-red-400 hover:bg-red-400/10 rounded-sm transition"
                                 title="Delete Page"
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -630,7 +630,7 @@ export default function BuilderPage() {
                 key={template.id}
                 className="p-6 bg-[#0E1116] border border-[#C8FF00]/10 rounded-xl hover:border-[#C8FF00]/30 transition group"
               >
-                <div className="h-32 bg-gradient-to-br from-[#C8FF00]/10 to-[#07070A] rounded mb-4 flex items-center justify-center overflow-hidden">
+                <div className="h-32 bg-linear-to-br from-[#C8FF00]/10 to-[#07070A] rounded-sm mb-4 flex items-center justify-center overflow-hidden">
                   {template.previewImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={template.previewImage} alt={template.name} className="h-full w-full object-cover" />
@@ -646,7 +646,7 @@ export default function BuilderPage() {
                 )}
                 <button
                   onClick={() => handleUseTemplate(template)}
-                  className="mt-3 w-full px-3 py-2 bg-[#C8FF00]/20 text-[#C8FF00] rounded text-sm font-medium hover:bg-[#C8FF00]/30 transition"
+                  className="mt-3 w-full px-3 py-2 bg-[#C8FF00]/20 text-[#C8FF00] rounded-sm text-sm font-medium hover:bg-[#C8FF00]/30 transition"
                 >
                   Use Template
                 </button>

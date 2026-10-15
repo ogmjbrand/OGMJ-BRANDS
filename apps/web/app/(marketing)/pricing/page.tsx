@@ -24,7 +24,7 @@ export default function PricingPage() {
 
         <PricingCards />
 
-        <div className="mt-16 rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
+        <div className="mt-16 rounded-4xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
           <h2 className="text-2xl font-bold text-white">Need a custom enterprise package?</h2>
           <p className="mx-auto mt-3 max-w-xl text-slate-300">
             We offer bundled service packages (branding, launch, automation) alongside platform access. Get a tailored proposal for your business.

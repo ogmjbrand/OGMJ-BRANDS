@@ -108,14 +108,14 @@ export default function EmailMarketingPage() {
               placeholder="Campaign name"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <input
               type="text"
               placeholder="Recipient status filter (optional, e.g. lead)"
               value={form.statusFilter}
               onChange={(e) => setForm((f) => ({ ...f, statusFilter: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
 
@@ -125,13 +125,13 @@ export default function EmailMarketingPage() {
               placeholder="AI topic (e.g. 'New collection launch')"
               value={form.topic}
               onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
-              className="flex-1 rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="flex-1 rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <button
               type="button"
               onClick={handleGenerateAI}
               disabled={generatingAI || !form.topic.trim()}
-              className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-xs font-medium text-[#C8FF00] transition hover:bg-[#C8FF00]/20 disabled:opacity-60"
             >
               <Sparkles className={`h-3.5 w-3.5 ${generatingAI ? 'animate-pulse' : ''}`} />
               {generatingAI ? 'Writing…' : 'AI draft'}
@@ -144,7 +144,7 @@ export default function EmailMarketingPage() {
             placeholder="Subject line"
             value={form.subject}
             onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
           <textarea
             required
@@ -152,7 +152,7 @@ export default function EmailMarketingPage() {
             placeholder="Email body"
             value={form.body}
             onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
 
           <button
@@ -196,7 +196,7 @@ export default function EmailMarketingPage() {
                   </p>
                 </div>
                 {c.status === 'draft' ? (
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleSend(c.id)}

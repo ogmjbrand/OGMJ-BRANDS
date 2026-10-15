@@ -407,14 +407,14 @@ function BentoCard({
   return (
     <div
       className={cx(
-        'group relative rounded-[1.75rem] bg-white/[0.03] p-1.5 ring-1 ring-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:ring-gold/30',
+        'group relative rounded-[1.75rem] bg-white/3 p-1.5 ring-1 ring-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:ring-gold/30',
         className,
       )}
     >
       <div
         className={cx(
           'relative flex h-full flex-col overflow-hidden rounded-[1.4rem] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
-          accent === 'feature' ? 'bg-gradient-to-br from-gold/[0.10] via-obsidian-soft to-obsidian-soft' : 'bg-obsidian-soft/60',
+          accent === 'feature' ? 'bg-linear-to-br from-gold/10 via-obsidian-soft to-obsidian-soft' : 'bg-obsidian-soft/60',
         )}
       >
         {children}
@@ -427,7 +427,7 @@ function PillButton({ href, children }: { href: string; children: React.ReactNod
   return (
     <Link
       href={href}
-      className="group inline-flex h-12 items-center gap-3 rounded-full bg-gold py-1 pl-6 pr-1.5 font-[family-name:var(--font-syne)] text-sm font-bold text-obsidian transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-gold-400 active:scale-[0.98]"
+      className="group inline-flex h-12 items-center gap-3 rounded-full bg-gold py-1 pl-6 pr-1.5 font-(family-name:--font-syne) text-sm font-bold text-obsidian transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-gold-400 active:scale-[0.98]"
     >
       {children}
       <span className="flex size-9 items-center justify-center rounded-full bg-obsidian/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -441,7 +441,7 @@ function GhostButton({ href, children }: { href: string; children: React.ReactNo
   return (
     <Link
       href={href}
-      className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 px-7 font-[family-name:var(--font-syne)] text-sm font-bold text-content transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-gold/50 hover:text-gold active:scale-[0.98]"
+      className="inline-flex h-12 items-center justify-center rounded-full border border-white/15 px-7 font-(family-name:--font-syne) text-sm font-bold text-content transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-gold/50 hover:text-gold active:scale-[0.98]"
     >
       {children}
     </Link>
@@ -459,7 +459,7 @@ function TopNav({ navItems, primaryCta }: { navItems: NavItem[]; primaryCta: Nav
       >
         <Link href="/" className="flex items-center gap-2">
           <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={20} height={20} className="size-5 rounded-full object-cover" priority />
-          <span className="font-[family-name:var(--font-syne)] text-base font-bold text-content">OGMJ BRANDS</span>
+          <span className="font-(family-name:--font-syne) text-base font-bold text-content">OGMJ BRANDS</span>
         </Link>
 
         <ul className="hidden items-center gap-8 lg:flex">
@@ -529,7 +529,7 @@ function TopNav({ navItems, primaryCta }: { navItems: NavItem[]; primaryCta: Nav
                   <Link
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="font-[family-name:var(--font-syne)] text-3xl font-bold text-content"
+                    className="font-(family-name:--font-syne) text-3xl font-bold text-content"
                   >
                     {item.label}
                   </Link>
@@ -564,7 +564,7 @@ function PulsePanel({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-content-muted">Business OS Pulse</p>
-            <p className="mt-1 font-[family-name:var(--font-syne)] text-xl font-bold text-content">Revenue &amp; Automation</p>
+            <p className="mt-1 font-(family-name:--font-syne) text-xl font-bold text-content">Revenue &amp; Automation</p>
           </div>
           <span className="flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-1 text-[11px] font-bold text-gold">
             <span className="size-1.5 rounded-full bg-gold" />
@@ -616,7 +616,7 @@ function PulsePanel({
         {metrics.map((metric) => (
           <BentoCard key={metric.label}>
             <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-content-muted">{metric.label}</p>
-            <p className="mt-2 font-[family-name:var(--font-syne)] text-2xl font-bold text-content">{metric.value}</p>
+            <p className="mt-2 font-(family-name:--font-syne) text-2xl font-bold text-content">{metric.value}</p>
             <p className="mt-1 text-xs leading-5 text-content-muted">{metric.detail}</p>
           </BentoCard>
         ))}
@@ -654,7 +654,7 @@ function Hero({
 
   return (
     <section
-      className="relative flex min-h-[100dvh] w-full flex-col justify-center overflow-hidden bg-obsidian px-4 pb-16 pt-24"
+      className="relative flex min-h-dvh w-full flex-col justify-center overflow-hidden bg-obsidian px-4 pb-16 pt-24"
       onMouseMove={(event) => {
         if (prefersReduced) return
         const bounds = event.currentTarget.getBoundingClientRect()
@@ -671,8 +671,8 @@ function Hero({
           sizes="100vw"
           className="object-cover opacity-[0.22]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/85 to-obsidian/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/60" />
+        <div className="absolute inset-0 bg-linear-to-r from-obsidian via-obsidian/85 to-obsidian/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-obsidian via-transparent to-obsidian/60" />
         {!prefersReduced && (
           <div className="absolute inset-0 opacity-70 mix-blend-screen">
             <HeroNetworkScene pointerX={smoothX} pointerY={smoothY} />
@@ -692,14 +692,14 @@ function Hero({
         >
           <motion.p
             variants={fadeInUp}
-            className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-gold"
+            className="rounded-full border border-white/10 bg-white/3 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-gold"
           >
             {eyebrow}
           </motion.p>
 
           <motion.h1
             variants={fadeInUp}
-            className="font-[family-name:var(--font-syne)] text-5xl font-bold leading-[1.05] text-content sm:text-6xl lg:text-7xl"
+            className="font-(family-name:--font-syne) text-5xl font-bold leading-[1.05] text-content sm:text-6xl lg:text-7xl"
           >
             <span className="block">{headline}</span>
             <span className="block text-gold">{accent}</span>
@@ -747,7 +747,7 @@ function StatBand({ stats }: { stats: StatItem[] }) {
             variants={fadeInUp}
             className="px-4 py-2 text-center first:pl-0 md:text-left md:first:pl-4"
           >
-            <p className="font-[family-name:var(--font-syne)] text-3xl font-bold text-content md:text-4xl">
+            <p className="font-(family-name:--font-syne) text-3xl font-bold text-content md:text-4xl">
               {stat.value}
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-content-muted">{stat.label}</p>
@@ -766,7 +766,7 @@ function DivisionsBento({ divisions }: { divisions: Division[] }) {
       <div className="mx-auto max-w-[1400px]">
         <Reveal className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">The Journey — Chapter by Chapter</p>
-          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="mt-4 font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Every stage of your story, one system that already knows the plot.
           </h2>
           <p className="mt-6 text-base leading-7 text-content-muted">
@@ -793,7 +793,7 @@ function DivisionsBento({ divisions }: { divisions: Division[] }) {
                     className={cx('mb-6 size-7', division.accent === 'feature' ? 'text-gold' : 'text-content-muted')}
                     strokeWidth={1.5}
                   />
-                  <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">
+                  <h3 className="font-(family-name:--font-syne) text-lg font-bold text-content">
                     {division.title}
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-content-muted">{division.description}</p>
@@ -819,7 +819,7 @@ function CommandCenterSplit({
       <div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-2 lg:items-center">
         <Reveal>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Command Center</p>
-          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="mt-4 font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             See the whole business at once.
           </h2>
           <p className="mt-6 max-w-md text-base leading-7 text-content-muted">
@@ -931,7 +931,7 @@ function BuilderSplit({ checklist, funnel }: { checklist: string[]; funnel: Funn
         </Reveal>
 
         <Reveal delay={0.1} className="order-1 lg:order-2">
-          <h2 className="font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Websites that convert, not just render.
           </h2>
           <p className="mt-6 max-w-md text-base leading-7 text-content-muted">
@@ -949,7 +949,7 @@ function MarketplaceCluster({ cards }: { cards: MarketplaceCard[] }) {
     <section id="marketplace" className="border-t border-white/5 px-4 py-24 md:px-10 lg:py-32">
       <div className="mx-auto max-w-[1400px]">
         <Reveal className="max-w-2xl">
-          <h2 className="font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Where founders find what is next.
           </h2>
         </Reveal>
@@ -966,7 +966,7 @@ function MarketplaceCluster({ cards }: { cards: MarketplaceCard[] }) {
               >
                 <BentoCard accent={card.size === 'lg' ? 'feature' : 'default'} className="h-full">
                   <Icon className="mb-6 size-7 text-gold" strokeWidth={1.5} />
-                  <h3 className="font-[family-name:var(--font-syne)] text-xl font-bold text-content">{card.title}</h3>
+                  <h3 className="font-(family-name:--font-syne) text-xl font-bold text-content">{card.title}</h3>
                   <p className="mt-3 max-w-sm text-sm leading-6 text-content-muted">{card.description}</p>
                 </BentoCard>
               </Reveal>
@@ -1025,7 +1025,7 @@ function ServicesShowcase() {
       <div className="mx-auto max-w-[1400px]">
         <Reveal className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Services</p>
-          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="mt-4 font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Everything a founder needs to look, and run, like the real thing.
           </h2>
         </Reveal>
@@ -1034,7 +1034,7 @@ function ServicesShowcase() {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICE_PHOTOS.map((service, index) => (
               <Reveal key={service.title} delay={index * 0.06}>
-                <div className="group relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-white/10">
+                <div className="group relative aspect-4/5 overflow-hidden rounded-3xl border border-white/10">
                   <Image
                     src={service.src}
                     alt={service.title}
@@ -1042,9 +1042,9 @@ function ServicesShowcase() {
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="object-cover transition duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/20 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-obsidian via-obsidian/20 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-6">
-                    <h3 className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">{service.title}</h3>
+                    <h3 className="font-(family-name:--font-syne) text-lg font-bold text-content">{service.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-content-muted">{service.description}</p>
                   </div>
                 </div>
@@ -1067,7 +1067,7 @@ function ServicesShowcase() {
                   transition={{ duration: 0.25, ease: EASE }}
                   className="max-w-lg"
                 >
-                  <h3 className="font-[family-name:var(--font-syne)] text-xl font-bold text-content">{active.title}</h3>
+                  <h3 className="font-(family-name:--font-syne) text-xl font-bold text-content">{active.title}</h3>
                   <p className="mt-2 text-sm leading-6 text-content-muted">{active.description}</p>
                 </motion.div>
               </AnimatePresence>
@@ -1125,7 +1125,7 @@ function TestimonialsSection() {
       <div className="mx-auto max-w-[1400px]">
         <Reveal className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold">Testimonials</p>
-          <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="mt-4 font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Founders who moved faster with OGMJ.
           </h2>
         </Reveal>
@@ -1164,7 +1164,7 @@ function StatementBand({ facts }: { facts: FactItem[] }) {
     <section className="border-t border-white/5 bg-obsidian-soft/40 px-4 py-24 md:px-10 lg:py-32">
       <div className="mx-auto max-w-[1400px]">
         <Reveal className="max-w-3xl">
-          <h2 className="font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight text-content md:text-5xl">
+          <h2 className="font-(family-name:--font-syne) text-3xl font-bold leading-tight text-content md:text-5xl">
             Twelve tools. One workspace.
           </h2>
           <p className="mt-6 text-lg leading-8 text-content-muted">
@@ -1197,7 +1197,7 @@ function StatementBand({ facts }: { facts: FactItem[] }) {
 function InvestorBanner() {
   return (
     <section id="investors" className="px-4 py-20 md:px-10">
-      <Reveal className="relative mx-auto flex max-w-[1400px] flex-col gap-8 overflow-hidden rounded-[2rem] border border-white/10 p-10 md:flex-row md:items-center md:justify-between">
+      <Reveal className="relative mx-auto flex max-w-[1400px] flex-col gap-8 overflow-hidden rounded-4xl border border-white/10 p-10 md:flex-row md:items-center md:justify-between">
         <Image
           src="/site/cta-bg.jpg"
           alt=""
@@ -1205,8 +1205,8 @@ function InvestorBanner() {
           sizes="(min-width: 1400px) 1400px, 100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-obsidian/50" />
-        <h2 className="relative max-w-xl font-[family-name:var(--font-syne)] text-2xl font-bold leading-tight text-content md:text-4xl">
+        <div className="absolute inset-0 bg-linear-to-r from-obsidian via-obsidian/80 to-obsidian/50" />
+        <h2 className="relative max-w-xl font-(family-name:--font-syne) text-2xl font-bold leading-tight text-content md:text-4xl">
           Track the business from idea to scale.
         </h2>
         <div className="relative">
@@ -1224,7 +1224,7 @@ function Footer({ columns }: { columns: FooterColumn[] }) {
         <div className="max-w-sm">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/brand/ogmj-mark.png" alt="OGMJ Brands" width={20} height={20} className="size-5 rounded-full object-cover" />
-            <span className="font-[family-name:var(--font-syne)] text-lg font-bold text-content">OGMJ BRANDS</span>
+            <span className="font-(family-name:--font-syne) text-lg font-bold text-content">OGMJ BRANDS</span>
           </Link>
           <p className="mt-4 text-sm leading-7 text-content-muted">
             The operating system African and global founders use to launch, run, and grow a business without
@@ -1260,11 +1260,11 @@ function Footer({ columns }: { columns: FooterColumn[] }) {
 export default function Home() {
   return (
     <div
-      className={`${syne.variable} ${dmSans.variable} relative min-h-screen bg-obsidian font-[family-name:var(--font-dm-sans)] text-content`}
+      className={`${syne.variable} ${dmSans.variable} relative min-h-screen bg-obsidian font-(family-name:--font-dm-sans) text-content`}
     >
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-[60] bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]"
+        className="pointer-events-none fixed inset-0 z-60 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]"
       />
 
       <TopNav navItems={content.navItems} primaryCta={content.primaryCta} />

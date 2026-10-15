@@ -98,7 +98,7 @@ export default function OnboardingPage() {
   if (checking) {
     return (
       <div className="min-h-screen bg-[#07070A] flex items-center justify-center">
-        <div className="animate-pulse h-8 w-48 rounded bg-[#C8FF00]/20" />
+        <div className="animate-pulse h-8 w-48 rounded-sm bg-[#C8FF00]/20" />
       </div>
     );
   }
@@ -121,11 +121,11 @@ export default function OnboardingPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#0E1116] p-6 sm:p-8 space-y-5"
+          className="rounded-3xl border border-[#C8FF00]/10 bg-[#0E1116] p-6 sm:p-8 space-y-5"
         >
           {error && (
             <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 shrink-0" />
               {error}
             </div>
           )}
@@ -143,7 +143,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Likiya Fast Fashion"
                 required
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 pl-10 pr-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 pl-10 pr-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-hidden"
               />
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
               id="industry"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
+              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-hidden"
             >
               <option value="">Select an industry…</option>
               {INDUSTRIES.map((i) => (
@@ -175,7 +175,7 @@ export default function OnboardingPage() {
                 type="text"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-hidden"
               />
             </div>
             <div>
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
                 id="currency"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-none"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white focus:border-[#C8FF00]/50 focus:outline-hidden"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
               value={teamSize}
               onChange={(e) => setTeamSize(e.target.value)}
               placeholder="e.g. 5"
-              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-none"
+              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] py-2.5 px-3 text-sm text-white placeholder-[#F8F9FA]/30 focus:border-[#C8FF00]/50 focus:outline-hidden"
             />
           </div>
 

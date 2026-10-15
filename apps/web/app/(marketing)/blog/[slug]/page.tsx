@@ -90,7 +90,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           ))}
         </div>
 
-        <div className="mt-16 rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center">
+        <div className="mt-16 rounded-4xl border border-white/10 bg-white/5 p-8 text-center">
           <h2 className="text-xl font-bold text-white">Ready to see similar results?</h2>
           <p className="mt-2 text-slate-300">Start your 14-day free trial or talk to our team.</p>
           <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">

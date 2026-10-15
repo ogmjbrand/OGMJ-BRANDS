@@ -221,7 +221,7 @@ export default function ScriptWorkspace({
         <form onSubmit={handleGenerate} className="space-y-4 rounded-2xl border border-[#C8FF00]/10 bg-[#0E1116] p-5">
           {generateError && (
             <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               {generateError}
             </div>
           )}
@@ -233,7 +233,7 @@ export default function ScriptWorkspace({
               onChange={(e) => setPrompt(e.target.value)}
               rows={5}
               placeholder={promptPlaceholder}
-              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8FF00]/50"
+              className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/50"
             />
           </label>
 
@@ -243,7 +243,7 @@ export default function ScriptWorkspace({
               <select
                 value={videoType}
                 onChange={(e) => setVideoType(e.target.value)}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8FF00]/50"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/50"
               >
                 {VIDEO_TYPES.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -255,7 +255,7 @@ export default function ScriptWorkspace({
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8FF00]/50"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/50"
               >
                 {STYLES.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -270,7 +270,7 @@ export default function ScriptWorkspace({
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value as '16:9' | '9:16' | '1:1')}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8FF00]/50"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/50"
               >
                 {ASPECT_RATIOS.map((a) => (
                   <option key={a.value} value={a.value}>{a.label}</option>
@@ -284,7 +284,7 @@ export default function ScriptWorkspace({
                 min={5}
                 value={targetDuration}
                 onChange={(e) => setTargetDuration(e.target.value)}
-                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#C8FF00]/50"
+                className="w-full rounded-xl border border-[#C8FF00]/15 bg-[#07070A] px-3 py-2.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/50"
               />
             </label>
           </div>
@@ -319,7 +319,7 @@ export default function ScriptWorkspace({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }}
-                      className="text-[#C8FF00]/30 hover:text-red-400 flex-shrink-0"
+                      className="text-[#C8FF00]/30 hover:text-red-400 shrink-0"
                       aria-label="Delete project"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -374,7 +374,7 @@ export default function ScriptWorkspace({
                         value={scene.narration}
                         onChange={(e) => updateScene(idx, { narration: e.target.value })}
                         rows={2}
-                        className="mt-1 w-full rounded-lg border border-[#C8FF00]/10 bg-[#0E1116] px-2 py-1.5 text-sm text-white outline-none focus:border-[#C8FF00]/40"
+                        className="mt-1 w-full rounded-lg border border-[#C8FF00]/10 bg-[#0E1116] px-2 py-1.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/40"
                       />
                     </label>
                     {scene.voiceoverStatus === 'completed' && scene.voiceoverUrl && (
@@ -389,7 +389,7 @@ export default function ScriptWorkspace({
                         value={scene.visualPrompt}
                         onChange={(e) => updateScene(idx, { visualPrompt: e.target.value })}
                         rows={2}
-                        className="mt-1 w-full rounded-lg border border-[#C8FF00]/10 bg-[#0E1116] px-2 py-1.5 text-sm text-white outline-none focus:border-[#C8FF00]/40"
+                        className="mt-1 w-full rounded-lg border border-[#C8FF00]/10 bg-[#0E1116] px-2 py-1.5 text-sm text-white outline-hidden focus:border-[#C8FF00]/40"
                       />
                     </label>
                   </div>
@@ -414,35 +414,35 @@ export default function ScriptWorkspace({
 
               {saveNotice && (
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
-                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   {saveNotice}
                 </div>
               )}
 
               {renderNotice && (
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
-                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   {renderNotice}
                 </div>
               )}
 
               {voiceoverNotice && (
                 <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
-                  <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   {voiceoverNotice}
                 </div>
               )}
 
               {selectedProject.status === 'rendering' && (
                 <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
-                  <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                   Rendering in the background — this page checks for updates automatically every few seconds.
                 </div>
               )}
 
               {selectedProject.status === 'completed' && selectedProject.output_video_url && (
                 <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
-                  <PlayCircle className="h-4 w-4 flex-shrink-0" />
+                  <PlayCircle className="h-4 w-4 shrink-0" />
                   Video ready: <a href={selectedProject.output_video_url} target="_blank" rel="noreferrer" className="underline">view output</a>
                 </div>
               )}

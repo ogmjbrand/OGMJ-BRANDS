@@ -38,15 +38,15 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20",
     "@types/paystack__inline-js": "^1.0.3",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.185.1",
-    "autoprefixer": "^10.4.19",
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.3",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5",
     "vitest": "^5.0.4"
   }

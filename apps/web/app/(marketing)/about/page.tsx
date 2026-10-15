@@ -34,7 +34,7 @@ export default function AboutPage() {
             { value: '15+', label: 'Countries served' },
             { value: '96%', label: 'Client retention' },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
+            <div key={stat.label} className="rounded-4xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
               <p className="text-4xl font-black text-gold">{stat.value}</p>
               <p className="mt-2 text-sm text-slate-400">{stat.label}</p>
             </div>
@@ -50,10 +50,10 @@ export default function AboutPage() {
           {TEAM.map((member) => (
             <div
               key={member.name}
-              className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-gold/30"
+              className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-gold/30"
             >
               <div className="flex items-start gap-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold/20 to-amber-600/10 text-xl font-bold text-gold">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-gold/20 to-amber-600/10 text-xl font-bold text-gold">
                   {member.initials}
                 </div>
                 <div>
@@ -74,7 +74,7 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <div className="mt-20 rounded-[2rem] border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
+        <div className="mt-20 rounded-4xl border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white">Ready to work with us?</h2>

@@ -1,83 +1,131 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  color-scheme: dark;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  --bg: #04060A;
-  --surface: #0C1118;
-  --surface2: #121925;
-  --surface3: #171E2B;
-  --border: rgba(255,255,255,0.08);
-  --gold: #C8FF00;
-  --gold-soft: rgba(200, 255, 0,0.18);
-  --emerald: #10B981;
-  --text: #F4F7FB;
-  --muted: #8E99AD;
+@config "./tailwind.config.js";
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-* {
-  box-sizing: border-box;
+@utility glass-panel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px);
 }
 
-html {
-  scroll-behavior: smooth;
+@utility hero-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(200, 255, 0, 0.16),
+    rgba(16, 185, 129, 0.12)
+  );
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  background: radial-gradient(circle at top, rgba(36, 44, 64, 0.18), transparent 26%),
-    radial-gradient(circle at 20% 20%, rgba(200, 255, 0, 0.12), transparent 18%),
-    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 20%),
-    var(--bg);
-  color: var(--text);
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+@utility text-gradient {
+  background: linear-gradient(
+    90deg,
+    #f8e2a1,
+    #edd8b0 28%,
+    #c8ff00 60%,
+    #f8e2a1 100%
+  );
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(circle at 12% 12%, rgba(200, 255, 0, 0.09), transparent 20%),
-    radial-gradient(circle at 86% 14%, rgba(16, 185, 129, 0.08), transparent 18%),
-    linear-gradient(180deg, rgba(255,255,255,0.02), transparent 42%);
+@utility soft-ring {
+  box-shadow: 0 20px 120px rgba(200, 255, 0, 0.08);
 }
 
-::selection {
-  background: rgba(200, 255, 0, 0.2);
-  color: #fff;
+@utility shadow-luxe {
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 @layer utilities {
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(22px);
+  :root {
+    color-scheme: dark;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    --bg: #04060a;
+    --surface: #0c1118;
+    --surface2: #121925;
+    --surface3: #171e2b;
+    --border: rgba(255, 255, 255, 0.08);
+    --gold: #c8ff00;
+    --gold-soft: rgba(200, 255, 0, 0.18);
+    --emerald: #10b981;
+    --text: #f4f7fb;
+    --muted: #8e99ad;
   }
 
-  .hero-gradient {
-    background: linear-gradient(135deg, rgba(200, 255, 0, 0.16), rgba(16, 185, 129, 0.12));
+  * {
+    box-sizing: border-box;
   }
 
-  .text-gradient {
-    background: linear-gradient(90deg, #F8E2A1, #EDD8B0 28%, #C8FF00 60%, #F8E2A1 100%);
-    -webkit-background-clip: text;
-    color: transparent;
+  html {
+    scroll-behavior: smooth;
   }
 
-  .soft-ring {
-    box-shadow: 0 20px 120px rgba(200, 255, 0, 0.08);
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top, rgba(36, 44, 64, 0.18), transparent 26%),
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(200, 255, 0, 0.12),
+        transparent 18%
+      ),
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(16, 185, 129, 0.12),
+        transparent 20%
+      ),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  .shadow-luxe {
-    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(
+        circle at 12% 12%,
+        rgba(200, 255, 0, 0.09),
+        transparent 20%
+      ),
+      radial-gradient(
+        circle at 86% 14%,
+        rgba(16, 185, 129, 0.08),
+        transparent 18%
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 42%);
+  }
+
+  ::selection {
+    background: rgba(200, 255, 0, 0.2);
+    color: #fff;
   }
 }
 

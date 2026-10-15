@@ -44,7 +44,7 @@ export default function InboxPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Sparkles className="h-4 w-4" /> Team communication
@@ -99,13 +99,13 @@ export default function InboxPage() {
                         <span className="text-sm font-semibold text-[#C8FF00]">{msg.sender?.name || 'Unknown'}</span>
                         <span className="text-xs text-[#F8F9FA]/50">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      <div className="rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#C8FF00]/10 p-3 text-white break-words">{msg.content}</div>
+                      <div className="rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#C8FF00]/10 p-3 text-white wrap-break-word">{msg.content}</div>
                     </div>
                   ))
                 )}
               </div>
               <div className="flex gap-2 border-t border-[#C8FF00]/10 p-4">
-                <input type="text" placeholder="Type a message..." value={messageInput} onChange={(e) => setMessageInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none placeholder:text-[#F8F9FA]/40" />
+                <input type="text" placeholder="Type a message..." value={messageInput} onChange={(e) => setMessageInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-hidden placeholder:text-[#F8F9FA]/40" />
                 <button onClick={handleSendMessage} className="rounded-full bg-[#C8FF00] px-4 py-2 font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90">
                   <Send className="h-4 w-4" />
                 </button>

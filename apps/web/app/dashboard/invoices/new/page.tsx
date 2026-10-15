@@ -78,7 +78,7 @@ export default function InvoiceCreatePage() {
               <select
                 value={clientId}
                 onChange={(event) => setClientId(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               >
                 <option value="">No client</option>
                 {clients.map((client) => (
@@ -94,7 +94,7 @@ export default function InvoiceCreatePage() {
                 type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               />
             </label>
           </div>
@@ -106,7 +106,7 @@ export default function InvoiceCreatePage() {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="e.g. Website design retainer"
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               />
             </label>
             <label className="space-y-2 text-sm text-[#C8FF00]/70">
@@ -116,7 +116,7 @@ export default function InvoiceCreatePage() {
                 min={0}
                 value={totalAmount}
                 onChange={(event) => setTotalAmount(Number(event.target.value))}
-                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
               />
             </label>
           </div>
@@ -128,7 +128,7 @@ export default function InvoiceCreatePage() {
               onChange={(event) => setNotes(event.target.value)}
               rows={5}
               placeholder="Add any payment instructions or line item summary."
-              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none focus:border-[#C8FF00]"
+              className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
             />
           </label>
 

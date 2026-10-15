@@ -71,7 +71,7 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Sparkles className="h-4 w-4" /> Revenue pipeline intelligence
@@ -93,7 +93,7 @@ export default function LeadsPage() {
         <div className="flex flex-wrap gap-3">
           <label className="flex items-center gap-2 rounded-full border border-[#C8FF00]/10 bg-[#11151E] px-3 py-2 text-sm text-[#C8FF00]">
             <Filter className="h-4 w-4" />
-            <select value={filterTemp || ''} onChange={(e) => setFilterTemp(e.target.value || null)} className="bg-transparent outline-none">
+            <select value={filterTemp || ''} onChange={(e) => setFilterTemp(e.target.value || null)} className="bg-transparent outline-hidden">
               <option className="bg-[#11151E] text-white" value="">All temperatures</option>
               <option className="bg-[#11151E] text-white" value="hot">Hot</option>
               <option className="bg-[#11151E] text-white" value="warm">Warm</option>
@@ -102,7 +102,7 @@ export default function LeadsPage() {
           </label>
           <label className="flex items-center gap-2 rounded-full border border-[#C8FF00]/10 bg-[#11151E] px-3 py-2 text-sm text-[#C8FF00]">
             <Filter className="h-4 w-4" />
-            <select value={filterStatus || ''} onChange={(e) => setFilterStatus(e.target.value || null)} className="bg-transparent outline-none">
+            <select value={filterStatus || ''} onChange={(e) => setFilterStatus(e.target.value || null)} className="bg-transparent outline-hidden">
               <option className="bg-[#11151E] text-white" value="">All statuses</option>
               <option className="bg-[#11151E] text-white" value="new">New</option>
               <option className="bg-[#11151E] text-white" value="contacted">Contacted</option>
@@ -181,14 +181,14 @@ export default function LeadsPage() {
                   placeholder="First name *"
                   value={newLead.first_name}
                   onChange={(e) => setNewLead((prev) => ({ ...prev, first_name: e.target.value }))}
-                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
                 />
                 <input
                   type="text"
                   placeholder="Last name"
                   value={newLead.last_name}
                   onChange={(e) => setNewLead((prev) => ({ ...prev, last_name: e.target.value }))}
-                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                  className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
                 />
               </div>
               <input
@@ -196,28 +196,28 @@ export default function LeadsPage() {
                 placeholder="Email"
                 value={newLead.email}
                 onChange={(e) => setNewLead((prev) => ({ ...prev, email: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <input
                 type="tel"
                 placeholder="Phone"
                 value={newLead.phone}
                 onChange={(e) => setNewLead((prev) => ({ ...prev, phone: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <input
                 type="text"
                 placeholder="Company"
                 value={newLead.company}
                 onChange={(e) => setNewLead((prev) => ({ ...prev, company: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <input
                 type="text"
                 placeholder="Source (e.g. referral, website)"
                 value={newLead.source}
                 onChange={(e) => setNewLead((prev) => ({ ...prev, source: e.target.value }))}
-                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-none focus:border-[#C8FF00]"
+                className="w-full rounded-lg border border-[#C8FF00]/20 bg-[#07070A] px-3 py-2 text-white outline-hidden focus:border-[#C8FF00]"
               />
               <div className="flex gap-3 pt-2">
                 <button

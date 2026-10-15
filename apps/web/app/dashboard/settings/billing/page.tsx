@@ -242,7 +242,7 @@ export default function BillingPage() {
       {/* Error Alert */}
       {error && (
         <div className="p-4 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-[#FF6B6B] flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#FF6B6B] shrink-0 mt-0.5" />
           <p className="text-[#FF6B6B]">{error}</p>
         </div>
       )}
@@ -310,7 +310,7 @@ export default function BillingPage() {
                   <ul className="space-y-3">
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-[#C8FF00] flex-shrink-0 mt-0.5" />
+                        <Check className="w-5 h-5 text-[#C8FF00] shrink-0 mt-0.5" />
                         <span className="text-[#C8FF00]/80">{feature}</span>
                       </li>
                     ))}

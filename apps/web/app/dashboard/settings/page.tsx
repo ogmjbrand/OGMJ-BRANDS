@@ -319,7 +319,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
             <Sparkles className="h-4 w-4" /> Control center
@@ -353,7 +353,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="fullName" className="mb-2 block text-sm font-medium text-[#C8FF00]">Full name</label>
-                  <input id="fullName" type="text" value={profileForm.fullName} onChange={(e) => setProfileForm((prev) => ({ ...prev, fullName: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                  <input id="fullName" type="text" value={profileForm.fullName} onChange={(e) => setProfileForm((prev) => ({ ...prev, fullName: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" />
                 </div>
                 <div>
                   <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#C8FF00]">Email</label>
@@ -381,28 +381,28 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="businessName" className="mb-2 block text-sm font-medium text-[#C8FF00]">Business name *</label>
-                    <input id="businessName" type="text" value={businessForm.name} onChange={(e) => setBusinessForm((prev) => ({ ...prev, name: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
+                    <input id="businessName" type="text" value={businessForm.name} onChange={(e) => setBusinessForm((prev) => ({ ...prev, name: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" required />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="industry" className="mb-2 block text-sm font-medium text-[#C8FF00]">Industry</label>
-                      <input id="industry" type="text" value={businessForm.industry} onChange={(e) => setBusinessForm((prev) => ({ ...prev, industry: e.target.value }))} placeholder="e.g. Branding, Software, Retail" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                      <input id="industry" type="text" value={businessForm.industry} onChange={(e) => setBusinessForm((prev) => ({ ...prev, industry: e.target.value }))} placeholder="e.g. Branding, Software, Retail" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" />
                     </div>
                     <div>
                       <label htmlFor="country" className="mb-2 block text-sm font-medium text-[#C8FF00]">Country</label>
-                      <input id="country" type="text" value={businessForm.country} onChange={(e) => setBusinessForm((prev) => ({ ...prev, country: e.target.value }))} placeholder="e.g. Nigeria" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                      <input id="country" type="text" value={businessForm.country} onChange={(e) => setBusinessForm((prev) => ({ ...prev, country: e.target.value }))} placeholder="e.g. Nigeria" className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" />
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="currency" className="mb-2 block text-sm font-medium text-[#C8FF00]">Currency</label>
-                      <select id="currency" value={businessForm.currency} onChange={(e) => setBusinessForm((prev) => ({ ...prev, currency: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]">
+                      <select id="currency" value={businessForm.currency} onChange={(e) => setBusinessForm((prev) => ({ ...prev, currency: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]">
                         {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div>
                       <label htmlFor="timezone" className="mb-2 block text-sm font-medium text-[#C8FF00]">Timezone</label>
-                      <select id="timezone" value={businessForm.timezone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, timezone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]">
+                      <select id="timezone" value={businessForm.timezone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, timezone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]">
                         {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                       </select>
                     </div>
@@ -410,14 +410,14 @@ export default function SettingsPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="businessPhone" className="mb-2 block text-sm font-medium text-[#C8FF00]">Phone</label>
-                      <input id="businessPhone" type="tel" value={businessForm.phone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, phone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                      <input id="businessPhone" type="tel" value={businessForm.phone} onChange={(e) => setBusinessForm((prev) => ({ ...prev, phone: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" />
                     </div>
                     <div>
                       <label htmlFor="brandColor" className="mb-2 block text-sm font-medium text-[#C8FF00]">Brand color</label>
                       <p className="mb-2 text-xs text-[#C8FF00]/50">Used on your invoices and documents — separate from the dashboard's own theme.</p>
                       <div className="flex items-center gap-3">
                         <input id="brandColor" type="color" value={businessForm.brandColor} onChange={(e) => setBusinessForm((prev) => ({ ...prev, brandColor: e.target.value }))} className="h-11 w-14 cursor-pointer rounded-lg border border-[#C8FF00]/10 bg-[#07070A]" />
-                        <input type="text" value={businessForm.brandColor} onChange={(e) => setBusinessForm((prev) => ({ ...prev, brandColor: e.target.value }))} className="flex-1 rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" />
+                        <input type="text" value={businessForm.brandColor} onChange={(e) => setBusinessForm((prev) => ({ ...prev, brandColor: e.target.value }))} className="flex-1 rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" />
                       </div>
                     </div>
                   </div>
@@ -468,15 +468,15 @@ export default function SettingsPage() {
                 {success && <div className="rounded-[1.1rem] border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-400">{success}</div>}
                 <div>
                   <label htmlFor="currentPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">Current password</label>
-                  <input id="currentPassword" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
+                  <input id="currentPassword" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" required />
                 </div>
                 <div>
                   <label htmlFor="newPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">New password</label>
-                  <input id="newPassword" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
+                  <input id="newPassword" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" required />
                 </div>
                 <div>
                   <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#C8FF00]">Confirm new password</label>
-                  <input id="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-none transition focus:border-[#C8FF00]" required />
+                  <input id="confirmPassword" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} className="w-full rounded-[1.1rem] border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden transition focus:border-[#C8FF00]" required />
                 </div>
                 <button type="submit" disabled={saving} className="rounded-full bg-[#C8FF00] px-4 py-2 text-sm font-semibold text-[#07070A] transition hover:bg-[#C8FF00]/90 disabled:bg-[#C8FF00]/50">{saving ? 'Changing...' : 'Change password'}</button>
               </form>
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value)}
                       placeholder="123456"
-                      className="w-40 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-none focus:border-[#C8FF00]"
+                      className="w-40 rounded-full border border-[#C8FF00]/10 bg-[#07070A] px-4 py-2 text-white outline-hidden focus:border-[#C8FF00]"
                     />
                     <button
                       onClick={handleVerifyMfa}

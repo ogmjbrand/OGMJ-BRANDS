@@ -12,7 +12,7 @@ export default function PricingCards({ showCta = true }: PricingCardsProps) {
       {PRICING_PLANS.map((plan) => (
         <div
           key={plan.id}
-          className={`relative rounded-[2rem] border p-8 backdrop-blur-xl transition hover:-translate-y-1 ${
+          className={`relative rounded-4xl border p-8 backdrop-blur-xl transition hover:-translate-y-1 ${
             plan.popular
               ? 'border-gold bg-gold/5 shadow-gold-glow ring-1 ring-gold/30'
               : 'border-white/10 bg-white/5'

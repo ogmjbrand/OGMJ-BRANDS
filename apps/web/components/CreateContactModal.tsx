@@ -128,7 +128,7 @@ export function CreateContactModal({
         {/* Error */}
         {error && (
           <div className="p-3 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex gap-2">
-            <AlertCircle className="w-4 h-4 text-[#FF6B6B] flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-[#FF6B6B] shrink-0 mt-0.5" />
             <p className="text-sm text-[#FF6B6B]">{error}</p>
           </div>
         )}
@@ -146,7 +146,7 @@ export function CreateContactModal({
                 value={formData.firstName}
                 onChange={handleChange}
                 placeholder="John"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
               />
             </div>
             <div>
@@ -159,7 +159,7 @@ export function CreateContactModal({
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Doe"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
               />
             </div>
           </div>
@@ -174,7 +174,7 @@ export function CreateContactModal({
               value={formData.email}
               onChange={handleChange}
               placeholder="john@example.com"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
             />
           </div>
 
@@ -188,7 +188,7 @@ export function CreateContactModal({
               value={formData.phone}
               onChange={handleChange}
               placeholder="+1 (555) 000-0000"
-              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+              className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
             />
           </div>
 
@@ -203,7 +203,7 @@ export function CreateContactModal({
                 value={formData.jobTitle}
                 onChange={handleChange}
                 placeholder="CEO"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
               />
             </div>
             <div>
@@ -216,7 +216,7 @@ export function CreateContactModal({
                 value={formData.companyName}
                 onChange={handleChange}
                 placeholder="Company Inc"
-                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]"
+                className="w-full px-3 py-2 bg-[#07070A] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]"
               />
             </div>
           </div>

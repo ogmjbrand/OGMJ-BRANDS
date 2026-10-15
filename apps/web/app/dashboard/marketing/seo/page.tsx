@@ -63,14 +63,14 @@ export default function SEOPage() {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="Page topic or URL purpose"
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={3}
             placeholder="Paste existing content (optional) for more accurate suggestions"
-            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
           />
           <button
             type="submit"

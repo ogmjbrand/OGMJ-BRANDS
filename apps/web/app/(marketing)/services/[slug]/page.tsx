@@ -70,7 +70,7 @@ export default function ServicePage({ params }: { params: { slug: string } }) {
           </ul>
         </div>
 
-        <div className="mt-16 rounded-[2rem] border border-white/10 bg-white/5 p-8">
+        <div className="mt-16 rounded-4xl border border-white/10 bg-white/5 p-8">
           <h2 className="text-xl font-bold text-white">Get a custom quote</h2>
           <p className="mt-2 text-slate-300">
             Every project is scoped to your needs. Tell us about your goals and we&apos;ll send a tailored proposal within 48 hours.

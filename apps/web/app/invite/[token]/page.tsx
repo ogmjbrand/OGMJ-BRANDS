@@ -55,7 +55,7 @@ export default function AcceptInvitePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#07070A] px-4">
-      <div className="w-full max-w-md space-y-6 rounded-[2rem] border border-[#C8FF00]/10 bg-[#0E1116]/90 p-8 text-center shadow-2xl shadow-black/40">
+      <div className="w-full max-w-md space-y-6 rounded-4xl border border-[#C8FF00]/10 bg-[#0E1116]/90 p-8 text-center shadow-2xl shadow-black/40">
         <Image
           src="/brand/ogmj-mark.png"
           alt="OGMJ Brands"

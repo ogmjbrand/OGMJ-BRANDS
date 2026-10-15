@@ -52,7 +52,7 @@ export default function CtaSection() {
               </h2>
             </FadeUp>
             <FadeUp delay={0.2}>
-              <p className="mt-6 max-w-[380px] text-base leading-[1.5] text-landing-text sm:text-lg">
+              <p className="mt-6 max-w-[380px] text-base leading-normal text-landing-text sm:text-lg">
                 26 on-demand services. Select, pay, and receive - all without hiring an agency. OGMJ Brands is the operating system African entrepreneurs have been waiting for.
               </p>
             </FadeUp>
@@ -67,7 +67,7 @@ export default function CtaSection() {
 
       <motion.div
         style={{ y: dashboardY }}
-        className="absolute left-4 right-4 top-[440px] z-10 sm:left-auto sm:-right-[8%] sm:top-[460px] sm:w-[85%] md:-right-[10%] md:top-[500px] md:w-[80%] lg:-right-[12%] lg:top-20 lg:w-[68%]"
+        className="absolute left-4 right-4 top-[440px] z-10 sm:left-auto sm:right-[-8%] sm:top-[460px] sm:w-[85%] md:right-[-10%] md:top-[500px] md:w-[80%] lg:right-[-12%] lg:top-20 lg:w-[68%]"
       >
         <CtaDashboardMock />
       </motion.div>

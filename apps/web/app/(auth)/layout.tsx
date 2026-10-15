@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#07070A] via-[#0E1116] to-[#07070A]">
       <div className="w-full max-w-md">
         {/* Auth Pages Container */}
         <div className="backdrop-blur-md bg-[#0E1116]/80 border border-[#C8FF00]/10 rounded-2xl p-8 shadow-2xl">

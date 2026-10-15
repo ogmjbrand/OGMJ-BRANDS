@@ -173,7 +173,7 @@ export default function TeamPage() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="teammate@company.com"
-                className="w-full rounded-xl border border-white/10 bg-[#11151E] py-2 pl-9 pr-3 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#11151E] py-2 pl-9 pr-3 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
               />
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function TeamPage() {
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as Exclude<TeamRole, 'owner'>)}
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none sm:w-40"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden sm:w-40"
             >
               {ROLES.map((role) => (
                 <option key={role} value={role} className="capitalize">
@@ -238,7 +238,7 @@ export default function TeamPage() {
                       <select
                         value={member.role}
                         onChange={(e) => handleRoleChange(member.user_id, e.target.value as Exclude<TeamRole, 'owner'>)}
-                        className="rounded-xl border border-white/10 bg-[#0E1116] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-none"
+                        className="rounded-xl border border-white/10 bg-[#0E1116] px-2.5 py-1.5 text-xs text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>
@@ -299,7 +299,7 @@ export default function TeamPage() {
           <div className="space-y-2">
             {activity.map((entry) => (
               <div key={entry.id} className="flex items-start gap-3 rounded-xl bg-[#11151E] px-3 py-2.5">
-                <Activity className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#C8FF00]/60" />
+                <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C8FF00]/60" />
                 <div className="flex-1">
                   <p className="text-xs text-[#F8F9FA]/70">{activityLabel(entry)}</p>
                 </div>

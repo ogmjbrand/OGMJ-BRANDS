@@ -108,7 +108,7 @@ export default function BrandStrategyPage() {
                   onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
                   rows={2}
-                  className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
                 />
               ) : (
                 <input
@@ -116,7 +116,7 @@ export default function BrandStrategyPage() {
                   value={form[field.key] || ''}
                   onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
-                  className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
                 />
               )}
             </div>
@@ -197,7 +197,7 @@ export default function BrandStrategyPage() {
               <div className="space-y-2">
                 {generated.roadmap.map((item, i) => (
                   <div key={i} className="flex gap-3 rounded-xl bg-[#11151E] px-4 py-2.5 text-sm">
-                    <span className="w-24 flex-shrink-0 font-medium text-[#C8FF00]">{item.month}</span>
+                    <span className="w-24 shrink-0 font-medium text-[#C8FF00]">{item.month}</span>
                     <span className="text-[#F8F9FA]/70">{item.focus}</span>
                   </div>
                 ))}

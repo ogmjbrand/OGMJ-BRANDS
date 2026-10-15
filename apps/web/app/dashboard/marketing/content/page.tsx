@@ -87,7 +87,7 @@ export default function ContentStudioPage() {
             <select
               value={form.type}
               onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               {CONTENT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -105,7 +105,7 @@ export default function ContentStudioPage() {
               value={form.platform}
               onChange={(e) => setForm((f) => ({ ...f, platform: e.target.value }))}
               placeholder="e.g. Instagram"
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
           <div className="sm:col-span-2">
@@ -116,7 +116,7 @@ export default function ContentStudioPage() {
               value={form.topic}
               onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))}
               placeholder="What's this about?"
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
           <div className="sm:col-span-2">
@@ -127,7 +127,7 @@ export default function ContentStudioPage() {
               value={form.instructions}
               onChange={(e) => setForm((f) => ({ ...f, instructions: e.target.value }))}
               rows={2}
-              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
           <button
@@ -160,7 +160,7 @@ export default function ContentStudioPage() {
                       <span className={item.status === 'published' ? 'text-[#10B981]' : 'text-[#F8F9FA]/40'}>{item.status}</span>
                     </p>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleCopy(item)}

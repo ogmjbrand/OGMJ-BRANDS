@@ -130,7 +130,7 @@ export default function AIPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -145,7 +145,7 @@ export default function AIPage() {
               the rest of your operating system.
             </p>
           </div>
-          <div className="rounded-[1.5rem] border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
+          <div className="rounded-3xl border border-[#C8FF00]/10 bg-[#11151E]/90 p-4 text-sm text-[#F8F9FA]/70">
             <p className="font-semibold text-white">Speaking with: {activeAgent.label}</p>
             <p className="mt-2">{activeAgent.focus}</p>
           </div>
@@ -236,7 +236,7 @@ export default function AIPage() {
               onKeyDown={handleKeyDown}
               placeholder={`Ask the ${activeAgent.label.toLowerCase()} to draft a launch, investor update, campaign plan or automation sequence…`}
               rows={3}
-              className="w-full rounded-[1.4rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-none ring-0 transition focus:border-[#C8FF00]"
+              className="w-full rounded-[1.4rem] border border-[#C8FF00]/10 bg-[#07070A] p-4 text-sm text-white outline-hidden ring-0 transition focus:border-[#C8FF00]"
             />
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {messages.length > 0 && (

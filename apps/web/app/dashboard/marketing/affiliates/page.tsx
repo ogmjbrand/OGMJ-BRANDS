@@ -91,19 +91,19 @@ export default function AffiliatesPage() {
               placeholder="Partner name"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <input
               type="email"
               placeholder="Email (optional)"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
             <select
               value={form.commissionType}
               onChange={(e) => setForm((f) => ({ ...f, commissionType: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white focus:border-[#C8FF00]/40 focus:outline-hidden"
             >
               <option value="percentage">Percentage</option>
               <option value="fixed">Fixed amount</option>
@@ -115,7 +115,7 @@ export default function AffiliatesPage() {
               placeholder="Commission value"
               value={form.commissionValue}
               onChange={(e) => setForm((f) => ({ ...f, commissionValue: e.target.value }))}
-              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-[#11151E] px-3 py-2 text-sm text-white placeholder-white/30 focus:border-[#C8FF00]/40 focus:outline-hidden"
             />
           </div>
           <button
@@ -156,7 +156,7 @@ export default function AffiliatesPage() {
                       {a.total_sales > 0 ? ` · ${a.currency} ${a.total_sales} sold · ${a.currency} ${a.total_commission} owed` : ''}
                     </p>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleToggleStatus(a)}

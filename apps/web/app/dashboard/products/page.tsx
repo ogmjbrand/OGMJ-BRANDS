@@ -84,7 +84,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[2rem] border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
+      <div className="rounded-4xl border border-[#C8FF00]/10 bg-[radial-gradient(circle_at_top_left,_rgba(200, 255, 0,0.16),_transparent_38%),linear-gradient(135deg,#0E1116_0%,#07070A_100%)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-4 py-2 text-sm text-[#C8FF00]">
@@ -106,20 +106,20 @@ export default function ProductsPage() {
       </div>
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-[1.6rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <h2 className="mb-4 text-2xl font-bold text-white">{editingProductId ? 'Edit product' : 'Add new product'}</h2>
             <div className="space-y-4">
-              <input type="text" placeholder="Product name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
-              <textarea placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
-              <select value={newProduct.type} onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value as any })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]">
+              <input type="text" placeholder="Product name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-hidden focus:border-[#C8FF00]" />
+              <textarea placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-hidden focus:border-[#C8FF00]" />
+              <select value={newProduct.type} onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value as any })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-hidden focus:border-[#C8FF00]">
                 <option value="physical">Physical</option>
                 <option value="digital">Digital</option>
                 <option value="service">Service</option>
                 <option value="subscription">Subscription</option>
                 <option value="course">Course</option>
               </select>
-              <input type="number" placeholder="Price" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-none focus:border-[#C8FF00]" />
+              <input type="number" placeholder="Price" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} className="w-full rounded-[1.1rem] border border-[#C8FF00]/20 bg-[#07070A] px-4 py-2.5 text-white outline-hidden focus:border-[#C8FF00]" />
             </div>
             <div className="mt-6 flex gap-4">
               <button

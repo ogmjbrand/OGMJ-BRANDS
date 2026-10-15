@@ -90,14 +90,14 @@ export default function ContactsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search contacts..."
-          className="w-full pl-10 pr-4 py-2.5 bg-[#0E1116] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-none focus:border-[#C8FF00]/60 transition"
+          className="w-full pl-10 pr-4 py-2.5 bg-[#0E1116] border border-[#C8FF00]/20 rounded-lg text-white placeholder-[#C8FF00]/30 focus:outline-hidden focus:border-[#C8FF00]/60 transition"
         />
       </div>
 
       {/* Error Alert */}
       {error && (
         <div className="p-4 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-[#FF6B6B] flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#FF6B6B] shrink-0 mt-0.5" />
           <p className="text-[#FF6B6B] text-sm">{error}</p>
         </div>
       )}
@@ -148,7 +148,7 @@ export default function ContactsPage() {
                     <td className="px-6 py-4 text-sm text-[#C8FF00]/70">{contact.email}</td>
                     <td className="px-6 py-4 text-sm text-[#C8FF00]/70">{contact.phone || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded ${getStatusColor(contact.status)}`}>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-sm ${getStatusColor(contact.status)}`}>
                         {contact.status}
                       </span>
                     </td>

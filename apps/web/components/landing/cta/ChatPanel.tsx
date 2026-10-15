@@ -87,7 +87,7 @@ export default function ChatPanel({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-[rgba(8,8,10,0.6)] backdrop-blur-[24px]">
+    <div className="flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-[rgba(8,8,10,0.6)] backdrop-blur-xl">
       <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 text-[#C8FF00]">
           <MIcon name="auto_awesome" size={14} />
@@ -130,7 +130,7 @@ export default function ChatPanel({
             onKeyDown={handleKeyDown}
             placeholder="Ask about our services..."
             rows={1}
-            className="min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-white/80 outline-none placeholder:text-white/35"
+            className="min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-white/80 outline-hidden placeholder:text-white/35"
           />
           <button
             type="submit"
