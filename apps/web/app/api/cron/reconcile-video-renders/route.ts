@@ -37,16 +37,21 @@ function isAuthorizedCronRequest(request: NextRequest): boolean {
 
 export async function GET(request: NextRequest) {
   if (!isAuthorizedCronRequest(request)) {
+    console.error('[cron/reconcile-video-renders] unauthorized: CRON_SECRET missing or bearer token mismatch');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  console.log('[cron/reconcile-video-renders] authorized, starting run');
+
   if (!isVideoRenderConfigured()) {
+    console.log('[cron/reconcile-video-renders] video render provider not configured, skipping');
     return NextResponse.json({ success: true, scanned: 0, reconciled: 0, timedOut: 0 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
+    console.error('[cron/reconcile-video-renders] service-role Supabase client not configured on this deployment');
     return NextResponse.json(
       { error: 'Service-role Supabase client is not configured on this deployment' },
       { status: 503 }
@@ -63,6 +68,7 @@ export async function GET(request: NextRequest) {
     .eq('status', 'rendering');
 
   if (error) {
+    console.error('[cron/reconcile-video-renders] failed to query rendering projects:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -117,6 +123,10 @@ export async function GET(request: NextRequest) {
       failures.push({ id: projectId, error: err instanceof Error ? err.message : 'unknown error' });
     }
   }
+
+  console.log(
+    `[cron/reconcile-video-renders] run complete: scanned=${projects?.length ?? 0} reconciled=${reconciledCount} timedOut=${timedOutCount} failures=${failures.length}`
+  );
 
   return NextResponse.json({
     success: true,
