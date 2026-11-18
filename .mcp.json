@@ -3,6 +3,10 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=czpfsfiatehldcavsvsw&features=database%2Caccount%2Cdocs"
+    },
+    "pinpinterest": {
+      "type": "http",
+      "url": "https://api.pinpinterest.com/mcp"
     }
   }
 }
