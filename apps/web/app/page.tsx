@@ -153,6 +153,7 @@ const content: PageContent = {
     { label: 'Marketplace', href: '#marketplace' },
     { label: 'Command Center', href: '#command-center' },
     { label: 'Pricing', href: '/pricing' },
+    { label: 'Hire OGMJ BRANDS', href: '/agency' },
   ],
   primaryCta: { label: 'Start Your Empire', href: '/signup' },
   secondaryCta: { label: 'Walk through the journey', href: '#divisions' },
@@ -331,6 +332,7 @@ const content: PageContent = {
     {
       title: 'Company',
       links: [
+        { label: 'Hire OGMJ BRANDS', href: '/agency' },
         { label: 'About', href: '/about' },
         { label: 'Contact', href: '/contact' },
         { label: 'Terms', href: '/terms' },
@@ -1257,6 +1259,60 @@ function Footer({ columns }: { columns: FooterColumn[] }) {
   )
 }
 
+function PathwaysBand() {
+  const paths = [
+    {
+      eyebrow: 'For platform users',
+      title: 'Explore OGMJ Business OS',
+      description: 'Run and grow your business with CRM, website builder, automation and AI in one operating system.',
+      href: '#divisions',
+      cta: 'Explore the platform',
+      tone: 'emerald' as const,
+    },
+    {
+      eyebrow: 'For businesses seeking professional services',
+      title: 'Hire OGMJ BRANDS',
+      description: 'Our agency team builds your brand, website, content and marketing for you. Start with a free Growth Audit.',
+      href: '/agency',
+      cta: 'Hire OGMJ BRANDS',
+      tone: 'gold' as const,
+    },
+  ]
+
+  return (
+    <section aria-label="Choose your path" className="relative z-10 px-4 pb-8 md:px-10">
+      <div className="mx-auto grid max-w-[1400px] gap-5 md:grid-cols-2">
+        {paths.map((path) => (
+          <Link
+            key={path.title}
+            href={path.href}
+            className={cx(
+              'group flex flex-col justify-between gap-6 rounded-[2rem] border bg-white/3 p-7 transition-colors duration-500 sm:flex-row sm:items-center',
+              path.tone === 'gold' ? 'border-gold/25 hover:border-gold/60' : 'border-emerald/25 hover:border-emerald/60',
+            )}
+          >
+            <div>
+              <p className={cx('text-xs font-bold uppercase tracking-[0.2em]', path.tone === 'gold' ? 'text-gold' : 'text-emerald')}>
+                {path.eyebrow}
+              </p>
+              <p className="mt-2 font-(family-name:--font-syne) text-2xl font-bold text-content">{path.title}</p>
+              <p className="mt-2 max-w-md text-sm leading-6 text-content-muted">{path.description}</p>
+            </div>
+            <span
+              className={cx(
+                'inline-flex shrink-0 items-center gap-2 font-(family-name:--font-syne) text-sm font-bold transition-transform duration-500 group-hover:translate-x-1',
+                path.tone === 'gold' ? 'text-gold' : 'text-emerald',
+              )}
+            >
+              {path.cta} <ArrowRight className="size-4" />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
   return (
     <div
@@ -1280,6 +1336,7 @@ export default function Home() {
         metrics={content.metrics}
       />
 
+      <PathwaysBand />
       <StatBand stats={content.stats} />
       <DivisionsBento divisions={content.divisions} />
       <CommandCenterSplit signals={content.commandSignals} modules={content.modules} />

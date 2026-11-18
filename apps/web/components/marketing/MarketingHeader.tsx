@@ -8,6 +8,7 @@ import { SITE } from '@/lib/marketing/content'
 
 const NAV_LINKS = [
   { label: 'Services', href: '/#services' },
+  { label: 'Hire OGMJ BRANDS', href: '/agency' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
   { label: 'Blog', href: '/blog' },
