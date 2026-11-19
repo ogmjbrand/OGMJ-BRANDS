@@ -3,8 +3,13 @@
  *
  * There is no canonical block schema in the codebase yet, so this is lenient:
  * each block is expected to look like { type, ...fields } and fields may live
- * at the top level or under `props` / `content` / `data`. Supported types:
- * heading, text, image, button. Anything else gets a neutral fallback.
+ * at the top level or under `props` / `content` / `data`.
+ *
+ * SECURITY: only an explicit allow-list of block types is rendered
+ * (SUPPORTED_BLOCK_TYPES). Every other type — including html/embed/script/
+ * iframe/custom blocks — renders NOTHING. All text is rendered as React text
+ * nodes (escaped; dangerouslySetInnerHTML is never used), and URLs are
+ * restricted to safe schemes by safeHref / safeSrc.
  */
 
 type Block = Record<string, unknown>;
@@ -27,11 +32,19 @@ function field(block: Block, ...keys: string[]): string | undefined {
   return undefined;
 }
 
+/**
+ * Site-relative path ("/about"), but NOT protocol-relative ("//evil.com") or
+ * the backslash variant ("/\evil.com") that browsers treat as another host.
+ */
+function isSiteRelative(value: string): boolean {
+  return value.startsWith('/') && !value.startsWith('//') && !value.startsWith('/\\');
+}
+
 /** Allow only http(s), mailto, tel, site-relative and in-page links. */
-function safeHref(href: string | undefined): string | undefined {
+export function safeHref(href: string | undefined): string | undefined {
   if (!href) return undefined;
   const trimmed = href.trim();
-  if (trimmed.startsWith('/') || trimmed.startsWith('#')) return trimmed;
+  if (isSiteRelative(trimmed) || trimmed.startsWith('#')) return trimmed;
   try {
     const url = new URL(trimmed);
     return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.toString() : undefined;
@@ -41,10 +54,10 @@ function safeHref(href: string | undefined): string | undefined {
 }
 
 /** Images only from http(s) or site-relative paths. */
-function safeSrc(src: string | undefined): string | undefined {
+export function safeSrc(src: string | undefined): string | undefined {
   if (!src) return undefined;
   const trimmed = src.trim();
-  if (trimmed.startsWith('/')) return trimmed;
+  if (isSiteRelative(trimmed)) return trimmed;
   try {
     const url = new URL(trimmed);
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined;
@@ -123,35 +136,49 @@ function ButtonBlock({ block }: { block: Block }) {
   );
 }
 
-function UnknownBlock({ block }: { block: Block }) {
-  // Unknown block types: show any obvious text content, otherwise render nothing visible.
-  const text = field(block, 'text', 'title', 'body');
-  if (!text) return null;
-  return <p className="text-white/80">{text}</p>;
+/** Block type aliases the public renderer accepts, mapped to a canonical type. */
+const BLOCK_TYPE_ALIASES: Record<string, SupportedBlockType> = {
+  heading: 'heading',
+  title: 'heading',
+  text: 'text',
+  paragraph: 'text',
+  richtext: 'text',
+  image: 'image',
+  button: 'button',
+  cta: 'button',
+};
+
+export const SUPPORTED_BLOCK_TYPES = ['heading', 'text', 'image', 'button'] as const;
+export type SupportedBlockType = (typeof SUPPORTED_BLOCK_TYPES)[number];
+
+/** Canonical supported type for a block, or null if it must not be rendered. */
+export function supportedBlockType(block: Block): SupportedBlockType | null {
+  const type = typeof block.type === 'string' ? block.type.trim().toLowerCase() : '';
+  return Object.prototype.hasOwnProperty.call(BLOCK_TYPE_ALIASES, type) ? BLOCK_TYPE_ALIASES[type] : null;
 }
 
-function renderBlock(block: Block) {
-  const type = typeof block.type === 'string' ? block.type.toLowerCase() : '';
+function renderBlock(type: SupportedBlockType, block: Block) {
   switch (type) {
     case 'heading':
-    case 'title':
       return <HeadingBlock block={block} />;
     case 'text':
-    case 'paragraph':
-    case 'richtext':
       return <TextBlock block={block} />;
     case 'image':
       return <ImageBlock block={block} />;
     case 'button':
-    case 'cta':
       return <ButtonBlock block={block} />;
-    default:
-      return <UnknownBlock block={block} />;
   }
 }
 
 export function SectionRenderer({ sections }: { sections: unknown[] }) {
-  const blocks = sections.map(asRecord).filter((b): b is Block => b !== null);
+  // Unsupported block types are dropped entirely (never rendered, not even
+  // as a fallback), so a page made only of unsupported blocks shows the
+  // empty state.
+  const blocks = (Array.isArray(sections) ? sections : [])
+    .map(asRecord)
+    .filter((b): b is Block => b !== null)
+    .map((block) => ({ block, type: supportedBlockType(block) }))
+    .filter((b): b is { block: Block; type: SupportedBlockType } => b.type !== null);
 
   if (blocks.length === 0) {
     return (
@@ -163,9 +190,9 @@ export function SectionRenderer({ sections }: { sections: unknown[] }) {
 
   return (
     <div className="space-y-10">
-      {blocks.map((block, i) => (
-        <section key={typeof block.id === 'string' ? block.id : i} data-block-type={String(block.type ?? 'unknown')}>
-          {renderBlock(block)}
+      {blocks.map(({ block, type }, i) => (
+        <section key={typeof block.id === 'string' ? block.id : i} data-block-type={type}>
+          {renderBlock(type, block)}
         </section>
       ))}
     </div>
