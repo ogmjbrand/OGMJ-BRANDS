@@ -4,10 +4,41 @@
  * JSON arriving from the database, an API request, or an AI tool call.
  * Every one of those three entry points must call `validateDocument` (or
  * `validateVersionedDocument`) before the result is trusted.
+ *
+ * Security note: identifier, URL, and CSS-value fields are validated here
+ * with the same allow-list functions `DocumentRenderer.tsx` re-checks at
+ * render time (see `security.ts`). Schema validation is the first line of
+ * defense — it's what stops an unsafe document from ever being stored —
+ * but the renderer does not assume every document it's handed went through
+ * this schema first, so both layers enforce the same rules independently.
  */
 
 import { z } from 'zod';
 import { CURRENT_SCHEMA_VERSION } from './types';
+import {
+  MAX_DOCUMENT_BYTES,
+  MAX_DOCUMENT_DEPTH,
+  MAX_NODE_COUNT,
+  checkDocumentLimits,
+  isSafeCssColor,
+  isSafeCssFragment,
+  isSafeCssLength,
+  isSafeHref,
+  isSafeIdentifier,
+  isSafeSrc,
+} from './security';
+
+// `isSafeIdentifier` (not just the SAFE_IDENTIFIER_PATTERN regex) so the
+// reserved-property-name check (__proto__/constructor/prototype) is
+// enforced here too -- a regex-only check would still accept them.
+const safeId = (what: string) =>
+  z.string().refine(isSafeIdentifier, `${what} must be 1-128 characters of letters, digits, "_" or "-", and not a reserved property name`);
+
+const safeHrefSchema = z.string().refine(isSafeHref, 'unsafe or malformed URL (allowed: http(s), mailto, tel, site-relative, #anchor)');
+const safeSrcSchema = z.string().refine(isSafeSrc, 'unsafe or malformed asset URL (allowed: http(s), site-relative)');
+const cssLengthSchema = z.string().refine(isSafeCssLength, 'unsafe or malformed CSS length/size value');
+const cssColorSchema = z.string().refine(isSafeCssColor, 'unsafe or malformed CSS color value');
+const cssFragmentSchema = z.string().refine(isSafeCssFragment, 'unsafe CSS fragment (no quotes, braces, semicolons, angle brackets, or comment delimiters)');
 
 const responsive = <T extends z.ZodTypeAny>(valueSchema: T) =>
   z.union([
@@ -15,7 +46,7 @@ const responsive = <T extends z.ZodTypeAny>(valueSchema: T) =>
     z.object({ base: valueSchema }).catchall(valueSchema),
   ]);
 
-const tokenRefSchema = z.object({ token: z.string().min(1) });
+const tokenRefSchema = z.object({ token: z.string().min(1).max(128) });
 const styleValue = <T extends z.ZodTypeAny>(valueSchema: T) => z.union([valueSchema, tokenRefSchema]);
 
 const shadowSpecSchema = z.object({
@@ -23,7 +54,7 @@ const shadowSpecSchema = z.object({
   offsetY: z.number(),
   blur: z.number().nonnegative(),
   spread: z.number().optional(),
-  color: styleValue(z.string()),
+  color: styleValue(cssColorSchema),
   inset: z.boolean().optional(),
 });
 
@@ -40,12 +71,12 @@ const filterSpecSchema = z
 
 const maskSpecSchema = z.object({
   type: z.enum(['linear-gradient', 'radial-gradient', 'image']),
-  value: z.string(),
+  value: cssFragmentSchema,
 });
 
 const shaderEffectRefSchema = z.object({
-  shaderId: z.string().min(1),
-  params: z.record(z.union([z.number(), z.string(), z.boolean()])).optional(),
+  shaderId: safeId('shaderId'),
+  params: z.record(z.union([z.number(), z.string().max(256), z.boolean()])).optional(),
 });
 
 const effectDefinitionSchema = z.object({
@@ -66,9 +97,9 @@ const animationKeyframeSchema = z.object({
 });
 
 const animationSpecSchema = z.object({
-  keyframes: z.array(animationKeyframeSchema).min(1),
+  keyframes: z.array(animationKeyframeSchema).min(1).max(64),
   durationMs: z.number().positive(),
-  easing: z.string().optional(),
+  easing: z.string().max(128).optional(),
   delayMs: z.number().nonnegative().optional(),
   repeat: z.union([z.number().positive(), z.literal('infinite')]).optional(),
   scrubbed: z.boolean().optional(),
@@ -80,7 +111,7 @@ const motionTriggerSchema = z.object({
 });
 
 const motionDefinitionSchema = z.object({
-  triggers: z.array(motionTriggerSchema),
+  triggers: z.array(motionTriggerSchema).max(16),
   reducedMotionFallback: z.enum(['none', 'fade-only']).optional(),
 });
 
@@ -92,161 +123,170 @@ const scene3DSpecSchema = z.object({
     lookAt: vector3Schema.optional(),
     fovDeg: z.number().positive().optional(),
   }),
-  lights: z.array(
-    z.object({
-      type: z.enum(['ambient', 'directional', 'point']),
-      color: z.string().optional(),
-      intensity: z.number().optional(),
-      position: vector3Schema.optional(),
-    })
-  ),
-  objects: z.array(
-    z.object({
-      id: z.string(),
-      assetRef: z.string(),
-      position: vector3Schema.optional(),
-      rotationDeg: vector3Schema.optional(),
-      scale: vector3Schema.optional(),
-    })
-  ),
+  lights: z
+    .array(
+      z.object({
+        type: z.enum(['ambient', 'directional', 'point']),
+        color: cssColorSchema.optional(),
+        intensity: z.number().optional(),
+        position: vector3Schema.optional(),
+      })
+    )
+    .max(32),
+  objects: z
+    .array(
+      z.object({
+        id: safeId('object id'),
+        assetRef: safeId('assetRef'),
+        position: vector3Schema.optional(),
+        rotationDeg: vector3Schema.optional(),
+        scale: vector3Schema.optional(),
+      })
+    )
+    .max(256),
   interactions: z
     .array(
       z.object({
         type: z.enum(['orbit', 'drag-rotate', 'scroll-camera-path', 'hover-highlight']),
-        targetObjectId: z.string().optional(),
+        targetObjectId: safeId('targetObjectId').optional(),
       })
     )
     .optional(),
-  posterAssetRef: z.string().optional(),
+  posterAssetRef: safeId('posterAssetRef').optional(),
 });
 
 const baseNodeStyleSchema = z.object({
-  width: responsive(z.string()).optional(),
-  height: responsive(z.string()).optional(),
-  padding: responsive(z.string()).optional(),
-  margin: responsive(z.string()).optional(),
-  background: styleValue(z.string()).optional(),
-  color: styleValue(z.string()).optional(),
+  width: responsive(cssLengthSchema).optional(),
+  height: responsive(cssLengthSchema).optional(),
+  padding: responsive(cssLengthSchema).optional(),
+  margin: responsive(cssLengthSchema).optional(),
+  background: styleValue(cssColorSchema).optional(),
+  color: styleValue(cssColorSchema).optional(),
   display: responsive(z.enum(['block', 'flex', 'grid', 'none'])).optional(),
   flexDirection: responsive(z.enum(['row', 'column'])).optional(),
-  gap: responsive(z.string()).optional(),
+  gap: responsive(cssLengthSchema).optional(),
   align: responsive(z.enum(['start', 'center', 'end', 'stretch'])).optional(),
   justify: responsive(z.enum(['start', 'center', 'end', 'between'])).optional(),
   textAlign: responsive(z.enum(['left', 'center', 'right'])).optional(),
-  borderRadius: styleValue(z.string()).optional(),
+  borderRadius: styleValue(cssLengthSchema).optional(),
   effects: effectDefinitionSchema.optional(),
 });
 
 const baseNodeFieldsSchema = {
-  id: z.string().min(1),
-  name: z.string().optional(),
+  id: safeId('node id'),
+  name: z.string().max(256).optional(),
   style: baseNodeStyleSchema.optional(),
   motion: motionDefinitionSchema.optional(),
-  a11yLabel: z.string().optional(),
+  a11yLabel: z.string().max(256).optional(),
   hidden: responsive(z.boolean()).optional(),
 };
 
 // `documentNodeSchema` is recursive (containers hold children), so it's
 // declared with z.lazy and assigned via a mutable ZodType reference.
+// Zod's recursive parse has no depth limit of its own -- `checkDocumentLimits`
+// in security.ts MUST run (via validateDocument/validateVersionedDocument
+// below) on the raw input before it ever reaches this schema, or a
+// pathologically deep document will stack-overflow the parser itself.
 export const documentNodeSchema: z.ZodType<unknown> = z.lazy(() =>
   z.discriminatedUnion('kind', [
-    z.object({ ...baseNodeFieldsSchema, kind: z.literal('root'), children: z.array(documentNodeSchema) }),
-    z.object({ ...baseNodeFieldsSchema, kind: z.literal('section'), children: z.array(documentNodeSchema) }),
-    z.object({ ...baseNodeFieldsSchema, kind: z.literal('container'), children: z.array(documentNodeSchema) }),
+    z.object({ ...baseNodeFieldsSchema, kind: z.literal('root'), children: z.array(documentNodeSchema).max(MAX_NODE_COUNT) }),
+    z.object({ ...baseNodeFieldsSchema, kind: z.literal('section'), children: z.array(documentNodeSchema).max(MAX_NODE_COUNT) }),
+    z.object({ ...baseNodeFieldsSchema, kind: z.literal('container'), children: z.array(documentNodeSchema).max(MAX_NODE_COUNT) }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('heading'),
-      text: z.string(),
+      text: z.string().max(10_000),
       level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('text'),
-      text: z.string(),
+      text: z.string().max(100_000),
       marks: z
         .array(
           z.object({
             start: z.number().int().nonnegative(),
             end: z.number().int().nonnegative(),
             type: z.enum(['bold', 'italic', 'link']),
-            href: z.string().optional(),
+            href: safeHrefSchema.optional(),
           })
         )
+        .max(1000)
         .optional(),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('image'),
-      assetRef: z.string(),
-      caption: z.string().optional(),
+      assetRef: safeId('assetRef'),
+      caption: z.string().max(1000).optional(),
       objectFit: z.enum(['cover', 'contain']).optional(),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('video'),
-      assetRef: z.string(),
+      assetRef: safeId('assetRef'),
       autoplay: z.boolean().optional(),
       loop: z.boolean().optional(),
       muted: z.boolean().optional(),
-      posterAssetRef: z.string().optional(),
+      posterAssetRef: safeId('posterAssetRef').optional(),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('button'),
-      label: z.string(),
-      href: z.string(),
+      label: z.string().max(1000),
+      href: safeHrefSchema,
       variant: z.enum(['primary', 'secondary', 'ghost']).optional(),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('slot'),
-      slotName: z.string().min(1),
-      defaultContent: z.array(documentNodeSchema).optional(),
+      slotName: safeId('slotName'),
+      defaultContent: z.array(documentNodeSchema).max(MAX_NODE_COUNT).optional(),
     }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('componentInstance'),
-      componentId: z.string(),
-      variantId: z.string().optional(),
+      componentId: safeId('componentId'),
+      variantId: safeId('variantId').optional(),
       propOverrides: z.record(z.unknown()).optional(),
-      slotContent: z.record(z.array(documentNodeSchema)).optional(),
+      slotContent: z.record(z.array(documentNodeSchema).max(MAX_NODE_COUNT)).optional(),
     }),
     z.object({ ...baseNodeFieldsSchema, kind: z.literal('scene3d'), scene: scene3DSpecSchema }),
     z.object({
       ...baseNodeFieldsSchema,
       kind: z.literal('custom'),
-      customType: z.string().min(1),
+      customType: safeId('customType'),
       props: z.record(z.unknown()),
-      children: z.array(documentNodeSchema).optional(),
+      children: z.array(documentNodeSchema).max(MAX_NODE_COUNT).optional(),
     }),
   ])
 );
 
 const breakpointDefinitionSchema = z.object({
-  key: z.string(),
-  minWidthPx: z.number().nonnegative(),
-  label: z.string().optional(),
+  key: safeId('breakpoint key'),
+  minWidthPx: z.number().nonnegative().max(100_000),
+  label: z.string().max(128).optional(),
 });
 
 const designTokenSetSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  colors: z.record(z.string()),
+  id: safeId('token set id'),
+  name: z.string().max(256),
+  colors: z.record(cssColorSchema),
   typography: z.object({
-    fontFamilies: z.record(z.string()),
-    fontSizes: z.record(z.string()),
+    fontFamilies: z.record(cssFragmentSchema),
+    fontSizes: z.record(cssLengthSchema),
     fontWeights: z.record(z.number()),
-    lineHeights: z.record(z.union([z.string(), z.number()])),
-    letterSpacing: z.record(z.string()).optional(),
+    lineHeights: z.record(z.union([z.string().max(32), z.number()])),
+    letterSpacing: z.record(cssLengthSchema).optional(),
   }),
-  spacing: z.record(z.string()),
-  radii: z.record(z.string()),
-  shadows: z.record(z.string()),
+  spacing: z.record(cssLengthSchema),
+  radii: z.record(cssLengthSchema),
+  shadows: z.record(cssFragmentSchema),
   gradients: z
     .record(
       z.object({
         type: z.enum(['linear', 'radial']),
-        stops: z.array(z.object({ color: z.string(), at: z.number().min(0).max(1) })),
+        stops: z.array(z.object({ color: cssColorSchema, at: z.number().min(0).max(1) })).max(32),
         angleDeg: z.number().optional(),
       })
     )
@@ -254,38 +294,40 @@ const designTokenSetSchema = z.object({
 });
 
 const assetRefSchema = z.object({
-  id: z.string(),
+  id: safeId('asset id'),
   kind: z.enum(['image', 'video', 'audio', 'font', 'model3d']),
-  url: z.string(),
-  mimeType: z.string().optional(),
+  url: safeSrcSchema,
+  mimeType: z.string().max(128).optional(),
   widthPx: z.number().positive().optional(),
   heightPx: z.number().positive().optional(),
   durationMs: z.number().positive().optional(),
-  altText: z.string().optional(),
+  altText: z.string().max(1000).optional(),
   generatedBy: z.enum(['upload', 'ai-generated']).optional(),
 });
 
 const componentDefinitionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  propSchema: z.array(
-    z.object({
-      name: z.string(),
-      type: z.enum(['string', 'number', 'boolean', 'color', 'assetRef']),
-      default: z.unknown().optional(),
-    })
-  ),
-  slots: z.array(z.string()),
-  variants: z.array(
-    z.object({ id: z.string(), name: z.string(), propOverrides: z.record(z.unknown()).optional() })
-  ),
+  id: safeId('component id'),
+  name: z.string().max(256),
+  propSchema: z
+    .array(
+      z.object({
+        name: safeId('prop name'),
+        type: z.enum(['string', 'number', 'boolean', 'color', 'assetRef']),
+        default: z.unknown().optional(),
+      })
+    )
+    .max(128),
+  slots: z.array(safeId('slot name')).max(64),
+  variants: z
+    .array(z.object({ id: safeId('variant id'), name: z.string().max(256), propOverrides: z.record(z.unknown()).optional() }))
+    .max(64),
   template: documentNodeSchema,
 });
 
 export const documentRootSchema = z.object({
-  root: z.object({ ...baseNodeFieldsSchema, kind: z.literal('root'), children: z.array(documentNodeSchema) }),
-  tokenSetId: z.string(),
-  breakpoints: z.array(breakpointDefinitionSchema).min(1),
+  root: z.object({ ...baseNodeFieldsSchema, kind: z.literal('root'), children: z.array(documentNodeSchema).max(MAX_NODE_COUNT) }),
+  tokenSetId: safeId('token set id'),
+  breakpoints: z.array(breakpointDefinitionSchema).min(1).max(16),
   components: z.record(componentDefinitionSchema),
   assets: z.record(assetRefSchema),
 });
@@ -307,11 +349,28 @@ function toResult<T>(parsed: z.SafeParseReturnType<unknown, T>): ValidationResul
   };
 }
 
+/**
+ * Runs the non-recursive size/depth/node-count pre-check (security.ts)
+ * before ever handing `input` to Zod's recursive schema. This is the fix
+ * for documents that would otherwise crash validation with an uncaught
+ * `RangeError: Maximum call stack size exceeded` instead of failing with a
+ * normal, catchable validation error.
+ */
+function checkLimitsOrError(input: unknown): ValidationResult<never> | null {
+  const violation = checkDocumentLimits(input);
+  if (!violation) return null;
+  return { success: false, errors: [`${violation.kind}: ${violation.message}`] };
+}
+
 export function validateDocument(input: unknown): ValidationResult<z.infer<typeof documentRootSchema>> {
+  const limitError = checkLimitsOrError(input);
+  if (limitError) return limitError;
   return toResult(documentRootSchema.safeParse(input));
 }
 
 export function validateVersionedDocument(input: unknown): ValidationResult<z.infer<typeof versionedDocumentSchema>> {
+  const limitError = checkLimitsOrError((input as { document?: unknown } | null)?.document ?? input);
+  if (limitError) return limitError;
   const result = toResult(versionedDocumentSchema.safeParse(input));
   if (!result.success) return result;
   if (result.data.schemaVersion > CURRENT_SCHEMA_VERSION) {
@@ -323,3 +382,5 @@ export function validateVersionedDocument(input: unknown): ValidationResult<z.in
 export function validateDesignTokenSet(input: unknown): ValidationResult<z.infer<typeof designTokenSetSchema>> {
   return toResult(designTokenSetSchema.safeParse(input));
 }
+
+export { MAX_DOCUMENT_BYTES, MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT };

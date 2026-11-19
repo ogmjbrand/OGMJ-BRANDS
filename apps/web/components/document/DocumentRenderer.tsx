@@ -39,6 +39,23 @@ import type {
 } from '@/lib/document-model/types';
 import { getChildren } from '@/lib/document-model/tree';
 import { resolveStyleValue } from '@/lib/document-model/tokens';
+import { isSafeCssColor, isSafeCssFragment, isSafeCssLength, isSafeIdentifier, safeHref, safeSrc } from '@/lib/document-model/security';
+
+/**
+ * SECURITY (defense in depth): `schema.ts` already rejects an unsafe
+ * identifier, URL, or CSS value before a document is stored. This
+ * renderer does NOT assume that already happened for whatever document
+ * it's handed, so every one of those same checks is re-applied here,
+ * independently, immediately before the value is interpolated into HTML
+ * or into the raw CSS text inside the <style> tag. A value that fails its
+ * check is dropped (that one property, or that one node) rather than
+ * rendered partially or substituted with something unvalidated.
+ */
+
+function safeObjectLookup<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+  if (!record || !isSafeIdentifier(key) || !Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return record[key];
+}
 
 interface RenderContext {
   document: DocumentRoot;
@@ -72,65 +89,86 @@ function isResponsiveMap(value: unknown): value is { base: unknown } & Record<st
  * node's own inline style. This is how "designed for desktop, tablet,
  * mobile and custom breakpoints" becomes real, server-rendered CSS with no
  * client JS and no CSS-in-JS dependency.
+ *
+ * SECURITY: `nodeId` is interpolated into a hand-built CSS attribute
+ * selector (`[data-node="<id>"]`) and `validate` gates every resolved
+ * value, string or not, before it is interpolated into the raw CSS text
+ * written into the <style> block below. Both checks run regardless of
+ * whether the document was already validated by `schema.ts` — an id or a
+ * value that fails either check is dropped silently (no rule emitted, no
+ * `var()` reference returned) rather than partially trusted.
  */
 function resolveResponsiveCssVar(
   nodeId: string,
   cssProp: CssPropertyName,
   rawValue: unknown,
   ctx: RenderContext,
-  valueMap?: Record<string, string>
+  validate: (value: string) => boolean
 ): string | undefined {
   if (rawValue === undefined) return undefined;
+  if (!isSafeIdentifier(nodeId)) return undefined;
   const varName = `--n-${nodeId}-${cssProp}`;
   const dedupeKey = `${nodeId}:${cssProp}`;
   if (ctx.emittedRuleKeys.has(dedupeKey)) return `var(${varName})`;
-  ctx.emittedRuleKeys.add(dedupeKey);
-  const mapValue = (v: unknown) => {
-    const str = resolveStyleValue(v as never, ctx.tokenSet) as unknown as string;
-    return valueMap ? valueMap[String(str)] ?? String(str) : String(str);
+
+  const resolve = (v: unknown): string | null => {
+    const resolved = resolveStyleValue(v as never, ctx.tokenSet) as unknown;
+    if (typeof resolved !== 'string' || !validate(resolved)) return null;
+    return resolved;
   };
 
+  const rules: string[] = [];
   if (isResponsiveMap(rawValue)) {
     const entries = rawValue as Record<string, unknown>;
-    const baseVal = mapValue(entries.base);
-    ctx.cssRules.push(`[data-node="${nodeId}"]{${varName}:${baseVal};}`);
+    const baseVal = resolve(entries.base);
+    if (baseVal === null) return undefined; // an invalid base value invalidates the whole responsive set
+    rules.push(`[data-node="${nodeId}"]{${varName}:${baseVal};}`);
     for (const bp of ctx.document.breakpoints) {
-      if (bp.key === 'base' || entries[bp.key] === undefined) continue;
-      ctx.cssRules.push(
-        `@media (min-width:${bp.minWidthPx}px){[data-node="${nodeId}"]{${varName}:${mapValue(entries[bp.key])};}}`
-      );
+      if (bp.key === 'base' || entries[bp.key] === undefined || !isSafeIdentifier(bp.key) || !Number.isFinite(bp.minWidthPx)) continue;
+      const overrideVal = resolve(entries[bp.key]);
+      if (overrideVal === null) continue; // skip just this one breakpoint override, not the whole property
+      rules.push(`@media (min-width:${bp.minWidthPx}px){[data-node="${nodeId}"]{${varName}:${overrideVal};}}`);
     }
   } else {
-    ctx.cssRules.push(`[data-node="${nodeId}"]{${varName}:${mapValue(rawValue)};}`);
+    const val = resolve(rawValue);
+    if (val === null) return undefined;
+    rules.push(`[data-node="${nodeId}"]{${varName}:${val};}`);
   }
+
+  ctx.emittedRuleKeys.add(dedupeKey);
+  ctx.cssRules.push(...rules);
   return `var(${varName})`;
 }
+
+const KEYWORD_VALIDATOR = (map: Record<string, string>) => (value: string) => value in map;
 
 function nodeInlineStyle(node: DocumentNode, ctx: RenderContext): CSSProperties {
   const style = (node as { style?: Record<string, unknown> }).style;
   if (!style) return {};
 
   const out: Record<string, string> = {};
-  const set = (cssProp: CssPropertyName, value: unknown, valueMap?: Record<string, string>) => {
-    const resolved = resolveResponsiveCssVar(node.id, cssProp, value, ctx, valueMap);
+  const set = (cssProp: CssPropertyName, value: unknown, validate: (value: string) => boolean) => {
+    const resolved = resolveResponsiveCssVar(node.id, cssProp, value, ctx, validate);
     if (resolved) out[cssProp] = resolved;
   };
 
-  set('width', style.width);
-  set('height', style.height);
-  set('padding', style.padding);
-  set('margin', style.margin);
-  set('background', style.background);
-  set('color', style.color);
-  set('display', style.display, DISPLAY_MAP);
-  set('flex-direction', style.flexDirection);
-  set('gap', style.gap);
-  set('align-items', style.align, ALIGN_MAP);
-  set('justify-content', style.justify, JUSTIFY_MAP);
-  set('text-align', style.textAlign);
-  set('border-radius', style.borderRadius);
+  set('width', style.width, isSafeCssLength);
+  set('height', style.height, isSafeCssLength);
+  set('padding', style.padding, isSafeCssLength);
+  set('margin', style.margin, isSafeCssLength);
+  set('background', style.background, isSafeCssColor);
+  set('color', style.color, isSafeCssColor);
+  set('display', style.display, KEYWORD_VALIDATOR(DISPLAY_MAP));
+  set('flex-direction', style.flexDirection, KEYWORD_VALIDATOR({ row: 'row', column: 'column' }));
+  set('gap', style.gap, isSafeCssLength);
+  set('align-items', style.align, KEYWORD_VALIDATOR(ALIGN_MAP));
+  set('justify-content', style.justify, KEYWORD_VALIDATOR(JUSTIFY_MAP));
+  set('text-align', style.textAlign, KEYWORD_VALIDATOR({ left: 'left', center: 'center', right: 'right' }));
+  set('border-radius', style.borderRadius, isSafeCssLength);
 
-  const effects = style.effects as { filters?: Record<string, number>; shadows?: unknown[] } | undefined;
+  const effects = style.effects as
+    | { filters?: Record<string, number>; mask?: { type: string; value: unknown }; shaderRef?: { shaderId: unknown } }
+    | undefined;
   const filterParts: string[] = [];
   if (effects?.filters) {
     const f = effects.filters;
@@ -143,9 +181,29 @@ function nodeInlineStyle(node: DocumentNode, ctx: RenderContext): CSSProperties 
   }
   if (filterParts.length) out.filter = filterParts.join(' ');
 
-  // CSS-expressible effects render today; shaderRef is recorded but not executed (see ShaderPlaceholder note below).
+  // `mask` gets real (CSS-native) effect today, re-validated here even though
+  // schema.ts already constrains it, because this fragment is the one place
+  // the document model allows a hand-written CSS value rather than a fully
+  // structured one -- see security.ts' isSafeCssFragment doc comment.
+  if (effects?.mask && isSafeCssFragment(effects.mask.value)) {
+    out.maskImage = effects.mask.value as string;
+    out.WebkitMaskImage = effects.mask.value as string;
+  }
+  // shaderRef has no runtime in Phase 1 (see Scene3DBlock's note on 3D for
+  // the same reasoning) -- explicitly recorded as a data attribute by the
+  // caller (nodeExtraAttributes below) so it is never silently dropped.
 
   return out as React.CSSProperties;
+}
+
+/** Non-style data attributes this node should carry — currently just the shaderRef passthrough. Kept out of nodeInlineStyle so it's not re-run by collectCssRules. */
+function nodeExtraAttributes(node: DocumentNode): Record<string, string> {
+  const style = (node as { style?: { effects?: { shaderRef?: { shaderId?: unknown } } } }).style;
+  const shaderId = style?.effects?.shaderRef?.shaderId;
+  if (typeof shaderId === 'string' && isSafeIdentifier(shaderId)) {
+    return { 'data-ogmj-shader-ref': shaderId };
+  }
+  return {};
 }
 
 /** Data attributes carrying motion intent for a future JS motion engine; CSS-only fade is applied today as a tasteful baseline. */
@@ -159,7 +217,7 @@ function motionAttributes(node: DocumentNode): { attrs: Record<string, string>; 
 }
 
 function resolveAsset(assetRef: AssetId, ctx: RenderContext): AssetRef | undefined {
-  return ctx.document.assets[assetRef];
+  return safeObjectLookup(ctx.document.assets, assetRef);
 }
 
 /**
@@ -180,7 +238,8 @@ function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
     for (const child of children) collectCssRules(child, ctx);
   }
   if (node.kind === 'componentInstance') {
-    const definition = ctx.document.components[node.componentId];
+    // Same safe lookup as ComponentInstanceBlock below -- see its comment.
+    const definition = safeObjectLookup(ctx.document.components, node.componentId);
     if (definition) collectCssRules(substituteSlots(definition.template, node.slotContent), ctx);
   }
 }
@@ -197,7 +256,7 @@ function RootOrContainer({ node, ctx }: { node: RootNode | SectionNode | Contain
   const { attrs, loadFadeClass } = motionAttributes(node);
   const Tag = node.kind === 'section' ? 'section' : 'div';
   return (
-    <Tag data-node={node.id} className={loadFadeClass} style={nodeInlineStyle(node, ctx)} {...attrs}>
+    <Tag data-node={node.id} className={loadFadeClass} style={nodeInlineStyle(node, ctx)} {...attrs} {...nodeExtraAttributes(node)}>
       <RenderChildren children={node.children} ctx={ctx} />
     </Tag>
   );
@@ -205,13 +264,17 @@ function RootOrContainer({ node, ctx }: { node: RootNode | SectionNode | Contain
 
 function HeadingBlock({ node, ctx }: { node: HeadingNode; ctx: RenderContext }) {
   const Tag = (`h${node.level}` as unknown) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  return <Tag data-node={node.id} style={nodeInlineStyle(node, ctx)}>{node.text}</Tag>;
+  return (
+    <Tag data-node={node.id} style={nodeInlineStyle(node, ctx)} {...nodeExtraAttributes(node)}>
+      {node.text}
+    </Tag>
+  );
 }
 
 function TextBlock({ node, ctx }: { node: TextNode; ctx: RenderContext }) {
   // Always plain text — marks are a constrained list, never raw HTML.
   return (
-    <p data-node={node.id} style={nodeInlineStyle(node, ctx)}>
+    <p data-node={node.id} style={nodeInlineStyle(node, ctx)} {...nodeExtraAttributes(node)}>
       {node.text}
     </p>
   );
@@ -220,10 +283,14 @@ function TextBlock({ node, ctx }: { node: TextNode; ctx: RenderContext }) {
 function ImageBlock({ node, ctx }: { node: ImageNode; ctx: RenderContext }) {
   const asset = resolveAsset(node.assetRef, ctx);
   if (!asset) return null;
+  // SECURITY (defense in depth): re-validate the asset URL at render time even
+  // though schema.ts already constrains AssetRef.url -- see the module header.
+  const src = safeSrc(asset.url);
+  if (!src) return null;
   return (
-    <figure data-node={node.id} style={nodeInlineStyle(node, ctx)}>
+    <figure data-node={node.id} style={nodeInlineStyle(node, ctx)} {...nodeExtraAttributes(node)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- asset hosts are arbitrary */}
-      <img src={asset.url} alt={asset.altText ?? ''} loading="lazy" style={{ objectFit: node.objectFit ?? 'cover' }} />
+      <img src={src} alt={asset.altText ?? ''} loading="lazy" style={{ objectFit: node.objectFit ?? 'cover' }} />
       {node.caption ? <figcaption>{node.caption}</figcaption> : null}
     </figure>
   );
@@ -232,13 +299,17 @@ function ImageBlock({ node, ctx }: { node: ImageNode; ctx: RenderContext }) {
 function VideoBlock({ node, ctx }: { node: VideoNode; ctx: RenderContext }) {
   const asset = resolveAsset(node.assetRef, ctx);
   if (!asset) return null;
+  const src = safeSrc(asset.url);
+  if (!src) return null;
   const poster = node.posterAssetRef ? resolveAsset(node.posterAssetRef, ctx) : undefined;
+  const posterSrc = poster ? safeSrc(poster.url) : undefined;
   return (
     <video
       data-node={node.id}
       style={nodeInlineStyle(node, ctx)}
-      src={asset.url}
-      poster={poster?.url}
+      {...nodeExtraAttributes(node)}
+      src={src}
+      poster={posterSrc}
       autoPlay={node.autoplay}
       loop={node.loop}
       muted={node.muted}
@@ -248,13 +319,26 @@ function VideoBlock({ node, ctx }: { node: VideoNode; ctx: RenderContext }) {
 }
 
 function ButtonBlock({ node, ctx }: { node: ButtonNode; ctx: RenderContext }) {
-  const external = /^https?:/.test(node.href);
+  // SECURITY: re-validate at render time even though schema.ts already
+  // requires a safe href -- never trust that every caller validated first.
+  // An unsafe/unparseable href renders as inert text, not a dead link, so
+  // the button's content isn't silently dropped either.
+  const href = safeHref(node.href);
+  if (!href) {
+    return (
+      <span data-node={node.id} data-variant={node.variant ?? 'primary'} style={nodeInlineStyle(node, ctx)} {...nodeExtraAttributes(node)}>
+        {node.label}
+      </span>
+    );
+  }
+  const external = /^https?:/.test(href);
   return (
     <a
       data-node={node.id}
       data-variant={node.variant ?? 'primary'}
       style={nodeInlineStyle(node, ctx)}
-      href={node.href}
+      {...nodeExtraAttributes(node)}
+      href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       {node.label}
@@ -289,7 +373,11 @@ function substituteSlots(template: DocumentNode, slotContent: Record<string, Doc
 }
 
 function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ctx: RenderContext }) {
-  const definition = ctx.document.components[node.componentId];
+  // SECURITY: a plain-object lookup keyed by document-supplied data must
+  // reject __proto__/constructor/prototype (see security.ts) -- otherwise
+  // a crafted componentId can resolve to Object.prototype instead of
+  // undefined and crash the .variants.find() call below.
+  const definition = safeObjectLookup(ctx.document.components, node.componentId);
   if (!definition) return <MissingComponentPlaceholder node={node} />;
   const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
   // Variant/instance propOverrides are resolved against propSchema defaults in a
@@ -313,11 +401,12 @@ function MissingComponentPlaceholder({ node }: { node: ComponentInstanceNode }) 
 /** No 3D runtime ships in Phase 1 — render the poster image (or a labeled placeholder) instead of WebGL. */
 function Scene3DBlock({ node, ctx }: { node: Scene3DNode; ctx: RenderContext }) {
   const poster = node.scene.posterAssetRef ? resolveAsset(node.scene.posterAssetRef, ctx) : undefined;
+  const posterSrc = poster ? safeSrc(poster.url) : undefined;
   return (
-    <div data-node={node.id} data-ogmj-scene3d-placeholder="true" style={nodeInlineStyle(node, ctx)}>
-      {poster ? (
+    <div data-node={node.id} data-ogmj-scene3d-placeholder="true" style={nodeInlineStyle(node, ctx)} {...nodeExtraAttributes(node)}>
+      {posterSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={poster.url} alt={poster.altText ?? '3D scene preview'} />
+        <img src={posterSrc} alt={poster?.altText ?? '3D scene preview'} />
       ) : (
         <div data-ogmj-scene3d-empty="true" />
       )}

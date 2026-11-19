@@ -7,9 +7,9 @@
  */
 
 import type { DocumentNode, DocumentOperation, DocumentRoot, OperationHistory, OperationHistoryEntry } from './types';
-import { findNode, findParent, getNodeProp, insertNode, moveNode, removeNode, setNodeProp, updateNode } from './tree';
+import { DocumentOperationError, findNode, findParent, getNodeProp, insertNode, moveNode, removeNode, setNodeProp, updateNode } from './tree';
 
-export class DocumentOperationError extends Error {}
+export { DocumentOperationError };
 
 /** Computes the inverse of `operation` against the document it is about to be applied to. */
 export function invert(document: DocumentRoot, operation: DocumentOperation): DocumentOperation {
@@ -44,7 +44,10 @@ export function invert(document: DocumentRoot, operation: DocumentOperation): Do
       if (!node || node.kind !== 'componentInstance') {
         throw new DocumentOperationError(`setSlotContent: componentInstance ${operation.nodeId} not found`);
       }
-      const previous = node.slotContent?.[operation.slotName] ?? [];
+      // `undefined` (not `[]`) when the slot had no key at all, so undo can
+      // delete the key and restore the exact pre-edit shape -- see the
+      // apply-side 'setSlotContent' case below.
+      const previous = node.slotContent?.[operation.slotName];
       return { op: 'setSlotContent', nodeId: operation.nodeId, slotName: operation.slotName, content: previous };
     }
 
@@ -53,8 +56,8 @@ export function invert(document: DocumentRoot, operation: DocumentOperation): Do
       if (!node || node.kind !== 'componentInstance') {
         throw new DocumentOperationError(`applyVariant: componentInstance ${operation.nodeId} not found`);
       }
-      // variantId may be undefined if no variant was previously applied.
-      return { op: 'applyVariant', nodeId: operation.nodeId, variantId: node.variantId as string };
+      // undefined (not a cast to string) when no variant was previously applied -- see note above.
+      return { op: 'applyVariant', nodeId: operation.nodeId, variantId: node.variantId };
     }
 
     default: {
@@ -93,6 +96,19 @@ export function applyOperation(
           ...document,
           root: updateNode(document.root, operation.nodeId, (n) => {
             if (n.kind !== 'componentInstance') return n;
+            // `content === undefined` restores "this slot key never existed" exactly,
+            // rather than leaving behind an empty-but-present `slotContent: {}`.
+            if (operation.content === undefined) {
+              if (!n.slotContent || !(operation.slotName in n.slotContent)) return n;
+              const nextSlotContent = { ...n.slotContent };
+              delete nextSlotContent[operation.slotName];
+              if (Object.keys(nextSlotContent).length === 0) {
+                const { slotContent, ...rest } = n;
+                void slotContent;
+                return rest;
+              }
+              return { ...n, slotContent: nextSlotContent };
+            }
             return { ...n, slotContent: { ...n.slotContent, [operation.slotName]: operation.content } };
           }),
         },
@@ -105,6 +121,15 @@ export function applyOperation(
           ...document,
           root: updateNode(document.root, operation.nodeId, (n) => {
             if (n.kind !== 'componentInstance') return n;
+            // `variantId === undefined` removes the key entirely, restoring
+            // "no variant was ever applied" exactly rather than an explicit
+            // `variantId: undefined` key.
+            if (operation.variantId === undefined) {
+              if (!('variantId' in n)) return n;
+              const { variantId, ...rest } = n;
+              void variantId;
+              return rest;
+            }
             return { ...n, variantId: operation.variantId };
           }),
         },

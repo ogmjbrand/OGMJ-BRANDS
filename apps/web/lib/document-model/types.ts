@@ -436,8 +436,12 @@ export type DocumentOperation =
   | { op: 'removeNode'; nodeId: NodeId }
   | { op: 'moveNode'; nodeId: NodeId; newParentId: NodeId; newIndex: number }
   | { op: 'updateNodeProps'; nodeId: NodeId; path: string[]; value: unknown }
-  | { op: 'setSlotContent'; nodeId: NodeId; slotName: string; content: DocumentNode[] }
-  | { op: 'applyVariant'; nodeId: NodeId; variantId: VariantId };
+  // `content`/`variantId` as `undefined` (key present, value absent) means
+  // "this slot/variant had no prior value" -- it's what `invert()` produces
+  // so undo can remove the key entirely rather than leaving behind an
+  // empty-but-present `slotContent: {}` or `variantId: undefined` key.
+  | { op: 'setSlotContent'; nodeId: NodeId; slotName: string; content: DocumentNode[] | undefined }
+  | { op: 'applyVariant'; nodeId: NodeId; variantId: VariantId | undefined };
 
 export interface OperationHistoryEntry {
   operation: DocumentOperation;

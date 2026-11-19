@@ -92,3 +92,107 @@ describe('undo/redo history', () => {
     expect(result.history).toEqual(history);
   });
 });
+
+describe('undo exactness: setSlotContent and applyVariant restore the exact pre-edit shape', () => {
+  function docWithInstance(): DocumentRoot {
+    return {
+      root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'callout' }] },
+      tokenSetId: DEFAULT_TOKEN_SET.id,
+      breakpoints: DEFAULT_BREAKPOINTS,
+      components: { callout: { id: 'callout', name: 'Callout', propSchema: [], slots: ['body'], variants: [{ id: 'v1', name: 'V1' }], template: { id: 'tpl', kind: 'container', children: [{ id: 'tpl-slot', kind: 'slot', slotName: 'body' }] } } },
+      assets: {},
+    };
+  }
+
+  it('undoing the FIRST setSlotContent on a node removes the slotContent key entirely, not just empties it', () => {
+    const doc = docWithInstance();
+    const beforeNode = findNode(doc.root, 'instance-1');
+    expect(beforeNode).not.toHaveProperty('slotContent');
+
+    const { document: after, inverse } = applyOperation(doc, {
+      op: 'setSlotContent', nodeId: 'instance-1', slotName: 'body', content: [{ id: 't1', kind: 'text', text: 'hi' }],
+    });
+    expect(findNode(after.root, 'instance-1')).toHaveProperty('slotContent.body');
+
+    const { document: restored } = applyOperation(after, inverse);
+    const restoredNode = restored.root.children[0];
+    expect(restoredNode).toEqual(beforeNode); // byte-for-byte, not just behaviorally equivalent
+    expect(restoredNode).not.toHaveProperty('slotContent');
+  });
+
+  it('undoing a setSlotContent that OVERWROTE a prior value restores that prior value, not an empty one', () => {
+    let doc = docWithInstance();
+    const first = applyOperation(doc, { op: 'setSlotContent', nodeId: 'instance-1', slotName: 'body', content: [{ id: 't1', kind: 'text', text: 'first' }] });
+    doc = first.document;
+    const second = applyOperation(doc, { op: 'setSlotContent', nodeId: 'instance-1', slotName: 'body', content: [{ id: 't2', kind: 'text', text: 'second' }] });
+
+    const { document: restored } = applyOperation(second.document, second.inverse);
+    expect(restored).toEqual(doc); // back to exactly the "first" state, not an empty slot
+  });
+
+  it('undoing the FIRST applyVariant on a node removes the variantId key entirely', () => {
+    const doc = docWithInstance();
+    const beforeNode = findNode(doc.root, 'instance-1');
+    expect(beforeNode).not.toHaveProperty('variantId');
+
+    const { document: after, inverse } = applyOperation(doc, { op: 'applyVariant', nodeId: 'instance-1', variantId: 'v1' });
+    expect((findNode(after.root, 'instance-1') as { variantId?: string }).variantId).toBe('v1');
+
+    const { document: restored } = applyOperation(after, inverse);
+    expect(restored.root.children[0]).toEqual(beforeNode);
+    expect(restored.root.children[0]).not.toHaveProperty('variantId');
+  });
+});
+
+describe('multi-step undo/redo across nested structures, verified by deep structural equality at every checkpoint', () => {
+  it('5 sequential operations (including a component instance): full undo to origin, full redo back', () => {
+    let doc: DocumentRoot = {
+      root: { id: 'root', kind: 'root', children: [{ id: 'section-1', kind: 'section', children: [{ id: 'heading-1', kind: 'heading', text: 'Start', level: 2 }] }] },
+      tokenSetId: DEFAULT_TOKEN_SET.id,
+      breakpoints: DEFAULT_BREAKPOINTS,
+      components: { callout: { id: 'callout', name: 'Callout', propSchema: [], slots: ['body'], variants: [{ id: 'v1', name: 'V1' }], template: { id: 'tpl', kind: 'container', children: [{ id: 'tpl-slot', kind: 'slot', slotName: 'body' }] } } },
+      assets: {},
+    };
+    let history = emptyHistory();
+    const snapshots: DocumentRoot[] = [structuredClone(doc)];
+
+    const ops = [
+      { op: 'updateNodeProps' as const, nodeId: 'heading-1', path: ['text'], value: 'Step 1' },
+      { op: 'insertNode' as const, parentId: 'section-1', index: 1, node: { id: 'instance-1', kind: 'componentInstance' as const, componentId: 'callout' } },
+      { op: 'setSlotContent' as const, nodeId: 'instance-1', slotName: 'body', content: [{ id: 'slot-text-1', kind: 'text' as const, text: 'Nested content' }] },
+      { op: 'applyVariant' as const, nodeId: 'instance-1', variantId: 'v1' },
+      { op: 'moveNode' as const, nodeId: 'heading-1', newParentId: 'root', newIndex: 0 },
+    ];
+
+    for (const operation of ops) {
+      const result = recordOperation(doc, history, operation, 'user');
+      doc = result.document;
+      history = result.history;
+      snapshots.push(structuredClone(doc));
+    }
+
+    expect((findNode(doc.root, 'heading-1') as { text: string }).text).toBe('Step 1');
+    expect((findNode(doc.root, 'instance-1') as { variantId?: string }).variantId).toBe('v1');
+
+    // Undo all 5, checking deep structural equality against the exact recorded snapshot at each step.
+    for (let i = ops.length; i >= 1; i--) {
+      const result = undo(doc, history);
+      doc = result.document;
+      history = result.history;
+      expect(doc).toEqual(snapshots[i - 1]);
+    }
+    expect(history.past).toHaveLength(0);
+    expect(history.future).toHaveLength(5);
+    expect(doc).toEqual(snapshots[0]); // back to the exact origin, not just a behaviorally-equivalent document
+
+    // Redo all 5 forward, checking every checkpoint again.
+    for (let i = 1; i <= ops.length; i++) {
+      const result = redo(doc, history);
+      doc = result.document;
+      history = result.history;
+      expect(doc).toEqual(snapshots[i]);
+    }
+    expect(history.past).toHaveLength(5);
+    expect(history.future).toHaveLength(0);
+  });
+});

@@ -64,4 +64,58 @@ describe('migrateLegacyContent', () => {
     const second = migrateLegacyContent(first, 'Page');
     expect(second).toEqual(first);
   });
+
+  describe('security: sanitizes legacy data that predates these checks, rather than carrying it through unsafe', () => {
+    it('drops a javascript: href from old legacy data, falling back to a safe in-page anchor', () => {
+      const result = migrateLegacyContent({ sections: [{ type: 'button', label: 'Click', href: 'javascript:alert(1)' }] }, 'Page');
+      expect(result.document.root.children[0]).toMatchObject({ kind: 'button', href: '#' });
+      expect(validateVersionedDocument(result).success).toBe(true);
+    });
+
+    it('drops a data: image src from old legacy data rather than creating an AssetRef for it', () => {
+      const result = migrateLegacyContent({ sections: [{ type: 'image', src: 'data:text/html,<script>alert(1)</script>' }] }, 'Page');
+      const node = result.document.root.children[0] as { assetRef: string };
+      expect(result.document.assets[node.assetRef]).toBeUndefined();
+      expect(validateVersionedDocument(result).success).toBe(true);
+    });
+
+    it('keeps a legitimate https href/src from legacy data unchanged', () => {
+      const result = migrateLegacyContent(
+        { sections: [{ type: 'button', label: 'Go', href: 'https://example.com/x' }, { type: 'image', src: 'https://example.com/a.jpg' }] },
+        'Page'
+      );
+      expect(result.document.root.children[0]).toMatchObject({ href: 'https://example.com/x' });
+      const imageNode = result.document.root.children[1] as { assetRef: string };
+      expect(result.document.assets[imageNode.assetRef]).toMatchObject({ url: 'https://example.com/a.jpg' });
+    });
+
+    it('replaces a legacy block id containing unsafe characters with a freshly minted safe id', () => {
+      const result = migrateLegacyContent({ sections: [{ type: 'heading', id: 'has "quotes" and {braces}', text: 'Hi', level: 1 }] }, 'Page');
+      const node = result.document.root.children[0];
+      expect(node.id).not.toContain('"');
+      expect(node.id).not.toContain('{');
+      expect(validateVersionedDocument(result).success).toBe(true);
+    });
+
+    it('replaces an unsafe legacy custom block type with "unknown" rather than carrying it into customType', () => {
+      const result = migrateLegacyContent({ sections: [{ type: 'weird type; with spaces', foo: 'bar' }] }, 'Page');
+      const node = result.document.root.children[0] as { customType: string; props: Record<string, unknown> };
+      expect(node.customType).toBe('unknown');
+      expect(node.props).toMatchObject({ foo: 'bar' }); // the original fields are still preserved in props, just the type label is sanitized
+      expect(validateVersionedDocument(result).success).toBe(true);
+    });
+
+    it('a realistic legacy page with a mix of safe and unsafe content migrates to a fully valid document', () => {
+      const legacy = {
+        sections: [
+          { type: 'heading', text: 'Welcome', level: 1 },
+          { type: 'button', label: 'Bad link', href: 'javascript:alert(document.cookie)' },
+          { type: 'image', src: '//evil.example.com/tracker.gif' },
+          { type: 'text', body: 'Legitimate paragraph.' },
+        ],
+      };
+      const result = migrateLegacyContent(legacy, 'Mixed Page');
+      expect(validateVersionedDocument(result).success).toBe(true);
+    });
+  });
 });

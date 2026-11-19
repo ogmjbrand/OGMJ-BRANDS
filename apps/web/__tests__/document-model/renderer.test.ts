@@ -256,4 +256,28 @@ describe('DocumentRenderer', () => {
     expect(html).toContain('data-motion=');
     expect(html).toContain('&quot;on&quot;:&quot;load&quot;');
   });
+
+  it('applies a mask declaration as real CSS, rather than silently ignoring it', () => {
+    const document: DocumentRoot = {
+      root: {
+        id: 'root', kind: 'root',
+        children: [{ id: 'n1', kind: 'container', children: [], style: { effects: { mask: { type: 'linear-gradient', value: 'linear-gradient(black, transparent)' } } } }],
+      },
+      tokenSetId: DEFAULT_TOKEN_SET.id, breakpoints: DEFAULT_BREAKPOINTS, components: {}, assets: {},
+    };
+    const html = render(document);
+    expect(html).toContain('mask-image:linear-gradient(black, transparent)');
+  });
+
+  it('records a shaderRef as an explicit data attribute instead of silently dropping it', () => {
+    const document: DocumentRoot = {
+      root: {
+        id: 'root', kind: 'root',
+        children: [{ id: 'n1', kind: 'container', children: [], style: { effects: { shaderRef: { shaderId: 'liquid-distort', params: { intensity: 0.5 } } } } }],
+      },
+      tokenSetId: DEFAULT_TOKEN_SET.id, breakpoints: DEFAULT_BREAKPOINTS, components: {}, assets: {},
+    };
+    const html = render(document);
+    expect(html).toContain('data-ogmj-shader-ref="liquid-distort"');
+  });
 });

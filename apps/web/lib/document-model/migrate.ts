@@ -23,6 +23,7 @@
 import type { AssetId, AssetRef, ButtonNode, DocumentNode, DocumentRoot, HeadingNode, ImageNode, TextNode, VersionedDocument } from './types';
 import { CURRENT_SCHEMA_VERSION } from './types';
 import { DEFAULT_BREAKPOINTS, DEFAULT_TOKEN_SET } from './tokens';
+import { isSafeIdentifier, safeHref, safeSrc, sanitizeIdentifier } from './security';
 
 type LegacyBlock = Record<string, unknown>;
 
@@ -55,7 +56,13 @@ function migrateLegacyBlock(block: unknown, index: number, assets: Record<AssetI
   }
 
   const rawType = typeof record.type === 'string' ? record.type.toLowerCase() : '';
-  const id = typeof record.id === 'string' ? record.id : stableId('legacy', index, rawType);
+  // SECURITY: a legacy id or type that doesn't fit the strict identifier
+  // charset (schema.ts) is replaced with a freshly minted safe one rather
+  // than carried through -- this is also what keeps a page that happened
+  // to be stored with, say, a stray quote in its block `id` from failing
+  // re-validation after this migration runs.
+  const id = sanitizeIdentifier(record.id, stableId('legacy', index, rawType));
+  const safeCustomType = isSafeIdentifier(rawType) ? rawType : 'unknown';
 
   switch (rawType) {
     case 'heading':
@@ -80,7 +87,11 @@ function migrateLegacyBlock(block: unknown, index: number, assets: Record<AssetI
     }
 
     case 'image': {
-      const src = field(record, 'src', 'url', 'image', 'imageUrl');
+      // SECURITY: a legacy `src` that isn't a safe URL (an old javascript:/data:
+      // value, or just malformed) is dropped rather than carried into the new
+      // AssetRef -- safeSrc returns undefined for anything unsafe, same check
+      // the renderer re-applies at render time.
+      const src = safeSrc(field(record, 'src', 'url', 'image', 'imageUrl'));
       const alt = field(record, 'alt', 'caption');
       const caption = field(record, 'caption');
       const assetId = `legacy-asset-${id}`;
@@ -94,14 +105,16 @@ function migrateLegacyBlock(block: unknown, index: number, assets: Record<AssetI
     case 'button':
     case 'cta': {
       const label = field(record, 'label', 'text', 'title');
-      const href = field(record, 'href', 'url', 'link');
-      const node: ButtonNode = { id, kind: 'button', label: label ?? '', href: href ?? '#' };
+      // SECURITY: same reasoning as `src` above -- an unsafe legacy href
+      // becomes the safe in-page anchor fallback, never carried through.
+      const href = safeHref(field(record, 'href', 'url', 'link')) ?? '#';
+      const node: ButtonNode = { id, kind: 'button', label: label ?? '', href };
       return node;
     }
 
     default:
       // Unknown block type: preserve every original field, nothing is dropped.
-      return { id, kind: 'custom', customType: rawType || 'unknown', props: record };
+      return { id, kind: 'custom', customType: safeCustomType, props: record };
   }
 }
 
