@@ -1,28 +1,30 @@
+import { cache } from 'react';
 import { createServerClient } from '@/lib/supabase/server';
 
 /**
  * Read-only data access for the public site-serving path (/sites/...).
  *
- * Canonical columns (packages/db/supabase/migrations/20260101000000_remote_baseline.sql):
- *   websites:  id, business_id, name, description, status ('draft' default),
- *              seo_title, seo_description, favicon_url, ...
- *   web_pages: id, website_id, business_id, title, slug, type ('page' default),
- *              status ('draft' default), content jsonb ({ sections: [...] }),
- *              seo jsonb, settings jsonb, published_at, ...
+ * ACCESS: websites and web_pages are RLS-restricted to business members, so
+ * this module does NOT query those tables directly. It calls the
+ * public.get_published_page(p_website_id, p_slug) SECURITY DEFINER RPC
+ * (packages/db/supabase/migrations/20261119000000_public_site_get_published_page_rpc.sql),
+ * which returns only render-relevant columns and itself enforces:
+ *   - web_pages.status = 'published'
+ *   - websites.status not in archived/deleted/disabled/suspended
+ *   - homepage priority when p_slug is null: type 'home', slug home/index/'',
+ *     then oldest published page.
+ * Sensitive website columns (ssl_certificate, analytics_id, owner_id,
+ * settings, ...) are never returned. This module deliberately does NOT use
+ * the service-role client.
  *
- * NOTE ON ACCESS: this uses the same cookie-aware anon-key server client as the
- * rest of the app. Both tables currently have RLS policies that only allow
- * business members (is_business_member(business_id)), so anonymous visitors
- * will get notFound() until a separate, reviewed change adds a public SELECT
- * policy for published pages. This module deliberately does NOT use the
- * service-role client.
+ * Consequence: a website with no published pages is indistinguishable from a
+ * missing one (getPublicWebsite returns null), so its name is not exposed.
  */
 
 export type PublicWebsite = {
   id: string;
   name: string;
   description: string | null;
-  status: string;
   seo_title: string | null;
   seo_description: string | null;
   favicon_url: string | null;
@@ -34,77 +36,99 @@ export type PublicPage = {
   title: string;
   slug: string;
   type: string;
-  status: string;
+  status: 'published';
   content: { sections?: unknown } | null;
   seo: Record<string, unknown> | null;
   published_at: string | null;
   created_at: string;
 };
 
-/** Website statuses that should never be served publicly. */
-const HIDDEN_WEBSITE_STATUSES = new Set(['archived', 'deleted', 'disabled', 'suspended']);
+/** Row shape returned by public.get_published_page. */
+type PublishedPageRow = {
+  website_id: string;
+  website_name: string;
+  website_description: string | null;
+  website_seo_title: string | null;
+  website_seo_description: string | null;
+  website_favicon_url: string | null;
+  page_id: string;
+  page_title: string;
+  page_slug: string;
+  page_type: string;
+  page_content: { sections?: unknown } | null;
+  page_seo: Record<string, unknown> | null;
+  page_published_at: string | null;
+  page_created_at: string;
+};
 
-/** Slugs (or page types) treated as a website's homepage, in priority order. */
-const HOMEPAGE_SLUGS = ['home', 'index', ''];
+/**
+ * One RPC call per (website, slug) per request; generateMetadata and the page
+ * component share the result. slug === null means "homepage".
+ */
+const fetchPublishedPageRow = cache(
+  async (websiteId: string, slug: string | null): Promise<PublishedPageRow | null> => {
+    const supabase = await createServerClient();
+    const { data, error } = await supabase.rpc('get_published_page', {
+      p_website_id: websiteId,
+      p_slug: slug,
+    });
 
-const WEBSITE_COLUMNS =
-  'id, name, description, status, seo_title, seo_description, favicon_url';
-const PAGE_COLUMNS =
-  'id, website_id, title, slug, type, status, content, seo, published_at, created_at';
+    // An invalid uuid, hidden website, unpublished page, or missing row all
+    // resolve to "not found".
+    if (error || !data) return null;
+    const rows = (Array.isArray(data) ? data : [data]) as PublishedPageRow[];
+    return rows[0] ?? null;
+  },
+);
 
+function toWebsite(row: PublishedPageRow): PublicWebsite {
+  return {
+    id: row.website_id,
+    name: row.website_name,
+    description: row.website_description,
+    seo_title: row.website_seo_title,
+    seo_description: row.website_seo_description,
+    favicon_url: row.website_favicon_url,
+  };
+}
+
+function toPage(row: PublishedPageRow): PublicPage {
+  return {
+    id: row.page_id,
+    website_id: row.website_id,
+    title: row.page_title,
+    slug: row.page_slug,
+    type: row.page_type,
+    status: 'published',
+    content: row.page_content,
+    seo: row.page_seo,
+    published_at: row.page_published_at,
+    created_at: row.page_created_at,
+  };
+}
+
+/**
+ * Returns the public website fields, or null if the website is missing,
+ * hidden, or has no published pages.
+ */
 export async function getPublicWebsite(websiteId: string): Promise<PublicWebsite | null> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from('websites')
-    .select(WEBSITE_COLUMNS)
-    .eq('id', websiteId)
-    .maybeSingle();
-
-  // An invalid uuid, RLS denial, or missing row all resolve to "not found".
-  if (error || !data) return null;
-  const website = data as unknown as PublicWebsite;
-  if (HIDDEN_WEBSITE_STATUSES.has(website.status)) return null;
-  return website;
+  const row = await fetchPublishedPageRow(websiteId, null);
+  return row ? toWebsite(row) : null;
 }
 
 export async function getPublishedPage(websiteId: string, slug: string): Promise<PublicPage | null> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from('web_pages')
-    .select(PAGE_COLUMNS)
-    .eq('website_id', websiteId)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as unknown as PublicPage;
+  const row = await fetchPublishedPageRow(websiteId, slug);
+  return row ? toPage(row) : null;
 }
 
 /**
  * Picks the homepage among a website's published pages: a page whose type is
  * 'home', else slug 'home' / 'index' / '', else the oldest published page.
+ * (Selection happens inside the get_published_page RPC.)
  */
 export async function getPublishedHomepage(websiteId: string): Promise<PublicPage | null> {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from('web_pages')
-    .select(PAGE_COLUMNS)
-    .eq('website_id', websiteId)
-    .eq('status', 'published')
-    .order('created_at', { ascending: true })
-    .limit(100);
-
-  if (error || !data || data.length === 0) return null;
-  const pages = data as unknown as PublicPage[];
-
-  const byType = pages.find((p) => p.type === 'home');
-  if (byType) return byType;
-  for (const slug of HOMEPAGE_SLUGS) {
-    const match = pages.find((p) => p.slug === slug);
-    if (match) return match;
-  }
-  return pages[0];
+  const row = await fetchPublishedPageRow(websiteId, null);
+  return row ? toPage(row) : null;
 }
 
 /** Extracts the sections array from web_pages.content, tolerating bad data. */
