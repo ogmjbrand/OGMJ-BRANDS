@@ -8,6 +8,7 @@
 
 import type { DocumentNode, DocumentOperation, DocumentRoot, OperationHistory, OperationHistoryEntry } from './types';
 import { DocumentOperationError, findNode, findParent, getNodeProp, insertNode, moveNode, removeNode, setNodeProp, updateNode } from './tree';
+import { isSafeIdentifier, safeObjectLookup } from './security';
 
 export { DocumentOperationError };
 
@@ -59,6 +60,13 @@ export function invert(document: DocumentRoot, operation: DocumentOperation): Do
       // undefined (not a cast to string) when no variant was previously applied -- see note above.
       return { op: 'applyVariant', nodeId: operation.nodeId, variantId: node.variantId };
     }
+
+    case 'upsertAsset':
+      // Prior value (or undefined if it didn't exist) -- same "undefined
+      // means absent, not an empty placeholder" convention as setSlotContent/applyVariant above.
+      // safeObjectLookup (not a raw `document.assets[id]`) so an unsafe id
+      // can never resolve to Object.prototype here either.
+      return { op: 'upsertAsset', assetId: operation.assetId, asset: safeObjectLookup(document.assets, operation.assetId) };
 
     default: {
       const exhaustive: never = operation;
@@ -135,6 +143,22 @@ export function applyOperation(
         },
         inverse,
       };
+
+    case 'upsertAsset': {
+      // SECURITY: assetId is a document-supplied key written into a plain
+      // object -- __proto__/constructor/prototype must never reach a spread
+      // or delete on document.assets (see safeObjectLookup's doc comment).
+      if (!isSafeIdentifier(operation.assetId)) {
+        throw new DocumentOperationError(`upsertAsset: "${operation.assetId}" is not a safe asset id`);
+      }
+      const nextAssets = { ...document.assets };
+      if (operation.asset === undefined) {
+        delete nextAssets[operation.assetId];
+      } else {
+        nextAssets[operation.assetId] = operation.asset;
+      }
+      return { document: { ...document, assets: nextAssets }, inverse };
+    }
 
     default: {
       const exhaustive: never = operation;

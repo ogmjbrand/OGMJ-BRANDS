@@ -13,10 +13,13 @@
  * plain `StyleValue<T>` (background/color/borderRadius) aren't responsive
  * in the schema, so they're edited as one value regardless of viewport.
  */
-import { findNode, type DocumentNode, type NodeId } from '@/lib/document-model';
+import { useEffect, useRef, useState } from 'react';
+import { findNode, type DocumentNode } from '@/lib/document-model';
 import { readResponsive, writeResponsive } from '@/lib/editor/responsiveValue';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { VIEWPORTS } from '@/lib/editor/useDocumentEditor';
+import { AssetPicker } from './AssetPicker';
+import { freshNodeId } from '@/lib/editor/createDefaultNode';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -30,11 +33,51 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputClass =
   'w-full rounded-md border border-[#D4AF37]/20 bg-[#121212] px-2.5 py-1.5 text-sm text-[#F0F0F0] outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/40';
 
+/**
+ * Commits on blur (and Enter, for single-line fields) rather than on every
+ * keystroke -- dispatching an `updateNodeProps` operation per character
+ * would flood undo history with one entry per keystroke instead of one
+ * coherent edit. The local draft resyncs from the external `value` when it
+ * changes while the field is NOT focused (e.g. after an undo), so this
+ * never shows stale text, but never clobbers what's mid-typing either.
+ */
 function TextField({ value, onChange, textarea }: { value: string; onChange: (v: string) => void; textarea?: boolean }) {
-  if (textarea) {
-    return <textarea className={inputClass} rows={3} value={value} onChange={(e) => onChange(e.target.value)} />;
+  const [draft, setDraft] = useState(value);
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setDraft(value);
+  }, [value]);
+
+  function commit() {
+    if (draft !== value) onChange(draft);
   }
-  return <input className={inputClass} type="text" value={value} onChange={(e) => onChange(e.target.value)} />;
+
+  const shared = {
+    className: inputClass,
+    value: draft,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(e.target.value),
+    onFocus: () => {
+      focused.current = true;
+    },
+    onBlur: () => {
+      focused.current = false;
+      commit();
+    },
+  };
+
+  if (textarea) {
+    return <textarea rows={3} {...shared} />;
+  }
+  return (
+    <input
+      type="text"
+      {...shared}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+      }}
+    />
+  );
 }
 
 function SelectField({ value, options, onChange }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void }) {
@@ -97,7 +140,7 @@ export function Inspector({ editor }: { editor: DocumentEditor }) {
         </div>
       </div>
 
-      <KindFields node={node} setProp={setProp} />
+      <KindFields node={node} setProp={setProp} editor={editor} />
 
       <div className="space-y-3 border-t border-white/5 pt-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[#D4AF37]/80">Layout &amp; Style</h3>
@@ -144,7 +187,15 @@ export function Inspector({ editor }: { editor: DocumentEditor }) {
   );
 }
 
-function KindFields({ node, setProp }: { node: DocumentNode; setProp: (path: string[], value: unknown) => void }) {
+function KindFields({
+  node,
+  setProp,
+  editor,
+}: {
+  node: DocumentNode;
+  setProp: (path: string[], value: unknown) => void;
+  editor: DocumentEditor;
+}) {
   switch (node.kind) {
     case 'heading':
       return (
@@ -189,13 +240,35 @@ function KindFields({ node, setProp }: { node: DocumentNode; setProp: (path: str
           </Field>
         </div>
       );
-    case 'image':
+    case 'image': {
+      const currentAsset = node.assetRef ? editor.document.assets[node.assetRef] : undefined;
       return (
         <div className="space-y-3">
-          <p className="rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5 text-xs text-[#9a9a9a]">
-            Changing the image source isn&apos;t available in this stage of the editor yet -- you can still move, resize and
-            restyle this image, and edit its caption below.
-          </p>
+          <Field label="Image">
+            <AssetPicker
+              assets={editor.document.assets}
+              kindFilter="image"
+              selectedAssetId={node.assetRef}
+              onSelect={(assetId) => setProp(['assetRef'], assetId)}
+              onAddByUrl={(url, altText) => {
+                // Replacing: reuse the SAME assetRef id the node already has
+                // (this is what makes "add by URL" double as "replace image"
+                // when a node already points at an asset); otherwise mint a
+                // fresh one and point the node at it.
+                const assetId = node.assetRef || freshNodeId('asset');
+                editor.apply({ op: 'upsertAsset', assetId, asset: { id: assetId, kind: 'image', url, altText: altText || undefined } });
+                if (assetId !== node.assetRef) setProp(['assetRef'], assetId);
+              }}
+            />
+          </Field>
+          {currentAsset && (
+            <Field label="Alt text">
+              <TextField
+                value={currentAsset.altText ?? ''}
+                onChange={(v) => editor.apply({ op: 'upsertAsset', assetId: currentAsset.id, asset: { ...currentAsset, altText: v || undefined } })}
+              />
+            </Field>
+          )}
           <Field label="Caption">
             <TextField value={node.caption ?? ''} onChange={(v) => setProp(['caption'], v || undefined)} />
           </Field>
@@ -211,6 +284,7 @@ function KindFields({ node, setProp }: { node: DocumentNode; setProp: (path: str
           </Field>
         </div>
       );
+    }
     case 'video':
       return (
         <div className="space-y-3">
