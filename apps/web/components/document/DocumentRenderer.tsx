@@ -22,6 +22,7 @@ import type {
   AssetId,
   AssetRef,
   ButtonNode,
+  ComponentId,
   ComponentInstanceNode,
   ContainerNode,
   CustomNode,
@@ -64,6 +65,13 @@ interface RenderContext {
   cssRules: string[];
   /** Dedupes rules between the CSS-collection pre-pass and the actual JSX render pass. */
   emittedRuleKeys: Set<string>;
+  /**
+   * componentInstance nodes (by object identity) whose expansion was found
+   * to be cyclic by `markCyclicComponentInstances` -- see that function's
+   * comment for why this has to be a pre-computed set consulted later,
+   * rather than a stack pushed/popped live during the JSX render pass.
+   */
+  cyclicInstances: Set<ComponentInstanceNode>;
 }
 
 // ================================
@@ -239,8 +247,55 @@ function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
   }
   if (node.kind === 'componentInstance') {
     // Same safe lookup as ComponentInstanceBlock below -- see its comment.
+    // SECURITY: never expand a cyclic instance here either -- see
+    // markCyclicComponentInstances, which has already run by this point.
+    if (ctx.cyclicInstances.has(node)) return;
     const definition = safeObjectLookup(ctx.document.components, node.componentId);
     if (definition) collectCssRules(substituteSlots(definition.template, node.slotContent), ctx);
+  }
+}
+
+/**
+ * SECURITY: a componentInstance's `componentId` is just a string reference
+ * into `document.components` -- nothing in schema.ts walks that reference
+ * graph for cycles, so a structurally small, schema-VALID document can still
+ * describe infinite expansion (A's template contains an instance of A, or
+ * A -> B -> A, or a longer cycle). `checkDocumentLimits` cannot catch this
+ * either: it measures each component template's own static shape, never the
+ * expansion graph formed by componentId references between templates.
+ *
+ * This must run as a single eager, non-JSX, plain-recursion walk -- same
+ * reasoning as `collectCssRules` above: JSX element creation is lazy, so a
+ * push-before/pop-after-return guard inside the JSX `ComponentInstanceBlock`
+ * component would always pop before React ever walks into the (lazy) child
+ * tree it just returned, making live stack tracking there a no-op. Instead,
+ * this walk resolves the full expansion ahead of time and records which
+ * SPECIFIC componentInstance node objects are cyclic (by identity, since the
+ * same component can be legitimately instantiated more than once in
+ * unrelated branches -- only a repeat along the SAME ancestor chain is a
+ * cycle). The later, lazy JSX pass then just consults that pre-computed set.
+ *
+ * `chain` is the set of component ids currently being expanded along the
+ * current root-to-node path; it is restored (an id removed) after each
+ * recursive call returns, so sibling/cousin branches don't contaminate each
+ * other, while true ancestor repeats are still caught regardless of length.
+ */
+function markCyclicComponentInstances(node: DocumentNode, ctx: RenderContext, chain: Set<ComponentId>): void {
+  if (node.kind === 'componentInstance') {
+    const definition = safeObjectLookup(ctx.document.components, node.componentId);
+    if (!definition) return; // missing component is handled separately at render time, not a cycle
+    if (chain.has(definition.id)) {
+      ctx.cyclicInstances.add(node);
+      return; // do not recurse further into a cyclic branch
+    }
+    chain.add(definition.id);
+    markCyclicComponentInstances(substituteSlots(definition.template, node.slotContent), ctx, chain);
+    chain.delete(definition.id);
+    return;
+  }
+  const children = getChildren(node);
+  if (children) {
+    for (const child of children) markCyclicComponentInstances(child, ctx, chain);
   }
 }
 
@@ -379,6 +434,12 @@ function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ct
   // undefined and crash the .variants.find() call below.
   const definition = safeObjectLookup(ctx.document.components, node.componentId);
   if (!definition) return <MissingComponentPlaceholder node={node} />;
+  // SECURITY: a self- or mutually-referencing component graph is flagged by
+  // markCyclicComponentInstances before this JSX pass ever runs (see its
+  // comment for why that has to happen eagerly, ahead of time, rather than
+  // via a stack tracked live here) -- never expand it, or this recurses
+  // without bound and crashes the render.
+  if (ctx.cyclicInstances.has(node)) return <CyclicComponentPlaceholder node={node} />;
   const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
   // Variant/instance propOverrides are resolved against propSchema defaults in a
   // future editor-facing prop-binding layer; Phase 1 establishes the shape and
@@ -395,6 +456,13 @@ function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ct
 function MissingComponentPlaceholder({ node }: { node: ComponentInstanceNode }) {
   return (
     <div data-node={node.id} data-ogmj-missing-component={node.componentId} style={{ display: 'none' }} />
+  );
+}
+
+/** Inert fallback for a componentInstance whose expansion would be cyclic (self- or mutually-referencing). */
+function CyclicComponentPlaceholder({ node }: { node: ComponentInstanceNode }) {
+  return (
+    <div data-node={node.id} data-ogmj-cyclic-component={node.componentId} style={{ display: 'none' }} />
   );
 }
 
@@ -471,7 +539,11 @@ export interface DocumentRendererProps {
  * validating the document before rendering it.
  */
 export function DocumentRenderer({ document, tokenSet }: DocumentRendererProps) {
-  const ctx: RenderContext = { document, tokenSet, cssRules: [], emittedRuleKeys: new Set() };
+  const ctx: RenderContext = { document, tokenSet, cssRules: [], emittedRuleKeys: new Set(), cyclicInstances: new Set() };
+  // Must run before collectCssRules and before the JSX pass -- both consult
+  // ctx.cyclicInstances, and neither can afford to discover a cycle lazily
+  // mid-walk (see markCyclicComponentInstances' comment for why).
+  markCyclicComponentInstances(document.root, ctx, new Set());
   // JSX element creation is lazy, so collect every node's CSS rules with a
   // plain tree walk *before* building the <style> tag's content; otherwise
   // the <style> tag would be built from an empty ctx.cssRules (see

@@ -162,6 +162,134 @@ describe('DocumentRenderer', () => {
     expect(render(document)).toContain('data-ogmj-missing-component="does-not-exist"');
   });
 
+  describe('component-instance cycle safety', () => {
+    // SECURITY: componentId is just a string reference -- nothing in
+    // schema.ts walks the component graph for cycles, so each document
+    // below is structurally small and schema-shape-valid, yet would expand
+    // infinitely if the renderer naively followed every componentId. See
+    // markCyclicComponentInstances in DocumentRenderer.tsx.
+
+    it('renders a safe inert placeholder, without throwing, for a DIRECT self-reference (A -> A)', () => {
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          compA: {
+            id: 'compA',
+            name: 'Self-referencing',
+            propSchema: [],
+            slots: [],
+            variants: [],
+            template: { id: 'inner', kind: 'componentInstance', componentId: 'compA' },
+          },
+        },
+        assets: {},
+      };
+      expect(() => render(document)).not.toThrow();
+      const html = render(document);
+      expect(html).toContain('data-ogmj-cyclic-component="compA"');
+    });
+
+    it('renders a safe inert placeholder, without throwing, for an INDIRECT two-component cycle (A -> B -> A)', () => {
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          compA: {
+            id: 'compA', name: 'A', propSchema: [], slots: [], variants: [],
+            template: { id: 'a-inner', kind: 'componentInstance', componentId: 'compB' },
+          },
+          compB: {
+            id: 'compB', name: 'B', propSchema: [], slots: [], variants: [],
+            template: { id: 'b-inner', kind: 'componentInstance', componentId: 'compA' },
+          },
+        },
+        assets: {},
+      };
+      expect(() => render(document)).not.toThrow();
+      const html = render(document);
+      // compB's own template is the one that tries to re-enter compA, which
+      // is already on the ancestor chain -- that re-entry is what's flagged.
+      expect(html).toContain('data-ogmj-cyclic-component="compA"');
+    });
+
+    it('renders a safe inert placeholder, without throwing, for a LONGER cycle (A -> B -> C -> A)', () => {
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          compA: {
+            id: 'compA', name: 'A', propSchema: [], slots: [], variants: [],
+            template: { id: 'a-inner', kind: 'componentInstance', componentId: 'compB' },
+          },
+          compB: {
+            id: 'compB', name: 'B', propSchema: [], slots: [], variants: [],
+            template: { id: 'b-inner', kind: 'componentInstance', componentId: 'compC' },
+          },
+          compC: {
+            id: 'compC', name: 'C', propSchema: [], slots: [], variants: [],
+            template: { id: 'c-inner', kind: 'componentInstance', componentId: 'compA' },
+          },
+        },
+        assets: {},
+      };
+      expect(() => render(document)).not.toThrow();
+      const html = render(document);
+      expect(html).toContain('data-ogmj-cyclic-component="compA"');
+    });
+
+    it('preserves a LEGITIMATE (non-cyclic) nested component instance: one component whose template instantiates a different component', () => {
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'outer' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          outer: {
+            id: 'outer', name: 'Outer', propSchema: [], slots: [], variants: [],
+            template: { id: 'outer-inner', kind: 'componentInstance', componentId: 'inner' },
+          },
+          inner: {
+            id: 'inner', name: 'Inner', propSchema: [], slots: [], variants: [],
+            template: { id: 'inner-text', kind: 'text', text: 'Nested content' },
+          },
+        },
+        assets: {},
+      };
+      const html = render(document);
+      expect(html).toContain('Nested content');
+      expect(html).toContain('data-component="outer"');
+      expect(html).toContain('data-component="inner"');
+      expect(html).not.toContain('data-ogmj-cyclic-component');
+    });
+
+    it('preserves the SAME (non-cyclic) component legitimately instantiated twice in unrelated branches', () => {
+      const document: DocumentRoot = {
+        root: {
+          id: 'root', kind: 'root',
+          children: [
+            { id: 'instance-1', kind: 'componentInstance', componentId: 'badge' },
+            { id: 'instance-2', kind: 'componentInstance', componentId: 'badge' },
+          ],
+        },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          badge: {
+            id: 'badge', name: 'Badge', propSchema: [], slots: [], variants: [],
+            template: { id: 'badge-text', kind: 'text', text: 'New' },
+          },
+        },
+        assets: {},
+      };
+      const html = render(document);
+      expect(html).not.toContain('data-ogmj-cyclic-component');
+      expect((html.match(/>New</g) ?? []).length).toBe(2);
+    });
+  });
+
   it('renders a 3D scene as a static poster placeholder, never a WebGL canvas', () => {
     const document: DocumentRoot = {
       root: {

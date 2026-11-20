@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DocumentRenderer } from '@/components/document/DocumentRenderer';
 import { validateDocument } from '@/lib/document-model/schema';
 import { DEFAULT_BREAKPOINTS, DEFAULT_TOKEN_SET } from '@/lib/document-model/tokens';
-import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT } from '@/lib/document-model/security';
+import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT, checkDocumentLimits } from '@/lib/document-model/security';
 import type { DocumentRoot } from '@/lib/document-model/types';
 
 function emptyDoc(): DocumentRoot {
@@ -59,6 +59,24 @@ describe('URL security', () => {
       doc.assets['asset-1'] = { id: 'asset-1', kind: 'image', url };
       const html = render(doc);
       expect(html).not.toContain('<img');
+    });
+
+    it(`rejects unsafe VIDEO asset url at schema validation time: ${url}`, () => {
+      const doc = emptyDoc();
+      doc.root.children = [{ id: 'vid', kind: 'video', assetRef: 'asset-1' }];
+      doc.assets['asset-1'] = { id: 'asset-1', kind: 'video', url };
+      expect(validateDocument(doc).success).toBe(false);
+    });
+
+    it(`never renders a <video> element for an unsafe asset url even if validation was skipped: ${url}`, () => {
+      const doc = emptyDoc();
+      doc.root.children = [{ id: 'vid', kind: 'video', assetRef: 'asset-1' }];
+      doc.assets['asset-1'] = { id: 'asset-1', kind: 'video', url };
+      const html = render(doc);
+      expect(html).not.toContain('<video');
+      expect(html.toLowerCase()).not.toContain('javascript:');
+      expect(html.toLowerCase()).not.toContain('vbscript:');
+      expect(html).not.toContain('data:text/html');
     });
   }
 
@@ -246,5 +264,42 @@ describe('document size and recursion limits', () => {
     const doc = emptyDoc();
     doc.root.children = [node];
     expect(validateDocument(doc).success).toBe(true);
+  });
+
+  it('checkDocumentLimits reports "malformed" instead of throwing when the input cannot be JSON-serialized (e.g. a circular reference)', () => {
+    const circular: Record<string, unknown> = { root: { id: 'root', kind: 'root', children: [] } };
+    (circular.root as Record<string, unknown>).selfRef = circular; // JSON.stringify throws TypeError on this
+    let result: ReturnType<typeof checkDocumentLimits>;
+    expect(() => {
+      result = checkDocumentLimits(circular);
+    }).not.toThrow();
+    expect(result!).not.toBeNull();
+    expect(result!.kind).toBe('malformed');
+  });
+});
+
+describe('component-instance graph cycles', () => {
+  // SECURITY: componentId is just a string reference between a
+  // componentInstance node and document.components -- schema.ts validates
+  // each node and each component template's own SHAPE, but does not walk
+  // that reference graph for cycles (doing so would mean re-deriving the
+  // same expansion logic DocumentRenderer already owns, in a second place).
+  // This is a deliberate choice, not an oversight: the renderer is the
+  // enforcement boundary for this specific risk (see
+  // markCyclicComponentInstances in DocumentRenderer.tsx), consistent with
+  // "do not rely exclusively on document validation". This test documents
+  // that current, intentional boundary so it can't silently drift.
+  it('a structurally valid but cyclic component graph currently PASSES schema validation -- the renderer, not the schema, is what must stay safe against it', () => {
+    const doc = emptyDoc();
+    doc.root.children = [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }];
+    doc.components['compA'] = {
+      id: 'compA', name: 'Self-referencing', propSchema: [], slots: [], variants: [],
+      template: { id: 'inner', kind: 'componentInstance', componentId: 'compA' },
+    };
+    expect(validateDocument(doc).success).toBe(true);
+    // And, per the dedicated DocumentRenderer cycle-safety tests, rendering
+    // this same document does not crash and falls back to an inert placeholder.
+    expect(() => render(doc)).not.toThrow();
+    expect(render(doc)).toContain('data-ogmj-cyclic-component="compA"');
   });
 });

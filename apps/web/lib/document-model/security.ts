@@ -144,10 +144,19 @@ export function isSafeCssColor(value: unknown): boolean {
  * the patterns above — it is a last-resort rejection of the characters
  * that would let a mask value break out of its declaration or the
  * surrounding `<style>` block (quotes, braces, semicolons, angle brackets,
- * comment delimiters, newlines). Prefer `isSafeCssColor`/`isSafeCssLength`
- * wherever a value can be fully structured instead of reaching for this.
+ * comment delimiters, newlines, backslashes). Prefer
+ * `isSafeCssColor`/`isSafeCssLength` wherever a value can be fully
+ * structured instead of reaching for this.
+ *
+ * Backslash is rejected even though a CSS hex-escape sequence (e.g. `\7d`
+ * for `}`) was empirically confirmed NOT to achieve a rule breakout in
+ * Chromium (escapes decode into a token's string content, not into a fresh
+ * structural separator token) -- it's excluded anyway so this blocklist
+ * doesn't depend on that parser-specific tokenization behavior holding
+ * across engines or future spec changes. No legitimate gradient/`url(...)`
+ * mask value needs a literal backslash.
  */
-const CSS_BREAKOUT_PATTERN = /["'{};<>\n\r]|\/\*|\*\//;
+const CSS_BREAKOUT_PATTERN = /["'{};<>\n\r\\]|\/\*|\*\//;
 
 export function isSafeCssFragment(value: unknown): boolean {
   return typeof value === 'string' && value.length <= 256 && !CSS_BREAKOUT_PATTERN.test(value);
