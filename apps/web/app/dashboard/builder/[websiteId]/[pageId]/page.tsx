@@ -19,6 +19,7 @@ import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
 import { Inspector } from '@/components/editor/Inspector';
 import { SettingsDrawer } from '@/components/editor/SettingsDrawer';
+import { AIAssistPanel } from '@/components/editor/AIAssistPanel';
 
 type LoadState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; page: EditablePage };
 
@@ -32,6 +33,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
   const [publishedStatus, setPublishedStatus] = useState<string | null>(null);
   const [websiteName, setWebsiteName] = useState(websiteId);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiAssistOpen, setAiAssistOpen] = useState(false);
 
   useEffect(() => {
     loadWebsiteName(websiteId).then(setWebsiteName);
@@ -121,6 +123,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         onSave={handleSave}
         onPublish={handlePublish}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenAIAssist={() => setAiAssistOpen(true)}
       />
 
       {(saveError || editor.lastError) && (
@@ -153,6 +156,8 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
           }}
         />
       )}
+
+      {aiAssistOpen && <AIAssistPanel editor={editor} websiteId={websiteId} onClose={() => setAiAssistOpen(false)} />}
     </div>
   );
 }

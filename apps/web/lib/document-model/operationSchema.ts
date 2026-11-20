@@ -17,6 +17,7 @@
 import { z } from 'zod';
 import { assetRefSchema, componentDefinitionSchema, documentNodeSchema, safeId } from './schema';
 import { MAX_NODE_COUNT, checkOperationNodeLimits } from './security';
+import type { DocumentOperation } from './types';
 
 const nodeIdSchema = safeId('node id');
 
@@ -34,7 +35,17 @@ export const documentOperationSchema = z.discriminatedUnion('op', [
   z.object({ op: z.literal('upsertComponent'), componentId: safeId('component id'), definition: componentDefinitionSchema.optional() }),
 ]);
 
-export type ValidatedDocumentOperation = z.infer<typeof documentOperationSchema>;
+/**
+ * `z.infer<typeof documentOperationSchema>` would type every embedded node
+ * field (e.g. insertNode's `node`) as `unknown`, since `documentNodeSchema`
+ * is deliberately `z.ZodType<unknown>` (see schema.ts) to describe a
+ * recursive shape Zod can't express as a precise static type on its own.
+ * The real `DocumentOperation` from types.ts IS the precise type for
+ * exactly this shape -- `validateOperation` casts to it below once the
+ * structure has actually been checked by Zod, rather than every caller
+ * (the AI panel, the route, tests) needing its own cast.
+ */
+export type ValidatedDocumentOperation = DocumentOperation;
 
 export interface OperationValidationResult {
   success: boolean;
@@ -73,5 +84,5 @@ export function validateOperation(rawOperation: unknown): OperationValidationRes
   if (!parsed.success) {
     return { success: false, errors: parsed.error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`) };
   }
-  return { success: true, operation: parsed.data, errors: [] };
+  return { success: true, operation: parsed.data as unknown as ValidatedDocumentOperation, errors: [] };
 }
