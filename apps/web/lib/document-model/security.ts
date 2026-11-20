@@ -246,6 +246,16 @@ export function checkDocumentLimits(rawDocument: unknown): DocumentLimitViolatio
       if (Array.isArray(children)) {
         for (const child of children) stack.push({ node: child, depth: depth + 1 });
       }
+      // A slot node's OWN defaultContent -- distinct from `children` above
+      // and from componentInstance's slotContent below. Without this, an
+      // attacker could nest pathological depth/count inside
+      // `{kind:'slot', defaultContent:[...]}` and reach Zod's unguarded
+      // recursive parse directly, which is exactly the stack-overflow this
+      // function exists to prevent before that parse ever runs.
+      const defaultContent = (node as { defaultContent?: unknown }).defaultContent;
+      if (Array.isArray(defaultContent)) {
+        for (const child of defaultContent) stack.push({ node: child, depth: depth + 1 });
+      }
       const slotContent = (node as { slotContent?: unknown }).slotContent;
       if (slotContent && typeof slotContent === 'object' && !Array.isArray(slotContent)) {
         for (const value of Object.values(slotContent as Record<string, unknown>)) {

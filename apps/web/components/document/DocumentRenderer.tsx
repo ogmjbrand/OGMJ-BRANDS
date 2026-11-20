@@ -234,9 +234,25 @@ function resolveAsset(assetRef: AssetId, ctx: RenderContext): AssetRef | undefin
  * `emittedRuleKeys` then makes the later, real render pass's calls to
  * `nodeInlineStyle` idempotent instead of duplicating every rule.
  */
+/**
+ * `getChildren` deliberately excludes a slot's `defaultContent` -- a slot's
+ * content comes from `setSlotContent`, never from `insertNode`, so it must
+ * stay out of the insert/move/remove container semantics `getChildren`
+ * serves for the tree-mutation helpers. CSS collection and cycle detection
+ * both need the FULL reachable tree regardless of that distinction: a
+ * styled node or a cyclic componentInstance reachable only through a
+ * slot's defaultContent (the common case for any preset/custom component
+ * whose list-shaped slot ships real default content, as opposed to an
+ * empty one filled only via an instance) still has to be found by both.
+ */
+function childrenForTraversal(node: DocumentNode): DocumentNode[] | undefined {
+  if (node.kind === 'slot') return node.defaultContent;
+  return getChildren(node);
+}
+
 function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
   nodeInlineStyle(node, ctx);
-  const children = getChildren(node);
+  const children = childrenForTraversal(node);
   if (children) {
     for (const child of children) collectCssRules(child, ctx);
   }
@@ -288,7 +304,7 @@ function markCyclicComponentInstances(node: DocumentNode, ctx: RenderContext, ch
     chain.delete(definition.id);
     return;
   }
-  const children = getChildren(node);
+  const children = childrenForTraversal(node);
   if (children) {
     for (const child of children) markCyclicComponentInstances(child, ctx, chain);
   }
@@ -460,17 +476,26 @@ function applyNodeOverride(node: DocumentNode, patch: Record<string, unknown>): 
  * that came from slot content too.
  */
 function applyTemplateOverrides(node: DocumentNode, overrides: Record<string, Record<string, unknown>>): DocumentNode {
-  // SECURITY/CORRECTNESS: never patch a componentInstance (or a slot, which
-  // should already be gone by the time overrides run). markCyclicComponentInstances
-  // tracks cyclic nodes by OBJECT IDENTITY, computed from the plain
-  // slot-substituted tree (no overrides applied). If an override here
-  // produced a NEW object for a nested componentInstance node (even via an
-  // otherwise-harmless allowlisted key), that fresh object would no longer
-  // match ctx.cyclicInstances' entry for it, silently defeating cycle
-  // protection for exactly the node a crafted document would most want to
-  // retarget. Overrides are for leaf/content nodes; reconfiguring a nested
-  // instance is what instantiating or editing it directly is for.
-  if (node.kind === 'componentInstance' || node.kind === 'slot') return node;
+  // SECURITY/CORRECTNESS: never patch a componentInstance's OWN fields.
+  // markCyclicComponentInstances tracks cyclic nodes by OBJECT IDENTITY,
+  // computed from the plain slot-substituted tree (no overrides applied).
+  // If an override here produced a NEW object for a nested
+  // componentInstance node (even via an otherwise-harmless allowlisted
+  // key), that fresh object would no longer match ctx.cyclicInstances'
+  // entry for it, silently defeating cycle protection for exactly the node
+  // a crafted document would most want to retarget. Overrides are for
+  // leaf/content nodes; reconfiguring a nested instance is what
+  // instantiating or editing it directly is for.
+  if (node.kind === 'componentInstance') return node;
+  // An UNFILLED slot (substituteSlots leaves it as a literal slot node when
+  // no slotContent was supplied -- see its own comment) is never itself
+  // patched either, but its defaultContent still needs walking: a preset's
+  // list-shaped slot commonly ships real styled default content, and an
+  // override must still be able to reach a node inside it.
+  if (node.kind === 'slot') {
+    if (!node.defaultContent) return node;
+    return { ...node, defaultContent: node.defaultContent.map((c) => applyTemplateOverrides(c, overrides)) };
+  }
   const patch = isSafeIdentifier(node.id) ? safeObjectLookup(overrides, node.id) : undefined;
   const patched = patch ? applyNodeOverride(node, patch) : node;
   const children = getChildren(patched);
@@ -528,8 +553,15 @@ function resolveComponentInstance(definition: { template: DocumentNode; variants
  * nesting composes without every level needing to rewrite its children.
  */
 function namespaceLeafIds(node: DocumentNode, instancePrefix: string): DocumentNode {
-  if (node.kind === 'componentInstance' || node.kind === 'slot') return node;
+  if (node.kind === 'componentInstance') return node;
   if (!isSafeIdentifier(instancePrefix)) return node; // fail safe: render unprefixed rather than emit an unvalidated id
+  // An unfilled slot keeps its own id (it carries no CSS of its own -- see
+  // SlotBlock, which renders only its children) but its defaultContent still
+  // needs namespacing, for the same reason applyTemplateOverrides walks it.
+  if (node.kind === 'slot') {
+    if (!node.defaultContent) return node;
+    return { ...node, defaultContent: node.defaultContent.map((c) => namespaceLeafIds(c, instancePrefix)) };
+  }
   const renamed = isSafeIdentifier(node.id) ? { ...node, id: `${instancePrefix}__${node.id}` } : node;
   const children = getChildren(renamed);
   if (!children) return renamed;

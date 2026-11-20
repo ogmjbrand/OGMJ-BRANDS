@@ -150,6 +150,33 @@ describe('DocumentRenderer', () => {
     expect(render(document)).toContain('Default copy');
   });
 
+  it('collects CSS rules for styled nodes inside a slot\'s defaultContent, not just inside normal children', () => {
+    // Regression: collectCssRules originally walked only getChildren(node),
+    // which excludes a slot's defaultContent -- a styled default-content
+    // node would be rendered referencing a CSS variable the <style> block
+    // never actually defined, so its style silently never applied.
+    const document: DocumentRoot = {
+      root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'callout' }] },
+      tokenSetId: DEFAULT_TOKEN_SET.id,
+      breakpoints: DEFAULT_BREAKPOINTS,
+      components: {
+        callout: {
+          id: 'callout', name: 'Callout', propSchema: [], slots: ['body'], variants: [],
+          template: {
+            id: 'tpl', kind: 'container',
+            children: [{
+              id: 'tpl-slot', kind: 'slot', slotName: 'body',
+              defaultContent: [{ id: 'default-text', kind: 'text', text: 'Default copy', style: { background: '#112233' } }],
+            }],
+          },
+        },
+      },
+      assets: {},
+    };
+    const html = render(document);
+    expect(html).toMatch(/--n-instance-1__default-text-background:#112233/);
+  });
+
   it('renders an invisible placeholder (never throws) for a componentInstance referencing a missing component', () => {
     const document: DocumentRoot = {
       root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'does-not-exist' }] },
@@ -263,6 +290,34 @@ describe('DocumentRenderer', () => {
       expect(html).toContain('data-component="outer"');
       expect(html).toContain('data-component="inner"');
       expect(html).not.toContain('data-ogmj-cyclic-component');
+    });
+
+    it('catches a cyclic componentInstance reachable only through a SLOT\'s defaultContent, not just through children', () => {
+      // Regression: markCyclicComponentInstances originally walked only
+      // getChildren(node), which returns undefined for a slot node --
+      // defaultContent was invisible to it, so a cycle hidden inside a
+      // slot's own default content would never be flagged and would
+      // recurse without bound at render time.
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          compA: {
+            id: 'compA', name: 'A', propSchema: [], slots: ['body'], variants: [],
+            template: {
+              id: 'tpl',
+              kind: 'slot',
+              slotName: 'body',
+              defaultContent: [{ id: 'inner', kind: 'componentInstance', componentId: 'compA' }],
+            },
+          },
+        },
+        assets: {},
+      };
+      expect(() => render(document)).not.toThrow();
+      const html = render(document);
+      expect(html).toContain('data-ogmj-cyclic-component="compA"');
     });
 
     it('preserves the SAME (non-cyclic) component legitimately instantiated twice in unrelated branches', () => {
