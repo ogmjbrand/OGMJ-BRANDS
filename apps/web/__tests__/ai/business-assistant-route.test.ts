@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 let currentUser: { id: string; email: string } | null = { id: 'user-1', email: 'user@example.com' };
 let membershipResult: { data: unknown; error: unknown } = { data: { role: 'owner' }, error: null };
 const insertedLogs: unknown[] = [];
+let insertShouldThrow: unknown = null;
 
 vi.mock('@/lib/auth.server', () => ({
   getCurrentUserServer: () => Promise.resolve(currentUser),
@@ -29,6 +30,7 @@ vi.mock('@/lib/supabase/server', () => ({
         if (table === 'ai_execution_logs') {
           return {
             async insert(row: unknown) {
+              if (insertShouldThrow) throw insertShouldThrow;
               insertedLogs.push(row);
               return { data: null, error: null };
             },
@@ -42,6 +44,7 @@ vi.mock('@/lib/supabase/server', () => ({
 let completeResult: unknown = { text: 'Here is my advice.', provider: 'anthropic', model: 'claude-sonnet-5-5', usage: { inputTokens: 10, outputTokens: 5 }, costUsd: 0.001 };
 let completeShouldThrow: Error | null = null;
 let rateLimitAllowed = true;
+let rateLimitShouldThrow: unknown = null;
 
 vi.mock('@/lib/ai/providers', async () => {
   const actual = await vi.importActual<typeof import('@/lib/ai/providers')>('@/lib/ai/providers');
@@ -59,12 +62,15 @@ vi.mock('@/lib/ai/providers', async () => {
 });
 
 vi.mock('@/lib/ai/rateLimit', () => ({
-  checkAndIncrementRateLimit: vi.fn(async () => ({
-    allowed: rateLimitAllowed,
-    limit: 100,
-    remaining: rateLimitAllowed ? 99 : 0,
-    resetAt: new Date('2026-01-01T01:00:00Z'),
-  })),
+  checkAndIncrementRateLimit: vi.fn(async () => {
+    if (rateLimitShouldThrow) throw rateLimitShouldThrow;
+    return {
+      allowed: rateLimitAllowed,
+      limit: 100,
+      remaining: rateLimitAllowed ? 99 : 0,
+      resetAt: new Date('2026-01-01T01:00:00Z'),
+    };
+  }),
 }));
 
 function makeRequest(body: Record<string, unknown>) {
@@ -80,7 +86,9 @@ describe('POST /api/ai/business-assistant', () => {
     completeResult = { text: 'Here is my advice.', provider: 'anthropic', model: 'claude-sonnet-5-5', usage: { inputTokens: 10, outputTokens: 5 }, costUsd: 0.001 };
     completeShouldThrow = null;
     rateLimitAllowed = true;
+    rateLimitShouldThrow = null;
     insertedLogs.length = 0;
+    insertShouldThrow = null;
   });
 
   it('returns a real AI response for an authorized, valid request', async () => {
@@ -146,5 +154,64 @@ describe('POST /api/ai/business-assistant', () => {
     const { POST } = await import('@/app/api/ai/business-assistant/route');
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(429);
+  });
+
+  describe('error logging never includes the raw error object, credentials, headers, or request content', () => {
+    it('a usage-logging failure on the SUCCESS path logs only a safe {name, message} summary -- never the raw thrown value -- and still returns the real AI success', async () => {
+      // Simulate an SDK-shaped error the way an HTTP client error might
+      // look: carries extra properties (here standing in for response
+      // headers / echoed request body) that must never reach the log.
+      const sensitiveLeak = Object.assign(new Error('insert failed: connection reset'), {
+        headers: { authorization: 'Bearer sk-should-never-be-logged' },
+        requestBody: { secret: 'should-never-be-logged-either' },
+      });
+      insertShouldThrow = sensitiveLeak;
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { POST } = await import('@/app/api/ai/business-assistant/route');
+      const res = await POST(makeRequest(validBody));
+      const body = await res.json();
+
+      // The logging failure is non-fatal: the user still gets the real AI success.
+      expect(res.status).toBe(200);
+      expect(body.success).toBe(true);
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const loggedArgs = consoleErrorSpy.mock.calls.flat();
+      const loggedText = JSON.stringify(loggedArgs);
+      expect(loggedText).not.toContain('sk-should-never-be-logged');
+      expect(loggedText).not.toContain('should-never-be-logged-either');
+      expect(loggedText).not.toContain('authorization');
+      // Exactly the safe summary shape -- never the raw Error object itself.
+      expect(loggedArgs).toContainEqual({ name: 'Error', message: 'insert failed: connection reset' });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('an unexpected (non-AIProviderError) failure anywhere in the handler logs only a safe {name, message} summary, never the raw object, and still returns a generic 500', async () => {
+      const sensitiveLeak = Object.assign(new Error('unexpected downstream failure'), {
+        headers: { authorization: 'Bearer sk-should-never-be-logged-2' },
+        requestBody: { secret: 'also-should-never-be-logged' },
+      });
+      rateLimitShouldThrow = sensitiveLeak;
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { POST } = await import('@/app/api/ai/business-assistant/route');
+      const res = await POST(makeRequest(validBody));
+      const body = await res.json();
+
+      expect(res.status).toBe(500);
+      expect(body.success).toBe(false);
+      expect(body.error).toBe('Internal server error'); // never the raw/internal message leaked to the client either
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const loggedText = JSON.stringify(consoleErrorSpy.mock.calls.flat());
+      expect(loggedText).not.toContain('sk-should-never-be-logged-2');
+      expect(loggedText).not.toContain('also-should-never-be-logged');
+      expect(loggedText).not.toContain('authorization');
+      expect(loggedText).toContain('unexpected downstream failure'); // useful diagnostic info is preserved
+
+      consoleErrorSpy.mockRestore();
+    });
   });
 });

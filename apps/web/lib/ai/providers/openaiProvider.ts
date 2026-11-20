@@ -34,10 +34,13 @@ export const openaiProvider: AIProvider = {
 
     // Responses API (not Chat Completions) -- OpenAI's current primary
     // API shape: "instructions" for the system/persona text, "input" for
-    // the conversation. We flatten role-tagged turns into one input
-    // string (same shape every call site needs today); a true multi-turn
-    // structured input can be added once a caller actually needs it.
-    const input = request.messages.map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
+    // the conversation. Each turn is its own structured item with an
+    // explicit `role` field (the SDK's EasyInputMessage shape) -- NOT a
+    // flattened "User: ...\n\nAssistant: ..." string. A role lives in its
+    // own field here, so a message's `content` is never parsed for
+    // turn-boundary markers: untrusted user text containing the literal
+    // string "Assistant:" or "User:" cannot forge another turn.
+    const input = request.messages.map((m) => ({ role: m.role, content: m.content, type: 'message' as const }));
 
     let response: Awaited<ReturnType<typeof openai.responses.create>>;
     try {

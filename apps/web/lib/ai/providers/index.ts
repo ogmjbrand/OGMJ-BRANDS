@@ -22,6 +22,21 @@ export function getConfiguredProviders(): AIProviderId[] {
  * typed `AIProviderError` (never a generic Error) when the requested
  * provider doesn't exist or isn't configured, so callers get a single
  * error shape to handle regardless of which provider was involved.
+ *
+ * NO AUTOMATIC FAILOVER: this resolves to exactly ONE provider for the
+ * call, picked once, before any request is sent. If that provider then
+ * fails mid-request (a runtime error from `.complete()` -- an outage,
+ * a timeout, a rate limit on the SDK side, etc.), there is no retry
+ * against the other configured provider within the same call; the
+ * error simply propagates to the caller as a classified
+ * `AIProviderError`. "Supports OpenAI and Anthropic" means callers
+ * aren't hard-wired to one SDK and can request either explicitly (or
+ * take this function's default) -- it does not mean a request is
+ * silently retried on a second provider when the first one errors.
+ * Automatic cross-provider failover, if wanted, is separate follow-up
+ * work (it has its own design questions: resending a request to a
+ * second paid provider after the first failed has cost and
+ * idempotency implications of its own).
  */
 export function getProvider(id?: AIProviderId): AIProvider {
   if (id) {

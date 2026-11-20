@@ -35,6 +35,23 @@ Help the user with their business -- strategy, marketing, content, operations --
 
 Be direct and useful: lead with the recommendation, then the reasoning. No filler, no fake enthusiasm.`;
 
+/**
+ * Formats an unknown thrown value for a log line WITHOUT ever including
+ * the raw error object. Some error types that can reach this route's
+ * catch blocks (HTTP client errors from either SDK, in particular) can
+ * carry response headers or echo request details as extra properties --
+ * never something this app wants verbatim in a log. Only a message and
+ * (for a real Error) its name are kept; that's enough to diagnose a
+ * failure while being provably free of credentials, headers, or raw
+ * request content.
+ */
+function safeErrorSummary(error: unknown): { name?: string; message: string } {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { message: typeof error === 'string' ? error : 'Non-Error value thrown' };
+}
+
 /** Classifies an AIProviderError into the right HTTP status -- the one place this mapping lives, so every failure path agrees. */
 function statusForProviderError(error: AIProviderError): number {
   switch (error.kind) {
@@ -113,7 +130,7 @@ export async function POST(request: NextRequest) {
         supabase,
         { businessId, userId: user.id, agentType: effectiveAgentType, prompt: message, systemPrompt: SYSTEM_PROMPT, executionTimeMs: Date.now() - start },
         result
-      ).catch((err) => console.error('ai_execution_logs insert failed (non-fatal):', err));
+      ).catch((err) => console.error('ai_execution_logs insert failed (non-fatal):', safeErrorSummary(err)));
 
       return NextResponse.json({
         success: true,
@@ -127,7 +144,7 @@ export async function POST(request: NextRequest) {
           { businessId, userId: user.id, agentType: effectiveAgentType, prompt: message, systemPrompt: SYSTEM_PROMPT, executionTimeMs },
           provider.id,
           error.message
-        ).catch((err) => console.error('ai_execution_logs insert failed (non-fatal):', err));
+        ).catch((err) => console.error('ai_execution_logs insert failed (non-fatal):', safeErrorSummary(err)));
 
         // NEVER fabricate a response here -- a provider failure is
         // reported as a failure, with the real classified status, not
@@ -137,7 +154,7 @@ export async function POST(request: NextRequest) {
       throw error;
     }
   } catch (error) {
-    console.error('OGMJ AI business-assistant error:', error);
+    console.error('OGMJ AI business-assistant error:', safeErrorSummary(error));
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

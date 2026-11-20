@@ -23,6 +23,12 @@
  * acceptable if this table were ever treated as a hard billing ledger --
  * it is not; `ai_execution_logs`/`cost_usd` is the source of truth for
  * cost.
+ *
+ * NOT BILLING-GRADE: to be explicit, this module is best-effort abuse
+ * prevention only. It must never be treated as, or presented as, an
+ * enforced billing/quota ledger -- under concurrent requests it can
+ * under-count (see above), and it is scoped per BUSINESS, not per
+ * user, so every active member of a business shares one limit/window.
  */
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 
