@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 import { getResendClient, isResendConfigured, RESEND_FROM_EMAIL } from '@/lib/email/resend';
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 
 interface StepResult {
   status: 'completed' | 'skipped' | 'failed';
@@ -62,6 +63,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const businessId = (workflow as any).business_id as string;
     const actions = ((workflow as any).actions as { type: string; label: string }[]) || [];
+
+    // Only runs that include an AI step count against AI usage.
+    if (actions.some((action) => action.type === 'generate_report')) {
+      const usageLimited = await enforceAIUsageLimit(businessId, 'ai:workflow');
+      if (usageLimited) return usageLimited;
+    }
 
     let contact: { id: string; email: string | null; first_name: string | null; last_name: string | null } | null = null;
     if (contactId) {

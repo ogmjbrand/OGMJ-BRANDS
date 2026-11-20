@@ -7,15 +7,15 @@ import PageTransition from '@/components/PageTransition'
 export const metadata: Metadata = {
   title: 'OGMJ BRANDS — Luxury Business OS',
   description: 'Premium global business operating system for brand launches, AI automation, CRM, and enterprise growth.',
-  metadataBase: new URL('https://ogmj-brands.com'),
+  metadataBase: new URL('https://ogmjbrands.com'),
   openGraph: {
     title: 'OGMJ BRANDS — Luxury Business OS',
     description: 'Premium global business operating system for brand launches, AI automation, CRM, and enterprise growth.',
     type: 'website',
-    url: 'https://ogmj-brands.com',
+    url: 'https://ogmjbrands.com',
     images: [
       {
-        url: 'https://ogmj-brands.com/og-image.png',
+        url: 'https://ogmjbrands.com/og-image.png',
         width: 1200,
         height: 630,
         alt: 'OGMJ BRANDS Luxury Business OS',

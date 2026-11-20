@@ -64,7 +64,7 @@ export default function ProductPreview() {
                   <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
                   <span className="h-3 w-3 rounded-full bg-green-500/80" />
                 </div>
-                <span className="text-xs text-slate-500">ogmj-brands.com/dashboard</span>
+                <span className="text-xs text-slate-500">ogmjbrands.com/dashboard</span>
               </div>
             </div>
 

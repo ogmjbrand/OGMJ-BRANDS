@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser();
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         : rating === 3
           ? 'This is a mixed review — acknowledge the good and the gap honestly, offer to make it right.'
           : 'This is a negative review — do not be defensive. Apologize sincerely, acknowledge the specific issue, and offer a concrete next step (contact info, resolution) without over-promising.';
+
+    const usageLimited = await enforceAIUsageLimit((review as any).business_id, 'ai:generate', 'review-response');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

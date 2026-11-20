@@ -430,3 +430,27 @@ export function getBlogPost(slug: string) {
   return BLOG_POSTS.find((p) => p.slug === slug)
 }
 
+
+/*
+ * ── Public proof: verification gate ────────────────────────────────────────
+ * Testimonials, team profiles and case studies are only shown publicly once
+ * the founder has confirmed they are real and approved for publication.
+ * The entries above are kept (not deleted) but stay hidden until their
+ * name/slug is added to the matching allow-list below.
+ */
+export const VERIFIED_TESTIMONIAL_NAMES: string[] = []
+export const VERIFIED_TEAM_NAMES: string[] = []
+/** Case studies with performance claims stay hidden until verified; insight articles are fine. */
+export const UNVERIFIED_BLOG_SLUGS = ['luma-ventures-case-study', 'verge-collective-launch', 'atlas-digital-ops']
+
+export function getPublicTestimonials() {
+  return TESTIMONIALS.filter((testimonial) => VERIFIED_TESTIMONIAL_NAMES.includes(testimonial.name))
+}
+
+export function getPublicTeam() {
+  return TEAM.filter((member) => VERIFIED_TEAM_NAMES.includes(member.name))
+}
+
+export function getPublicBlogPosts() {
+  return BLOG_POSTS.filter((post) => !UNVERIFIED_BLOG_SLUGS.includes(post.slug))
+}

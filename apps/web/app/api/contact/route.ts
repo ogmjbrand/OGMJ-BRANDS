@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createErrorResponse, createSuccessResponse } from '@/lib/utils/api'
 import { getResendClient, isResendConfigured, RESEND_FROM_EMAIL } from '@/lib/email/resend'
 import { SITE } from '@/lib/marketing/content'
+import { escapeHtml } from '@/lib/utils/html'
 
 // Reuses the address already shown on the marketing site as OGMJ's own
 // contact email, rather than inventing a new one. Override with
@@ -15,6 +16,14 @@ export async function POST(request: NextRequest) {
 
     if (!name || !email || !message) {
       return createErrorResponse('Name, email, and message are required', 400)
+    }
+
+    if (
+      typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string' ||
+      (company !== undefined && company !== null && typeof company !== 'string') ||
+      name.length > 200 || email.length > 254 || message.length > 5000 || (company?.length ?? 0) > 200
+    ) {
+      return createErrorResponse('Please check the form and try again', 400)
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -40,8 +49,9 @@ export async function POST(request: NextRequest) {
           from: RESEND_FROM_EMAIL,
           to: CONTACT_NOTIFICATION_EMAIL,
           replyTo: email,
-          subject: `New contact inquiry from ${name}${company ? ` (${company})` : ''}`,
-          html: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><p><strong>Company:</strong> ${company || 'N/A'}</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br/>')}</p>`,
+          subject: `New contact inquiry from ${name}${company ? ` (${company})` : ''}`.slice(0, 200),
+          // Form input is untrusted: escape it so it can't inject HTML or links into the email.
+          html: `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p><strong>Company:</strong> ${escapeHtml(company || 'N/A')}</p><p><strong>Message:</strong></p><p>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>`,
         })
       } catch (emailError) {
         console.error('Failed to send contact notification email:', emailError)

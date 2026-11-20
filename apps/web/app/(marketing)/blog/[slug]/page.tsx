@@ -2,14 +2,17 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { BLOG_POSTS, getBlogPost } from '@/lib/marketing/content'
+import { getBlogPost, getPublicBlogPosts, UNVERIFIED_BLOG_SLUGS } from '@/lib/marketing/content'
+
+// Only listed (public) posts exist; anything else is a real 404.
+export const dynamicParams = false
 
 export function generateStaticParams() {
-  return BLOG_POSTS.map((post) => ({ slug: post.slug }))
+  return getPublicBlogPosts().map((post) => ({ slug: post.slug }))
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const post = getBlogPost(params.slug)
+  const post = UNVERIFIED_BLOG_SLUGS.includes(params.slug) ? undefined : getBlogPost(params.slug)
   if (!post) return { title: 'Post Not Found' }
   return {
     title: `${post.title} — OGMJ BRANDS`,
@@ -37,7 +40,7 @@ const POST_CONTENT: Record<string, string[]> = {
     'Atlas Digital has since expanded into two new markets, using OGMJ\'s registration and compliance services to establish entities without hiring additional legal counsel.',
   ],
   'ai-automation-for-founders': [
-    'Most founders know they should automate — but few know where to start. After working with 200+ businesses, we\'ve identified the workflows that deliver the highest ROI in the first 30 days.',
+    'Most founders know they should automate — but few know where to start. From our work with founders, we\'ve identified the workflows that deliver the highest ROI in the first 30 days.',
     'Start with lead follow-up: configure an automated sequence that sends a personalized welcome email within 5 minutes of a new contact, followed by value-add touchpoints on days 2, 5, and 10. This alone typically recovers 15-25% of leads that would otherwise go cold.',
     'Next, automate invoice reminders. Set up a workflow that sends friendly payment reminders at 3 days before due, on due date, and 3 days after. Businesses using this workflow report 30% faster payment collection.',
     'Finally, build an onboarding sequence for new clients: automated welcome packets, milestone check-ins, and satisfaction surveys. This reduces churn and generates testimonials without manual effort.',
@@ -60,7 +63,7 @@ const POST_CONTENT: Record<string, string[]> = {
 }
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getBlogPost(params.slug)
+  const post = UNVERIFIED_BLOG_SLUGS.includes(params.slug) ? undefined : getBlogPost(params.slug)
   if (!post) notFound()
 
   const paragraphs = POST_CONTENT[params.slug] || [post.excerpt]
