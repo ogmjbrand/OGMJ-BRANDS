@@ -4,12 +4,20 @@ import { createClient } from '@supabase/supabase-js';
  * OGMJ BRANDS — Service-role Supabase client (server-only, trusted path)
  *
  * This client authenticates with the Supabase SERVICE ROLE key, which
- * bypasses Row Level Security entirely. It exists for exactly one
- * purpose right now: calling the payment-recording webhook RPCs
- * (record_paystack_webhook_charge, record_paystack_webhook_transaction_event,
- * record_flutterwave_webhook_charge, record_flutterwave_webhook_transaction_event)
- * from inside the Paystack/Flutterwave webhook routes, which have no
- * Supabase user session to authenticate as.
+ * bypasses Row Level Security entirely. Known legitimate uses:
+ *
+ * 1. Calling the payment-recording webhook RPCs
+ *    (record_paystack_webhook_charge, record_paystack_webhook_transaction_event,
+ *    record_flutterwave_webhook_charge, record_flutterwave_webhook_transaction_event)
+ *    from inside the Paystack/Flutterwave webhook routes, which have no
+ *    Supabase user session to authenticate as.
+ * 2. lib/ai/rateLimit.ts's business-scoped AI rate-limit counter
+ *    (`rate_limits` table): its RLS policy only allows an admin-role
+ *    SELECT and has no client-writable policy at all, by design (the
+ *    counter itself must be write-trusted, not user-writable). Only
+ *    ever called AFTER the request's caller has already been verified
+ *    (authenticated user + confirmed active business membership),
+ *    exactly like the webhook routes verify their signature first.
  *
  * SECURITY_FIX (C1): those RPCs were previously called using the public
  * anon-key client, which meant they had to be granted EXECUTE to the
