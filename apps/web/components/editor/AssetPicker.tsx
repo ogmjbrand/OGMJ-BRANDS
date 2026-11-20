@@ -74,9 +74,12 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, onSelect, onA
                 selectedAssetId === asset.id ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]' : 'border-[#D4AF37]/15 hover:border-[#D4AF37]/50'
               }`}
             >
-              {asset.kind === 'image' ? (
+              {asset.kind === 'image' && safeSrc(asset.url) ? (
+                // SECURITY (defense in depth): re-validate at render time,
+                // same as DocumentRenderer's own ImageBlock -- never trust
+                // that an asset reaching this list was already validated.
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={asset.url} alt={asset.altText ?? ''} className="h-full w-full object-cover" />
+                <img src={safeSrc(asset.url)} alt={asset.altText ?? ''} className="h-full w-full object-cover" />
               ) : (
                 <ImageOff className="h-5 w-5 text-[#6b6b6b]" />
               )}

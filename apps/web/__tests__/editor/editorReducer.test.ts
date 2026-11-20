@@ -74,4 +74,18 @@ describe('editorReducer', () => {
     expect(editorReducer(state, { type: 'undo' }).document).toBe(state.document);
     expect(editorReducer(state, { type: 'redo' }).document).toBe(state.document);
   });
+
+  it('upsertAsset flows through the reducer exactly like any other operation (dirty, undoable, redoable)', () => {
+    const state = initialEditorState(emptyDoc());
+    const asset = { id: 'asset-1', kind: 'image' as const, url: 'https://cdn.example.com/a.jpg' };
+    const afterAdd = editorReducer(state, { type: 'apply', operation: { op: 'upsertAsset', assetId: 'asset-1', asset } });
+    expect(afterAdd.document.assets['asset-1']).toEqual(asset);
+    expect(afterAdd.dirty).toBe(true);
+
+    const afterUndo = editorReducer(afterAdd, { type: 'undo' });
+    expect('asset-1' in afterUndo.document.assets).toBe(false);
+
+    const afterRedo = editorReducer(afterUndo, { type: 'redo' });
+    expect(afterRedo.document.assets['asset-1']).toEqual(asset);
+  });
 });

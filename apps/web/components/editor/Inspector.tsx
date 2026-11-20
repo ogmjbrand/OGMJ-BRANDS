@@ -14,7 +14,7 @@
  * in the schema, so they're edited as one value regardless of viewport.
  */
 import { useEffect, useRef, useState } from 'react';
-import { findNode, type DocumentNode } from '@/lib/document-model';
+import { findNode, safeObjectLookup, type DocumentNode } from '@/lib/document-model';
 import { readResponsive, writeResponsive } from '@/lib/editor/responsiveValue';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { VIEWPORTS } from '@/lib/editor/useDocumentEditor';
@@ -41,7 +41,7 @@ const inputClass =
  * changes while the field is NOT focused (e.g. after an undo), so this
  * never shows stale text, but never clobbers what's mid-typing either.
  */
-function TextField({ value, onChange, textarea }: { value: string; onChange: (v: string) => void; textarea?: boolean }) {
+export function TextField({ value, onChange, textarea }: { value: string; onChange: (v: string) => void; textarea?: boolean }) {
   const [draft, setDraft] = useState(value);
   const focused = useRef(false);
 
@@ -241,7 +241,10 @@ function KindFields({
         </div>
       );
     case 'image': {
-      const currentAsset = node.assetRef ? editor.document.assets[node.assetRef] : undefined;
+      // SECURITY: safeObjectLookup, not a raw bracket access -- assetRef is
+      // document-supplied data and must never resolve __proto__/constructor/
+      // prototype to real JS machinery (see security.ts's own doc comment).
+      const currentAsset = node.assetRef ? safeObjectLookup(editor.document.assets, node.assetRef) : undefined;
       return (
         <div className="space-y-3">
           <Field label="Image">

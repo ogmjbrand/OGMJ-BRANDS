@@ -42,6 +42,13 @@ export function EditorCanvas({ editor }: { editor: DocumentEditor }) {
   }, [rectFor, editor.selectedNodeId, editor.document]);
 
   function handleClick(e: React.MouseEvent) {
+    // SECURITY/CORRECTNESS: the rendered content includes real <a href>
+    // elements (ButtonBlock) with real, safeHref-validated-but-still
+    // author-chosen destinations, including target="_blank" for external
+    // links. Without this, clicking a link while editing would navigate
+    // the canvas (or open a new tab) instead of selecting it -- clicking
+    // inside your own editor must never leave it.
+    e.preventDefault();
     const target = e.target as HTMLElement;
     const nodeEl = target.closest('[data-node]') as HTMLElement | null;
     if (!nodeEl) {

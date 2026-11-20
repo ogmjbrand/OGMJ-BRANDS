@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, FileText, Copy, Trash2, Loader2 } from 'lucide-react';
 import { getPages, createPage, deletePage, type Page } from '@/lib/services/builder.service';
+import { slugify as baseSlugify } from '@/lib/utils/slug';
 
 interface PagesPanelProps {
   businessId: string;
@@ -40,19 +41,32 @@ export function PagesPanel({ businessId, websiteId, currentPageId }: PagesPanelP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [websiteId]);
 
-  function slugify(name: string): string {
-    const s = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    return s || `page-${Date.now().toString(36)}`;
+  /**
+   * Page slugs only carry a `UNIQUE (website_id, slug)` constraint (no
+   * format/length CHECK like `websites.slug` -- confirmed directly against
+   * the live schema), and unlike the website-creation route (PR #74), the
+   * existing pages POST route has no collision-retry of its own. Reusing
+   * the shared `slugify` from `@/lib/utils/slug.ts` (rather than a second,
+   * ad hoc implementation) and disambiguating against the pages already
+   * loaded here is what keeps "New Page"/"Duplicate" from failing with a
+   * generic 500 the moment two pages would share a title.
+   */
+  function uniqueSlug(title: string): string {
+    const base = baseSlugify(title) || `page-${Date.now().toString(36)}`;
+    const existing = new Set(pages.map((p) => p.slug));
+    if (!existing.has(base)) return base;
+    for (let n = 2; n < 1000; n++) {
+      const candidate = `${base}-${n}`;
+      if (!existing.has(candidate)) return candidate;
+    }
+    return `${base}-${Date.now().toString(36)}`;
   }
 
   async function handleCreate() {
     if (!newTitle.trim()) return;
     setCreating(true);
     setError(null);
-    const result = await createPage({ businessId, websiteId, title: newTitle.trim(), slug: slugify(newTitle.trim()) });
+    const result = await createPage({ businessId, websiteId, title: newTitle.trim(), slug: uniqueSlug(newTitle.trim()) });
     setCreating(false);
     if (result.success && result.data) {
       setNewTitle('');
@@ -72,7 +86,7 @@ export function PagesPanel({ businessId, websiteId, currentPageId }: PagesPanelP
     const body = await res.json();
     const sourceContent = res.ok ? body.data?.content : undefined;
     const title = `${page.title} copy`;
-    const result = await createPage({ businessId, websiteId, title, slug: slugify(title) });
+    const result = await createPage({ businessId, websiteId, title, slug: uniqueSlug(title) });
     if (result.success && result.data && sourceContent !== undefined) {
       await fetch(`/api/builder/pages/${result.data.id}`, {
         method: 'PUT',
