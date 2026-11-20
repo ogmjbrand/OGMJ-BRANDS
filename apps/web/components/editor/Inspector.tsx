@@ -20,6 +20,8 @@ import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { VIEWPORTS } from '@/lib/editor/useDocumentEditor';
 import { AssetPicker } from './AssetPicker';
 import { freshNodeId } from '@/lib/editor/createDefaultNode';
+import { findNodeIncludingSlotDefaults, friendlyPropLabel, parsePropSchemaName } from '@/lib/editor/componentProps';
+import type { ComponentInstanceNode } from '@/lib/document-model/types';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -306,12 +308,7 @@ function KindFields({
         </div>
       );
     case 'componentInstance':
-      return (
-        <p className="rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5 text-xs text-[#9a9a9a]">
-          Component instance of <span className="text-[#D4AF37]">{node.componentId}</span>. Prop/slot editing for component
-          instances is planned for a follow-up stage.
-        </p>
-      );
+      return <ComponentInstanceFields node={node} editor={editor} />;
     case 'scene3d':
       return (
         <p className="rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5 text-xs text-[#9a9a9a]">
@@ -321,4 +318,71 @@ function KindFields({
     default:
       return null;
   }
+}
+
+/**
+ * Real component-instance editing: a variant selector (when the component
+ * defines any) and one field per `propSchema` entry, writing through
+ * `propOverrides` -- see `presetComponents.ts`'s module doc comment for the
+ * `"<templateNodeId>__<field>"` convention `parsePropSchemaName` reads back.
+ * Every write is a normal `updateNodeProps` operation (nodeId: the
+ * INSTANCE, path: ['propOverrides', templateNodeId, field]) -- same undo
+ * history, same `setNodeProp` path-segment hardening as every other field
+ * in this file, nothing instance-editing-specific about the plumbing.
+ */
+function ComponentInstanceFields({ node, editor }: { node: ComponentInstanceNode; editor: DocumentEditor }) {
+  const definition = safeObjectLookup(editor.document.components, node.componentId);
+  if (!definition) {
+    return (
+      <p className="rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5 text-xs text-[#9a9a9a]">
+        This instance references component <span className="text-[#D4AF37]">&quot;{node.componentId}&quot;</span>, which no
+        longer exists. It renders as an invisible placeholder until the component is restored or this instance is removed.
+      </p>
+    );
+  }
+
+  const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
+
+  function setOverride(nodeId: string, field: string, value: unknown) {
+    editor.apply({ op: 'updateNodeProps', nodeId: node.id, path: ['propOverrides', nodeId, field], value });
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2 text-xs text-[#9a9a9a]">
+        Instance of <span className="text-[#D4AF37]">{definition.name}</span>
+      </p>
+
+      {definition.variants.length > 0 && (
+        <Field label="Variant">
+          <SelectField
+            value={node.variantId ?? ''}
+            options={[{ value: '', label: 'Default' }, ...definition.variants.map((v) => ({ value: v.id, label: v.name }))]}
+            onChange={(v) => editor.apply({ op: 'updateNodeProps', nodeId: node.id, path: ['variantId'], value: v || undefined })}
+          />
+        </Field>
+      )}
+
+      {definition.propSchema.map((propDef) => {
+        const parsed = parsePropSchemaName(propDef.name);
+        if (!parsed) return null; // malformed propSchema entry -- never crash the inspector over it
+        const templateNode = findNodeIncludingSlotDefaults(definition.template, parsed.nodeId);
+        const instanceValue = (node.propOverrides as Record<string, Record<string, unknown>> | undefined)?.[parsed.nodeId]?.[parsed.field];
+        const variantValue = (variant?.propOverrides as Record<string, Record<string, unknown>> | undefined)?.[parsed.nodeId]?.[parsed.field];
+        const templateValue = templateNode ? (templateNode as unknown as Record<string, unknown>)[parsed.field] : undefined;
+        const current = instanceValue ?? variantValue ?? templateValue ?? propDef.default;
+
+        return (
+          <Field key={propDef.name} label={friendlyPropLabel(parsed)}>
+            <TextField value={typeof current === 'string' ? current : String(current ?? '')} onChange={(v) => setOverride(parsed.nodeId, parsed.field, v)} />
+          </Field>
+        );
+      })}
+
+      <p className="pt-1 text-[11px] text-[#6b6b6b]">
+        Slot-based regions (e.g. nav links, pricing plans) are edited as a group for now -- per-item editing inside a slot is
+        planned for a follow-up stage.
+      </p>
+    </div>
+  );
 }

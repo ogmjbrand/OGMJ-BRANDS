@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PRESET_COMPONENTS, withPresetComponents } from '@/lib/editor/presetComponents';
-import { parsePropSchemaName } from '@/lib/editor/componentProps';
+import { findNodeIncludingSlotDefaults, parsePropSchemaName } from '@/lib/editor/componentProps';
 import { validateDocument } from '@/lib/document-model/schema';
 import { getChildren, getNodeProp } from '@/lib/document-model';
 import { setNodeProp } from '@/lib/document-model/tree';
@@ -54,8 +54,8 @@ describe('preset component library', () => {
       for (const propDef of def.propSchema) {
         const parsed = parsePropSchemaName(propDef.name);
         expect(parsed, `"${def.id}" propSchema entry "${propDef.name}" must parse`).not.toBeNull();
-        const nodeIds = new Set(walkIncludingSlotDefaults(def.template).map((n) => n.id));
-        expect(nodeIds.has(parsed!.nodeId), `"${def.id}": propSchema targets node "${parsed!.nodeId}", which is not in its own template`).toBe(true);
+        const found = findNodeIncludingSlotDefaults(def.template, parsed!.nodeId);
+        expect(found, `"${def.id}": propSchema targets node "${parsed!.nodeId}", which is not in its own template`).not.toBeNull();
       }
     }
   });
