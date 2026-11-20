@@ -460,6 +460,17 @@ function applyNodeOverride(node: DocumentNode, patch: Record<string, unknown>): 
  * that came from slot content too.
  */
 function applyTemplateOverrides(node: DocumentNode, overrides: Record<string, Record<string, unknown>>): DocumentNode {
+  // SECURITY/CORRECTNESS: never patch a componentInstance (or a slot, which
+  // should already be gone by the time overrides run). markCyclicComponentInstances
+  // tracks cyclic nodes by OBJECT IDENTITY, computed from the plain
+  // slot-substituted tree (no overrides applied). If an override here
+  // produced a NEW object for a nested componentInstance node (even via an
+  // otherwise-harmless allowlisted key), that fresh object would no longer
+  // match ctx.cyclicInstances' entry for it, silently defeating cycle
+  // protection for exactly the node a crafted document would most want to
+  // retarget. Overrides are for leaf/content nodes; reconfiguring a nested
+  // instance is what instantiating or editing it directly is for.
+  if (node.kind === 'componentInstance' || node.kind === 'slot') return node;
   const patch = isSafeIdentifier(node.id) ? safeObjectLookup(overrides, node.id) : undefined;
   const patched = patch ? applyNodeOverride(node, patch) : node;
   const children = getChildren(patched);
@@ -495,8 +506,34 @@ function resolveComponentInstance(definition: { template: DocumentNode; variants
   for (const [nodeId, patch] of Object.entries(instanceOverrides)) {
     merged[nodeId] = { ...merged[nodeId], ...patch };
   }
-  if (Object.keys(merged).length === 0) return slotted;
-  return applyTemplateOverrides(slotted, merged);
+  const overridden = Object.keys(merged).length === 0 ? slotted : applyTemplateOverrides(slotted, merged);
+  return namespaceLeafIds(overridden, node.id);
+}
+
+/**
+ * Prefixes every LEAF/content node's `.id` with the enclosing instance's own
+ * id (e.g. "navbar-1__navbar-logo"), so two instances of the same component
+ * never emit the same `--n-<id>-<prop>` CSS variable name or `data-node`
+ * value. Without this, `resolveResponsiveCssVar`'s dedup-by-nodeId (see its
+ * own comment) means the SECOND instance's style rule for a given template
+ * node id is silently dropped -- two navbar instances with different
+ * variants would visually bleed into whichever one rendered its CSS first.
+ *
+ * Deliberately mirrors applyTemplateOverrides' componentInstance/slot
+ * exclusion: a nested componentInstance node must keep the EXACT object
+ * reference markCyclicComponentInstances recorded it by, or cycle
+ * protection silently stops matching it. Its own id does not need
+ * namespacing here anyway -- when IT renders, resolveComponentInstance runs
+ * again for its own id and namespaces everything inside IT in turn, so
+ * nesting composes without every level needing to rewrite its children.
+ */
+function namespaceLeafIds(node: DocumentNode, instancePrefix: string): DocumentNode {
+  if (node.kind === 'componentInstance' || node.kind === 'slot') return node;
+  if (!isSafeIdentifier(instancePrefix)) return node; // fail safe: render unprefixed rather than emit an unvalidated id
+  const renamed = isSafeIdentifier(node.id) ? { ...node, id: `${instancePrefix}__${node.id}` } : node;
+  const children = getChildren(renamed);
+  if (!children) return renamed;
+  return { ...renamed, children: children.map((c) => namespaceLeafIds(c, instancePrefix)) } as DocumentNode;
 }
 
 function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ctx: RenderContext }) {

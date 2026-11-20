@@ -435,12 +435,15 @@ describe('DocumentRenderer', () => {
 
     it('applying a variant restyles the specific template node it targets', () => {
       const html = render(docWithHero({ variantId: 'dark' }));
-      expect(html).toContain('--n-tpl-heading-background:#000000');
+      // CSS variable names are namespaced by the instance id (instance-1__...)
+      // so two instances of the same component never collide -- see
+      // namespaceLeafIds in DocumentRenderer.tsx.
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000');
     });
 
     it('with no variant selected, the template node keeps its own default style', () => {
       const html = render(docWithHero({}));
-      expect(html).toContain('--n-tpl-heading-background:#ffffff');
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#ffffff');
     });
 
     it('a per-instance propOverride patches content on a specific template node without detaching from the component', () => {
@@ -457,7 +460,43 @@ describe('DocumentRenderer', () => {
         })
       );
       expect(html).toContain('Instance headline');
-      expect(html).toContain('--n-tpl-heading-background:#000000'); // variant's style override still applied
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000'); // variant's style override still applied
+    });
+
+    it('two instances of the SAME component with different variants do not bleed CSS into each other', () => {
+      const document: DocumentRoot = {
+        root: {
+          id: 'root',
+          kind: 'root',
+          children: [
+            { id: 'instance-1', kind: 'componentInstance', componentId: 'hero', variantId: 'dark' },
+            { id: 'instance-2', kind: 'componentInstance', componentId: 'hero' },
+          ],
+        },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          hero: {
+            id: 'hero',
+            name: 'Hero',
+            propSchema: [],
+            slots: [],
+            variants: [{ id: 'dark', name: 'Dark', propOverrides: { 'tpl-heading': { style: { background: '#000000' } } } }],
+            template: {
+              id: 'tpl',
+              kind: 'container',
+              children: [{ id: 'tpl-heading', kind: 'heading', text: 'Headline', level: 1, style: { background: '#ffffff' } }],
+            },
+          },
+        },
+        assets: {},
+      };
+      const html = render(document);
+      // Without per-instance id namespacing both instances would emit the
+      // SAME CSS variable name for "tpl-heading", and whichever rule came
+      // first would win for both -- this proves they're independent.
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000');
+      expect(html).toContain('--n-instance-2__tpl-heading-background:#ffffff');
     });
 
     it('cannot patch structural keys (id/kind/children/componentId) via propOverrides', () => {
