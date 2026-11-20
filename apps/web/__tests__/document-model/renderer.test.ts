@@ -397,6 +397,79 @@ describe('DocumentRenderer', () => {
     expect(html).toContain('mask-image:linear-gradient(black, transparent)');
   });
 
+  describe('componentInstance variant and per-instance propOverrides', () => {
+    function docWithHero(options: { variantId?: string; instanceOverrides?: Record<string, unknown> }): DocumentRoot {
+      return {
+        root: {
+          id: 'root',
+          kind: 'root',
+          children: [
+            {
+              id: 'instance-1',
+              kind: 'componentInstance',
+              componentId: 'hero',
+              variantId: options.variantId,
+              propOverrides: options.instanceOverrides,
+            },
+          ],
+        },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          hero: {
+            id: 'hero',
+            name: 'Hero',
+            propSchema: [],
+            slots: [],
+            variants: [{ id: 'dark', name: 'Dark', propOverrides: { 'tpl-heading': { style: { background: '#000000' } } } }],
+            template: {
+              id: 'tpl',
+              kind: 'container',
+              children: [{ id: 'tpl-heading', kind: 'heading', text: 'Default headline', level: 1, style: { background: '#ffffff' } }],
+            },
+          },
+        },
+        assets: {},
+      };
+    }
+
+    it('applying a variant restyles the specific template node it targets', () => {
+      const html = render(docWithHero({ variantId: 'dark' }));
+      expect(html).toContain('--n-tpl-heading-background:#000000');
+    });
+
+    it('with no variant selected, the template node keeps its own default style', () => {
+      const html = render(docWithHero({}));
+      expect(html).toContain('--n-tpl-heading-background:#ffffff');
+    });
+
+    it('a per-instance propOverride patches content on a specific template node without detaching from the component', () => {
+      const html = render(docWithHero({ instanceOverrides: { 'tpl-heading': { text: 'Custom headline for this instance' } } }));
+      expect(html).toContain('Custom headline for this instance');
+      expect(html).toContain('data-component="hero"'); // still a real instance, not detached
+    });
+
+    it('instance-level overrides win over the variant on the same key, but the variant\'s other overrides on that node survive', () => {
+      const html = render(
+        docWithHero({
+          variantId: 'dark',
+          instanceOverrides: { 'tpl-heading': { text: 'Instance headline' } },
+        })
+      );
+      expect(html).toContain('Instance headline');
+      expect(html).toContain('--n-tpl-heading-background:#000000'); // variant's style override still applied
+    });
+
+    it('cannot patch structural keys (id/kind/children/componentId) via propOverrides', () => {
+      const document = docWithHero({ instanceOverrides: { 'tpl-heading': { kind: 'button', id: 'hijacked', children: [] } } });
+      const html = render(document);
+      // The node still rendered as its real kind (<h1>), proving the
+      // disallowed keys in the patch were silently dropped, not applied.
+      expect(html).toContain('<h1');
+      expect(html).not.toContain('hijacked');
+    });
+  });
+
   it('records a shaderRef as an explicit data attribute instead of silently dropping it', () => {
     const document: DocumentRoot = {
       root: {

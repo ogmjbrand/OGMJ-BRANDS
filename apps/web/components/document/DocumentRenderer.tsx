@@ -246,7 +246,7 @@ function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
     // markCyclicComponentInstances, which has already run by this point.
     if (ctx.cyclicInstances.has(node)) return;
     const definition = safeObjectLookup(ctx.document.components, node.componentId);
-    if (definition) collectCssRules(substituteSlots(definition.template, node.slotContent), ctx);
+    if (definition) collectCssRules(resolveComponentInstance(definition, node), ctx);
   }
 }
 
@@ -422,6 +422,83 @@ function substituteSlots(template: DocumentNode, slotContent: Record<string, Doc
   return { ...template, children: nextChildren } as DocumentNode;
 }
 
+/**
+ * Keys a variant's or an instance's `propOverrides` is allowed to patch onto
+ * a specific template node (see the convention documented on
+ * `ComponentVariant.propOverrides` in types.ts): a node-id-keyed map of
+ * shallow patches, e.g. `{ 'tpl-heading': { text: 'New headline' } }`.
+ *
+ * SECURITY: deliberately an allowlist, not a blocklist. `id`/`kind`/
+ * `children`/`componentId`/`slotContent`/`slotName`/`defaultContent` can
+ * never be patched this way -- allowing any of them would let an override
+ * change a node's structural identity (e.g. retarget a nested
+ * componentInstance's componentId, which `markCyclicComponentInstances`
+ * does not re-check after override application) or desync it from the
+ * children array the renderer is currently walking.
+ */
+const OVERRIDABLE_NODE_KEYS = new Set(['style', 'text', 'label', 'href', 'variant', 'objectFit', 'caption', 'level', 'a11yLabel', 'hidden']);
+
+function applyNodeOverride(node: DocumentNode, patch: Record<string, unknown>): DocumentNode {
+  const next: Record<string, unknown> = { ...node };
+  for (const [key, value] of Object.entries(patch)) {
+    if (!OVERRIDABLE_NODE_KEYS.has(key)) continue;
+    if (key === 'style' && value && typeof value === 'object') {
+      // One level deep, so a variant/instance can override just `background`
+      // without having to repeat every other style field on the node.
+      next.style = { ...(node as { style?: Record<string, unknown> }).style, ...(value as Record<string, unknown>) };
+    } else {
+      next[key] = value;
+    }
+  }
+  return next as unknown as DocumentNode;
+}
+
+/**
+ * Applies a node-id-keyed overrides map (already merged from variant +
+ * instance propOverrides, instance taking precedence) across a resolved
+ * template tree. Runs AFTER substituteSlots, so overrides can target nodes
+ * that came from slot content too.
+ */
+function applyTemplateOverrides(node: DocumentNode, overrides: Record<string, Record<string, unknown>>): DocumentNode {
+  const patch = isSafeIdentifier(node.id) ? safeObjectLookup(overrides, node.id) : undefined;
+  const patched = patch ? applyNodeOverride(node, patch) : node;
+  const children = getChildren(patched);
+  if (!children) return patched;
+  return { ...patched, children: children.map((c) => applyTemplateOverrides(c, overrides)) } as DocumentNode;
+}
+
+/** `propOverrides` on a variant/instance is a node-id-keyed patch map, but may be absent, malformed, or (pre-Phase-3 data) a flat propSchema-name map -- treat anything that isn't a plain record of records as "no overrides" rather than throwing. */
+function asNodeOverridesMap(value: unknown): Record<string, Record<string, unknown>> {
+  if (!value || typeof value !== 'object') return {};
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (v && typeof v === 'object' && isSafeIdentifier(k)) out[k] = v as Record<string, unknown>;
+  }
+  return out;
+}
+
+/**
+ * The one place slot content, variant overrides, and per-instance overrides
+ * all resolve into the final tree a componentInstance renders -- used by
+ * both the CSS-collection pre-pass and the real JSX pass so they never
+ * disagree about what a given instance actually looks like.
+ */
+function resolveComponentInstance(definition: { template: DocumentNode; variants: Array<{ id: string; propOverrides?: Record<string, unknown> }> }, node: ComponentInstanceNode): DocumentNode {
+  const slotted = substituteSlots(definition.template, node.slotContent);
+  const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
+  const variantOverrides = asNodeOverridesMap(variant?.propOverrides);
+  const instanceOverrides = asNodeOverridesMap(node.propOverrides);
+  const merged: Record<string, Record<string, unknown>> = { ...variantOverrides };
+  // Per-node-id merge, not a top-level replace -- an instance overriding
+  // `text` on a node must not silently drop that same node's variant-level
+  // `style` override.
+  for (const [nodeId, patch] of Object.entries(instanceOverrides)) {
+    merged[nodeId] = { ...merged[nodeId], ...patch };
+  }
+  if (Object.keys(merged).length === 0) return slotted;
+  return applyTemplateOverrides(slotted, merged);
+}
+
 function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ctx: RenderContext }) {
   // SECURITY: a plain-object lookup keyed by document-supplied data must
   // reject __proto__/constructor/prototype (see security.ts) -- otherwise
@@ -435,12 +512,7 @@ function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ct
   // via a stack tracked live here) -- never expand it, or this recurses
   // without bound and crashes the render.
   if (ctx.cyclicInstances.has(node)) return <CyclicComponentPlaceholder node={node} />;
-  const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
-  // Variant/instance propOverrides are resolved against propSchema defaults in a
-  // future editor-facing prop-binding layer; Phase 1 establishes the shape and
-  // slot substitution, which is the part the renderer must get right today.
-  void variant;
-  const resolved = substituteSlots(definition.template, node.slotContent);
+  const resolved = resolveComponentInstance(definition, node);
   return (
     <div data-node={node.id} data-component={definition.id} data-variant={node.variantId ?? 'default'}>
       <RenderNode node={resolved} ctx={ctx} />
