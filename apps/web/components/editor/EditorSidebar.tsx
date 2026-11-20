@@ -55,7 +55,7 @@ export function EditorSidebar({ editor, businessId, websiteId, pageId }: EditorS
         {tab === 'add' && <BlockPalette editor={editor} />}
         {tab === 'components' && <ComponentsPanel editor={editor} />}
         {tab === 'nav' && <NavigationPanel businessId={businessId} websiteId={websiteId} />}
-        {tab === 'assets' && <AssetsPanel editor={editor} />}
+        {tab === 'assets' && <AssetsPanel editor={editor} businessId={businessId} />}
       </div>
     </aside>
   );

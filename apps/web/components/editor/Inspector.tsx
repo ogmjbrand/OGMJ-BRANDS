@@ -102,7 +102,7 @@ function asPlainString(value: unknown): string {
   return '';
 }
 
-export function Inspector({ editor }: { editor: DocumentEditor }) {
+export function Inspector({ editor, businessId }: { editor: DocumentEditor; businessId: string }) {
   const node = editor.selectedNodeId ? findNode(editor.document.root, editor.selectedNodeId) : null;
 
   if (!node) {
@@ -142,7 +142,7 @@ export function Inspector({ editor }: { editor: DocumentEditor }) {
         </div>
       </div>
 
-      <KindFields node={node} setProp={setProp} editor={editor} />
+      <KindFields node={node} setProp={setProp} editor={editor} businessId={businessId} />
 
       <div className="space-y-3 border-t border-white/5 pt-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[#D4AF37]/80">Layout &amp; Style</h3>
@@ -193,10 +193,12 @@ function KindFields({
   node,
   setProp,
   editor,
+  businessId,
 }: {
   node: DocumentNode;
   setProp: (path: string[], value: unknown) => void;
   editor: DocumentEditor;
+  businessId: string;
 }) {
   switch (node.kind) {
     case 'heading':
@@ -253,6 +255,7 @@ function KindFields({
             <AssetPicker
               assets={editor.document.assets}
               kindFilter="image"
+              businessId={businessId}
               selectedAssetId={node.assetRef}
               onSelect={(assetId) => setProp(['assetRef'], assetId)}
               onAddByUrl={(url, altText) => {

@@ -3,34 +3,60 @@
 /**
  * Shared by the Inspector's image field and the sidebar Assets panel.
  *
- * Real functionality, honestly scoped: adding an asset "by URL" is fully
- * real (validated through the exact same `safeSrc` allow-list the renderer
- * and schema already enforce, then written through `upsertAsset` like any
- * other edit). Direct file upload is NOT implemented here -- this project
- * has no storage bucket for images today (only `videos`/`voiceovers`
- * exist, both restricted to those mime types by their own bucket config),
- * and creating one needs a reviewed migration this task is not authorized
- * to apply. Saying so here beats pretending to upload a file that goes
- * nowhere.
+ * Two fully real ways to add an image: "Upload" (a real file -> Supabase
+ * Storage, via asset-upload.ts) and "Add by URL" (validated through the
+ * same `safeSrc` allow-list the renderer/schema already enforce). Both end
+ * the same way -- `onAddByUrl` -> the caller's `upsertAsset` -- so an
+ * uploaded image is a completely normal asset from the document model's
+ * point of view. Upload requires the `website-assets` bucket, PREPARED but
+ * not applied (see asset-upload.ts); until an authorized operator applies
+ * that migration, an upload attempt fails with a clear, caught error
+ * rather than silently going nowhere.
  */
-import { useState } from 'react';
-import { Search, Link2, ImageOff, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Search, Link2, ImageOff, Trash2, Upload as UploadIcon } from 'lucide-react';
 import { safeSrc, type AssetId, type AssetKind, type AssetRef } from '@/lib/document-model';
+import { uploadImageFile, validateImageFile, ACCEPTED_IMAGE_TYPES } from '@/lib/services/asset-upload';
 
 interface AssetPickerProps {
   assets: Record<AssetId, AssetRef>;
   kindFilter?: AssetKind;
   selectedAssetId?: AssetId;
+  /** Needed to scope the uploaded object's storage path -- see asset-upload.ts. */
+  businessId: string;
   onSelect: (assetId: AssetId) => void;
   onAddByUrl: (url: string, altText: string) => void;
   onDelete?: (assetId: AssetId) => void;
 }
 
-export function AssetPicker({ assets, kindFilter, selectedAssetId, onSelect, onAddByUrl, onDelete }: AssetPickerProps) {
+export function AssetPicker({ assets, kindFilter, selectedAssetId, businessId, onSelect, onAddByUrl, onDelete }: AssetPickerProps) {
   const [query, setQuery] = useState('');
   const [urlDraft, setUrlDraft] = useState('');
   const [altDraft, setAltDraft] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileSelected(file: File | undefined) {
+    if (!file) return;
+    setUploadError(null);
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadError(validationError.message);
+      return;
+    }
+    setUploading(true);
+    try {
+      const { url } = await uploadImageFile(file, businessId);
+      onAddByUrl(url, '');
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   const entries = Object.values(assets).filter((a) => {
     if (kindFilter && a.kind !== kindFilter) return false;
@@ -99,6 +125,23 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, onSelect, onA
 
       <div className="space-y-2 rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5">
         <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[#D4AF37]/80">
+          <UploadIcon className="h-3 w-3" />
+          Upload image
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+          onChange={(e) => handleFileSelected(e.target.files?.[0])}
+          disabled={uploading}
+          className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#9a9a9a] outline-none file:mr-2 file:rounded-sm file:border-0 file:bg-[#D4AF37]/15 file:px-2 file:py-1 file:text-[#D4AF37]"
+        />
+        {uploading && <p className="text-[11px] text-[#9a9a9a]">Uploading…</p>}
+        {uploadError && <p className="text-[11px] text-[#f09a9a]">{uploadError}</p>}
+      </div>
+
+      <div className="space-y-2 rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5">
+        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[#D4AF37]/80">
           <Link2 className="h-3 w-3" />
           Add image by URL
         </div>
@@ -122,10 +165,6 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, onSelect, onA
         >
           Add
         </button>
-        <p className="text-[10px] leading-snug text-[#6b6b6b]">
-          Direct file upload isn&apos;t available yet — this project has no storage bucket for images (only video/voiceover
-          uploads exist today), which needs a reviewed database migration first.
-        </p>
       </div>
     </div>
   );

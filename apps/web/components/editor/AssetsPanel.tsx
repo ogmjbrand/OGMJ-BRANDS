@@ -9,11 +9,12 @@
 import { useState } from 'react';
 import { freshNodeId } from '@/lib/editor/createDefaultNode';
 import { safeObjectLookup, safeSrc } from '@/lib/document-model';
+import { deleteUploadedImage, storagePathFromPublicUrl } from '@/lib/services/asset-upload';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { AssetPicker } from './AssetPicker';
 import { TextField } from './Inspector';
 
-export function AssetsPanel({ editor }: { editor: DocumentEditor }) {
+export function AssetsPanel({ editor, businessId }: { editor: DocumentEditor; businessId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = selectedId ? safeObjectLookup(editor.document.assets, selectedId) : undefined;
 
@@ -21,6 +22,7 @@ export function AssetsPanel({ editor }: { editor: DocumentEditor }) {
     <div className="space-y-3 p-3">
       <AssetPicker
         assets={editor.document.assets}
+        businessId={businessId}
         selectedAssetId={selectedId ?? undefined}
         onSelect={(id) => setSelectedId(id)}
         onAddByUrl={(url, altText) => {
@@ -29,8 +31,15 @@ export function AssetsPanel({ editor }: { editor: DocumentEditor }) {
           setSelectedId(id);
         }}
         onDelete={(id) => {
+          const asset = safeObjectLookup(editor.document.assets, id);
           editor.apply({ op: 'upsertAsset', assetId: id, asset: undefined });
           if (selectedId === id) setSelectedId(null);
+          // Best-effort storage cleanup -- a hand-entered "add by URL" asset
+          // has no storage path to clean up (storagePathFromPublicUrl
+          // returns undefined for it), and a failed cleanup here must never
+          // block the document-level delete, which already succeeded above.
+          const path = asset ? storagePathFromPublicUrl(asset.url) : undefined;
+          if (path) deleteUploadedImage(path).catch(() => {});
         }}
       />
 

@@ -138,7 +138,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         </main>
 
         <aside className="w-80 shrink-0 overflow-y-auto border-l border-[#D4AF37]/15 bg-[#101010]">
-          <Inspector editor={editor} />
+          <Inspector editor={editor} businessId={businessId} />
         </aside>
       </div>
 
