@@ -448,7 +448,16 @@ export type DocumentOperation =
   // `document.assets` directly, for the same reason every other field goes
   // through an operation: reversible, auditable, and usable by both a human
   // and a future AI editor through the identical path.
-  | { op: 'upsertAsset'; assetId: AssetId; asset: AssetRef | undefined };
+  | { op: 'upsertAsset'; assetId: AssetId; asset: AssetRef | undefined }
+  // Same "undefined = absent" convention: defines, replaces, or deletes a
+  // component in `document.components`. This is how the editor's component
+  // library and component editor create/rename/duplicate/delete a
+  // reusable component definition -- never a direct write to
+  // `document.components`. Editing which SLOT CONTENT an instance supplies
+  // is still `setSlotContent`; this operation is for the shared definition
+  // (template/slots/variants/propSchema) every instance of a component
+  // points at.
+  | { op: 'upsertComponent'; componentId: ComponentId; definition: ComponentDefinition | undefined };
 
 export interface OperationHistoryEntry {
   operation: DocumentOperation;

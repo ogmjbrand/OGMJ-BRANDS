@@ -68,6 +68,9 @@ export function invert(document: DocumentRoot, operation: DocumentOperation): Do
       // can never resolve to Object.prototype here either.
       return { op: 'upsertAsset', assetId: operation.assetId, asset: safeObjectLookup(document.assets, operation.assetId) };
 
+    case 'upsertComponent':
+      return { op: 'upsertComponent', componentId: operation.componentId, definition: safeObjectLookup(document.components, operation.componentId) };
+
     default: {
       const exhaustive: never = operation;
       throw new DocumentOperationError(`Unknown operation: ${JSON.stringify(exhaustive)}`);
@@ -158,6 +161,21 @@ export function applyOperation(
         nextAssets[operation.assetId] = operation.asset;
       }
       return { document: { ...document, assets: nextAssets }, inverse };
+    }
+
+    case 'upsertComponent': {
+      // SECURITY: same reasoning as upsertAsset above -- componentId is a
+      // document-supplied key written into a plain object.
+      if (!isSafeIdentifier(operation.componentId)) {
+        throw new DocumentOperationError(`upsertComponent: "${operation.componentId}" is not a safe component id`);
+      }
+      const nextComponents = { ...document.components };
+      if (operation.definition === undefined) {
+        delete nextComponents[operation.componentId];
+      } else {
+        nextComponents[operation.componentId] = operation.definition;
+      }
+      return { document: { ...document, components: nextComponents }, inverse };
     }
 
     default: {
