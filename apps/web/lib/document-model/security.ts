@@ -53,6 +53,20 @@ export function sanitizeIdentifier(value: unknown, fallback: string): string {
   return isSafeIdentifier(value) ? (value as string) : fallback;
 }
 
+/**
+ * A plain-object lookup keyed by document-supplied data (`document.assets[id]`,
+ * `document.components[id]`) must reject `__proto__`/`constructor`/`prototype`
+ * -- those resolve to real JS prototype machinery on a plain object instead
+ * of `undefined`, which can crash (or worse) whatever reads the result next.
+ * The single canonical implementation lives here so the renderer and the
+ * document-model's own operations never each carry their own copy that can
+ * independently drift out of sync.
+ */
+export function safeObjectLookup<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+  if (!record || !isSafeIdentifier(key) || !Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return record[key];
+}
+
 // ================================
 // URLS (href / src)
 // ================================

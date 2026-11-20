@@ -441,7 +441,14 @@ export type DocumentOperation =
   // so undo can remove the key entirely rather than leaving behind an
   // empty-but-present `slotContent: {}` or `variantId: undefined` key.
   | { op: 'setSlotContent'; nodeId: NodeId; slotName: string; content: DocumentNode[] | undefined }
-  | { op: 'applyVariant'; nodeId: NodeId; variantId: VariantId | undefined };
+  | { op: 'applyVariant'; nodeId: NodeId; variantId: VariantId | undefined }
+  // `asset: undefined` deletes `assetId` from `document.assets` entirely;
+  // this is the ONLY sanctioned way to add, replace, or remove an asset
+  // reference -- editor UI (e.g. "replace image") must never write
+  // `document.assets` directly, for the same reason every other field goes
+  // through an operation: reversible, auditable, and usable by both a human
+  // and a future AI editor through the identical path.
+  | { op: 'upsertAsset'; assetId: AssetId; asset: AssetRef | undefined };
 
 export interface OperationHistoryEntry {
   operation: DocumentOperation;

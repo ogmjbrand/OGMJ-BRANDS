@@ -40,7 +40,7 @@ import type {
 } from '@/lib/document-model/types';
 import { getChildren } from '@/lib/document-model/tree';
 import { resolveStyleValue } from '@/lib/document-model/tokens';
-import { isSafeCssColor, isSafeCssFragment, isSafeCssLength, isSafeIdentifier, safeHref, safeSrc } from '@/lib/document-model/security';
+import { isSafeCssColor, isSafeCssFragment, isSafeCssLength, isSafeIdentifier, safeHref, safeObjectLookup, safeSrc } from '@/lib/document-model/security';
 
 /**
  * SECURITY (defense in depth): `schema.ts` already rejects an unsafe
@@ -52,11 +52,6 @@ import { isSafeCssColor, isSafeCssFragment, isSafeCssLength, isSafeIdentifier, s
  * check is dropped (that one property, or that one node) rather than
  * rendered partially or substituted with something unvalidated.
  */
-
-function safeObjectLookup<T>(record: Record<string, T> | undefined, key: string): T | undefined {
-  if (!record || !isSafeIdentifier(key) || !Object.prototype.hasOwnProperty.call(record, key)) return undefined;
-  return record[key];
-}
 
 interface RenderContext {
   document: DocumentRoot;

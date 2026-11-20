@@ -196,3 +196,46 @@ describe('multi-step undo/redo across nested structures, verified by deep struct
     expect(history.future).toHaveLength(0);
   });
 });
+
+describe('upsertAsset', () => {
+  it('adds a new asset, and undo removes the key entirely (not an empty placeholder)', () => {
+    const doc = baseDocument();
+    const asset = { id: 'asset-1', kind: 'image' as const, url: 'https://cdn.example.com/a.jpg' };
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertAsset', assetId: 'asset-1', asset });
+    expect(next.assets['asset-1']).toEqual(asset);
+    expect(inverse).toEqual({ op: 'upsertAsset', assetId: 'asset-1', asset: undefined });
+
+    const { document: undone } = applyOperation(next, inverse);
+    expect('asset-1' in undone.assets).toBe(false);
+    expect(undone).toEqual(doc);
+  });
+
+  it('replacing an existing asset inverts back to the exact prior value', () => {
+    const doc = baseDocument();
+    doc.assets['asset-1'] = { id: 'asset-1', kind: 'image', url: 'https://cdn.example.com/old.jpg' };
+    const replacement = { id: 'asset-1', kind: 'image' as const, url: 'https://cdn.example.com/new.jpg' };
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertAsset', assetId: 'asset-1', asset: replacement });
+    expect(next.assets['asset-1']).toEqual(replacement);
+    const { document: undone } = applyOperation(next, inverse);
+    expect(undone.assets['asset-1'].url).toBe('https://cdn.example.com/old.jpg');
+  });
+
+  it('deleting an asset (asset: undefined) inverts back to restoring it', () => {
+    const doc = baseDocument();
+    const asset = { id: 'asset-1', kind: 'image' as const, url: 'https://cdn.example.com/a.jpg' };
+    doc.assets['asset-1'] = asset;
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertAsset', assetId: 'asset-1', asset: undefined });
+    expect('asset-1' in next.assets).toBe(false);
+    const { document: restored } = applyOperation(next, inverse);
+    expect(restored.assets['asset-1']).toEqual(asset);
+  });
+
+  it('rejects __proto__/constructor/prototype as an asset id instead of touching Object.prototype', () => {
+    const doc = baseDocument();
+    for (const dangerous of ['__proto__', 'constructor', 'prototype']) {
+      expect(() => applyOperation(doc, { op: 'upsertAsset', assetId: dangerous, asset: { id: dangerous, kind: 'image', url: 'https://x' } })).toThrow();
+    }
+    // And the document is provably untouched -- no polluted prototype leaking into a fresh object.
+    expect(({} as Record<string, unknown>).kind).toBeUndefined();
+  });
+});

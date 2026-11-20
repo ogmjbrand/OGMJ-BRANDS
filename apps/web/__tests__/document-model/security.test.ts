@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DocumentRenderer } from '@/components/document/DocumentRenderer';
 import { validateDocument } from '@/lib/document-model/schema';
 import { DEFAULT_BREAKPOINTS, DEFAULT_TOKEN_SET } from '@/lib/document-model/tokens';
-import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT, checkDocumentLimits } from '@/lib/document-model/security';
+import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT, checkDocumentLimits, safeObjectLookup } from '@/lib/document-model/security';
 import type { DocumentRoot } from '@/lib/document-model/types';
 
 function emptyDoc(): DocumentRoot {
@@ -301,5 +301,25 @@ describe('component-instance graph cycles', () => {
     // this same document does not crash and falls back to an inert placeholder.
     expect(() => render(doc)).not.toThrow();
     expect(render(doc)).toContain('data-ogmj-cyclic-component="compA"');
+  });
+});
+
+describe('safeObjectLookup', () => {
+  it('returns the value for an existing, safe key', () => {
+    expect(safeObjectLookup({ a: 1 }, 'a')).toBe(1);
+  });
+
+  it('returns undefined for a missing key, never Object.prototype machinery', () => {
+    for (const dangerous of ['__proto__', 'constructor', 'prototype']) {
+      expect(safeObjectLookup({ a: 1 }, dangerous)).toBeUndefined();
+    }
+  });
+
+  it('returns undefined for an unsafe-charset key even if somehow present', () => {
+    expect(safeObjectLookup({ 'has space': 1 } as Record<string, number>, 'has space')).toBeUndefined();
+  });
+
+  it('returns undefined for an undefined record', () => {
+    expect(safeObjectLookup(undefined, 'a')).toBeUndefined();
   });
 });
