@@ -39,7 +39,7 @@ export interface EditorState {
 }
 
 export type EditorAction =
-  | { type: 'apply'; operation: DocumentOperation }
+  | { type: 'apply'; operation: DocumentOperation; actor: 'user' | 'ai' }
   | { type: 'undo' }
   | { type: 'redo' }
   | { type: 'select'; nodeId: NodeId | null }
@@ -63,7 +63,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   switch (action.type) {
     case 'apply': {
       try {
-        const { document, history } = recordOperation(state.document, state.history, action.operation, 'user');
+        const { document, history } = recordOperation(state.document, state.history, action.operation, action.actor);
         return { ...state, document, history, dirty: true, lastError: null };
       } catch (err) {
         // A rejected operation (e.g. a stale drag target) must never corrupt
@@ -96,7 +96,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 export function useDocumentEditor(initialDocument: DocumentRoot) {
   const [state, dispatch] = useReducer(editorReducer, initialEditorState(initialDocument));
 
-  const apply = useCallback((operation: DocumentOperation) => dispatch({ type: 'apply', operation }), []);
+  const apply = useCallback((operation: DocumentOperation, actor: 'user' | 'ai' = 'user') => dispatch({ type: 'apply', operation, actor }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []);
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
   const select = useCallback((nodeId: NodeId | null) => dispatch({ type: 'select', nodeId }), []);
