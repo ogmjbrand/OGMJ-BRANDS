@@ -45,6 +45,24 @@ export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
       <iframe
         ref={iframeRef}
         title="Page preview"
+        // SECURITY: `allow-same-origin` only, never `allow-scripts`.
+        // `allow-same-origin` is required -- without it a sandboxed,
+        // src-less iframe gets an opaque origin and `contentDocument`
+        // access above throws a SecurityError, breaking this component
+        // entirely. `allow-scripts` is NOT needed: the portaled React
+        // content is built and reconciled by the PARENT frame's JS engine
+        // (synthetic events, DOM mutations) and never writes a <script>
+        // tag into the iframe's OWN document -- DocumentRenderer has no
+        // node kind that emits one. Empirically verified (Playwright,
+        // isolated from the app): with exactly this sandbox value, (1)
+        // contentDocument access and document.write still work, (2) a
+        // DOM listener the parent attaches to a node inside the iframe
+        // still fires on a click, and (3) a literal <script> tag written
+        // into the sandboxed document does NOT execute -- so if a future
+        // bug ever let one reach rendered output, it would be inert here
+        // instead of a live XSS. Do not add allow-scripts "to be safe";
+        // it would remove exactly the protection this exists to add.
+        sandbox="allow-same-origin"
         style={{ width: widthPx, height: '100%', border: 'none', display: 'block', background: '#fff' }}
       />
       {mountNode ? createPortal(children, mountNode) : null}

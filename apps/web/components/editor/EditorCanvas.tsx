@@ -48,6 +48,18 @@ export function EditorCanvas({ editor }: { editor: DocumentEditor }) {
     // links. Without this, clicking a link while editing would navigate
     // the canvas (or open a new tab) instead of selecting it -- clicking
     // inside your own editor must never leave it.
+    //
+    // Phase 3 audit note: does this preventDefault also defeat a rendered
+    // <video controls> element's native play/pause/scrub interaction? No --
+    // a native media control's own click-to-play behavior is driven by
+    // pointer/mousedown handling inside the browser's UA shadow DOM, which
+    // already runs before this synthetic 'click' bubbles here; preventDefault
+    // on 'click' only cancels the DEFAULT ACTION tied to click (e.g. a link
+    // navigating), not an already-completed internal widget state change.
+    // Moot in practice today regardless: `video` is a valid NodeKind the
+    // renderer supports, but it is in neither INSERTABLE_BLOCKS nor any
+    // migrateLegacyContent output, so no document produced by this editor
+    // can contain one yet.
     e.preventDefault();
     const target = e.target as HTMLElement;
     const nodeEl = target.closest('[data-node]') as HTMLElement | null;
