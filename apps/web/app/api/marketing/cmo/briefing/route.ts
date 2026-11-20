@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -73,6 +74,9 @@ export async function POST(request: NextRequest) {
     const brandContext = strategy.data
       ? `Brand voice: ${(strategy.data as any).brand_voice || 'not set'}. USP: ${(strategy.data as any).usp || 'not set'}.`
       : 'No brand strategy on file yet.';
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'cmo-briefing');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 type Workspace = 'generator' | 'marketing' | 'script_to_video';
 
 const SCRIPT_JSON_SHAPE = `{
@@ -174,6 +175,9 @@ Video type: ${videoType || 'not specified'}
 Style: ${style || 'not specified'}
 Aspect ratio: ${aspectRatio || '16:9'}
 Target duration: ${targetDurationSeconds ? `${targetDurationSeconds} seconds` : 'not specified'}${brandContext}`;
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:video');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

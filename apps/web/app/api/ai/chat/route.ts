@@ -8,6 +8,7 @@ import {
   getAnthropicClient,
   isAIConfigured,
 } from '@/lib/ai/anthropic';
+import { enforceAIUsageLimit, resolveUserBusinessId } from '@/lib/ai/usage-limits';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -54,11 +55,19 @@ export async function POST(request: NextRequest) {
     }
 
     const { messages, agent } = parsed.data;
+    // Usage is metered per business so one account can't run unlimited paid AI calls.
+    const usageBusinessId = await resolveUserBusinessId(supabase);
+    if (!usageBusinessId) {
+      return NextResponse.json({ error: 'Create a business before using OGMJ AI' }, { status: 403 });
+    }
+    const usageLimited = await enforceAIUsageLimit(usageBusinessId, 'ai:chat');
+    if (usageLimited) return usageLimited;
+
     const client = getAnthropicClient();
 
     const stream = client.messages.stream({
       model: AI_MODEL,
-      max_tokens: 64_000,
+      max_tokens: 16_000,
       thinking: { type: 'adaptive' },
       system: buildSystemPrompt(agent),
       messages,

@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
       : 'No brand strategy on file — use a confident, bold default direction.';
 
     const isVideo = (format || 'video') !== 'image';
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'creative');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

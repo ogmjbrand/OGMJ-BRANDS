@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const PLATFORM_GUIDANCE: Record<string, string> = {
   meta: 'Meta Ads (Facebook/Instagram): punchy primary text (under 125 chars ideal), headline under 40 chars, description under 30 chars.',
   google: 'Google Ads (Search): headlines under 30 chars each (provide 5), descriptions under 90 chars each (provide 2), keyword-relevant.',
@@ -56,6 +57,9 @@ export async function POST(request: NextRequest) {
       : 'No brand strategy on file — use a confident, persuasive default voice.';
 
     const guidance = PLATFORM_GUIDANCE[platform] || 'Write natural, on-brand ad copy.';
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'ads');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

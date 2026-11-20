@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const META_SYSTEM = `You are an SEO specialist. Return ONLY valid JSON (no markdown fences): {"metaTitle": "string (under 60 chars)", "metaDescription": "string (under 160 chars)", "keywords": ["string", ...] (8-12 keywords/phrases, primary keyword first), "headingSuggestions": ["string", ...] (3-5 H2 suggestions)}.`;
 
 export async function POST(request: NextRequest) {
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest) {
     if (!membership) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'seo');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

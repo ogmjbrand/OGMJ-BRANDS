@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { safeNextPath } from '@/lib/utils/safe-redirect';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,16 +29,19 @@ export async function GET(request: NextRequest) {
 
       console.log('🔐 [AUTH CALLBACK] Session exchanged successfully:', !!data.session);
 
-      // Redirect to onboarding for new users
+      // Default: new users go to onboarding. A password-recovery link passes
+      // next=/reset-password. Only same-origin relative paths are honoured,
+      // so the callback can't be used as an open redirect.
+      const destination = safeNextPath(searchParams.get('next')) ?? '/onboarding';
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
 
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}/onboarding`);
+        return NextResponse.redirect(`${origin}${destination}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}/onboarding`);
+        return NextResponse.redirect(`https://${forwardedHost}${destination}`);
       } else {
-        return NextResponse.redirect(`${origin}/onboarding`);
+        return NextResponse.redirect(`${origin}${destination}`);
       }
     }
 

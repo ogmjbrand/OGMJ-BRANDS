@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const CONTENT_TYPE_PROMPTS: Record<string, string> = {
   blog_article: 'Write a complete, publish-ready blog article (600-900 words) with a compelling title.',
   seo_article: 'Write an SEO-optimized article targeting the topic as the primary keyword — clear H2 structure, natural keyword usage, 700-1000 words.',
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
     const brandContext = strategy
       ? `Brand voice: ${(strategy as any).brand_voice || 'not set'}. Tone: ${(strategy as any).brand_tone || 'not set'}. USP: ${(strategy as any).usp || 'not set'}. Target audience: ${(strategy as any).target_audience || 'not set'}.`
       : 'No brand strategy on file yet — use a professional, confident default voice.';
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'content');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({
