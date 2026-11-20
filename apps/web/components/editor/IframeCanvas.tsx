@@ -20,9 +20,19 @@ const BASE_IFRAME_STYLES = `
 interface IframeCanvasProps {
   widthPx: number;
   children: ReactNode;
+  /**
+   * Fires once with the iframe's own `contentWindow` after it's ready.
+   * `keydown` inside the iframe's own document is a SEPARATE browsing
+   * context from the parent window -- it never bubbles up to a
+   * `window.addEventListener('keydown', ...)` attached on the parent page.
+   * A caller that needs a shortcut to work while focus happens to be
+   * inside the canvas (e.g. after clicking an element to select it) must
+   * attach its own listener to this window too, not just the parent's.
+   */
+  onWindowReady?: (win: Window) => void;
 }
 
-export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
+export function IframeCanvas({ widthPx, children, onWindowReady }: IframeCanvasProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
@@ -38,6 +48,8 @@ export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
     doc.write(`<!DOCTYPE html><html><head><style>${BASE_IFRAME_STYLES}</style></head><body><div id="ogmj-canvas-root"></div></body></html>`);
     doc.close();
     setMountNode(doc.getElementById('ogmj-canvas-root'));
+    if (iframe?.contentWindow) onWindowReady?.(iframe.contentWindow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
