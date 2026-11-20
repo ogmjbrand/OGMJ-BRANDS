@@ -7,6 +7,7 @@ export * from './types';
 export * from './tree';
 export * from './operations';
 export * from './schema';
+export * from './operationSchema';
 export * from './tokens';
 export * from './migrate';
 export * from './security';
