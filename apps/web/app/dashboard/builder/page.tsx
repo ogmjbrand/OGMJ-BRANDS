@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, Edit, Trash2, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, Edit, Trash2, ExternalLink, Wand2 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -564,6 +565,13 @@ export default function BuilderPage() {
                               {page.status}
                             </span>
                             <div className="flex gap-1">
+                              <Link
+                                href={`/dashboard/builder/${website.id}/${page.id}`}
+                                className="p-1 text-[#C8FF00]/50 hover:text-[#C8FF00] hover:bg-[#C8FF00]/10 rounded-sm transition"
+                                title="Open in Visual Editor"
+                              >
+                                <Wand2 className="w-3 h-3" />
+                              </Link>
                               <button
                                 onClick={() => handlePublishPage(page.id, website.id)}
                                 disabled={page.status === 'published'}
