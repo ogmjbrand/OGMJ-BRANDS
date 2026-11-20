@@ -52,6 +52,16 @@ describe('applyOperation + invert', () => {
     expect(restored).toEqual(doc);
   });
 
+  it('updateNodeProps rejects __proto__/constructor/prototype anywhere in the path instead of repointing a prototype', () => {
+    const doc = baseDocument();
+    for (const dangerous of ['__proto__', 'constructor', 'prototype']) {
+      expect(() => applyOperation(doc, { op: 'updateNodeProps', nodeId: 'heading-1', path: ['style', dangerous], value: { polluted: true } })).toThrow();
+      expect(() => applyOperation(doc, { op: 'updateNodeProps', nodeId: 'heading-1', path: [dangerous], value: 'x' })).toThrow();
+    }
+    // And no prototype was actually repointed by any of the attempts above.
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
   it('removeNode + inverse restores the node at its original index among siblings', () => {
     const doc = baseDocument();
     const { document: removed, inverse } = applyOperation(doc, { op: 'removeNode', nodeId: 'heading-1' });
