@@ -121,6 +121,12 @@ export async function proposeWebsiteOperations(instruction: string, document: Do
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) throw new WebsiteAssistError('Invalid ANTHROPIC_API_KEY.');
     if (error instanceof Anthropic.RateLimitError) throw new WebsiteAssistError('AI rate limit reached -- try again shortly.');
+    // Classified explicitly (consistent with lib/ai/providers/anthropicProvider.ts)
+    // rather than falling through to APIError/the raw rethrow below: a timeout
+    // is a distinct, actionable failure mode (retry is reasonable; a bad key or
+    // bad request is not), and leaving it unclassified means the raw SDK error
+    // object reaches this module's caller's catch block undifferentiated.
+    if (error instanceof Anthropic.APIConnectionTimeoutError) throw new WebsiteAssistError('AI request timed out.');
     if (error instanceof Anthropic.APIError) throw new WebsiteAssistError(`AI request failed (${error.status}).`);
     throw error;
   }

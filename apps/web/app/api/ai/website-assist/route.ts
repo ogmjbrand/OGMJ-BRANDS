@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { documentRootSchema, type DocumentRoot } from '@/lib/document-model';
 import { WebsiteAssistError, proposeWebsiteOperations } from '@/lib/ai/websiteAssist';
+import { safeErrorSummary } from '@/lib/ai/errorSummary';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof WebsiteAssistError) {
       return NextResponse.json({ success: false, error: error.message }, { status: 422 });
     }
-    console.error('AI website assist error:', error);
+    console.error('AI website assist error:', safeErrorSummary(error));
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

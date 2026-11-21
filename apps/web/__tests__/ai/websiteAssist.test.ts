@@ -116,4 +116,11 @@ describe('proposeWebsiteOperations', () => {
     createShouldThrow = new Anthropic.RateLimitError(429, {}, 'rate limited', new Headers());
     await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(/rate limit/i);
   });
+
+  it('classifies a connection-timeout error explicitly as a clear "timed out" WebsiteAssistError, consistent with lib/ai/providers/anthropicProvider.ts', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    createShouldThrow = new Anthropic.APIConnectionTimeoutError({ message: 'timed out' });
+    await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(WebsiteAssistError);
+    await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(/timed out/i);
+  });
 });

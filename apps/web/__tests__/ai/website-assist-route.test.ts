@@ -128,4 +128,31 @@ describe('POST /api/ai/website-assist', () => {
     expect(res.status).toBe(422);
     expect(body.error).toContain('ANTHROPIC_API_KEY');
   });
+
+  it('an unexpected (non-WebsiteAssistError) failure logs only a safe {name, message} summary, never the raw object, and returns a generic 500', async () => {
+    const sensitiveLeak = Object.assign(new Error('unexpected downstream failure'), {
+      headers: { authorization: 'Bearer sk-should-never-be-logged' },
+      requestBody: { secret: 'also-should-never-be-logged' },
+    });
+    proposeShouldThrow = sensitiveLeak;
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { POST } = await import('@/app/api/ai/website-assist/route');
+    const res = await POST(makeRequest({ websiteId: '11111111-1111-1111-1111-111111111111', instruction: 'x', document: sampleDocument() }));
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Internal server error'); // raw/internal message never leaked to the client either
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const loggedText = JSON.stringify(consoleErrorSpy.mock.calls.flat());
+    expect(loggedText).not.toContain('sk-should-never-be-logged');
+    expect(loggedText).not.toContain('also-should-never-be-logged');
+    expect(loggedText).not.toContain('authorization');
+    expect(loggedText).toContain('unexpected downstream failure'); // useful diagnostic info is preserved
+    expect(loggedText).toContain('Error'); // the safe {name, message} shape, never the raw object
+
+    consoleErrorSpy.mockRestore();
+  });
 });
