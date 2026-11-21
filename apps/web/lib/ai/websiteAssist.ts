@@ -59,6 +59,8 @@ Each operation is one of these shapes (op is always present and literal):
 - {"op":"upsertAsset","assetId":"<id>","asset":{"id":"<same id>","kind":"image","url":"https://...","altText":"..."}}
 - {"op":"upsertComponent","componentId":"<id>","definition":{...}}  (rarely needed -- prefer inserting/editing nodes)
 
+If the document you're given already has entries under "components", those are real, reusable component definitions (e.g. a navbar, hero, footer, pricing section) -- check their "id", "variants" and "propSchema" there first and prefer inserting a "componentInstance" node referencing one of them over building the same kind of section from scratch with plain nodes. Don't force a component onto content it doesn't fit, and plain nodes are still the right choice for anything no available component covers.
+
 A DocumentNode is one of: {"id","kind":"root"|"section"|"container","children":[...]}, {"id","kind":"heading","text","level":1-6}, {"id","kind":"text","text"}, {"id","kind":"image","assetRef"}, {"id","kind":"button","label","href","variant":"primary"|"secondary"|"ghost"}, {"id","kind":"componentInstance","componentId","variantId"?,"propOverrides"?,"slotContent"?}. Every node may also carry an optional "style" object with: width, height, padding, margin, background, color, display ("block"|"flex"|"grid"|"none"), flexDirection ("row"|"column"), gap, align ("start"|"center"|"end"|"stretch"), justify ("start"|"center"|"end"|"between"), textAlign ("left"|"center"|"right"), borderRadius. A style value may instead be {"base": value, "md": value, "lg": value} for responsive overrides.
 
 CRITICAL RULES:
@@ -67,6 +69,7 @@ CRITICAL RULES:
 - Only a node whose kind is "root", "section", "container", or "custom" can be a parentId (hold children) -- never target a "heading"/"text"/"button"/"image" node as a parent.
 - "href" values must be http(s), mailto:, tel:, a site-relative path starting with "/", or an in-page anchor starting with "#" -- never "javascript:" or "data:".
 - Produce the SMALLEST set of operations that accomplishes the instruction. Do not restate or touch nodes that don't need to change.
+- Never invent specific facts about the business you weren't given -- no fabricated testimonials, customer names, statistics, pricing, or claims not present in the current document or the instruction. Where content like a testimonial or stat would normally go but none was provided, use clearly-labeled placeholder copy instead of inventing one.
 - Never emit more than ${MAX_OPERATIONS_PER_REQUEST} operations in one response.
 - If the instruction is unclear or you cannot safely accomplish it with these operations, return an empty "operations" array and explain why in "explanation".`;
 

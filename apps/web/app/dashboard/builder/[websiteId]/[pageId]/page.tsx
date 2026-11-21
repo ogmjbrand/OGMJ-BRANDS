@@ -9,11 +9,13 @@
  * UI that drives them, not a second implementation of any of them.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { publishPage } from '@/lib/services/builder.service';
 import { loadEditablePage, loadWebsiteName, saveEditablePage, type EditablePage } from '@/lib/services/document-editor.service';
 import { useDocumentEditor } from '@/lib/editor/useDocumentEditor';
+import { takeGenerationRequest, type GenerationRequest } from '@/lib/editor/websiteGeneration';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
@@ -34,10 +36,30 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
   const [websiteName, setWebsiteName] = useState(websiteId);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiAssistOpen, setAiAssistOpen] = useState(false);
+  const [autoGenerate, setAutoGenerate] = useState<GenerationRequest | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     loadWebsiteName(websiteId).then(setWebsiteName);
   }, [websiteId]);
+
+  // Handoff from "New Website" -> AI creation mode (see the builder list
+  // page): a generation request was stashed for this exact page id right
+  // before navigating here. Consumed at most once -- takeGenerationRequest
+  // clears it from sessionStorage, and stripping the query param means a
+  // page refresh never re-triggers it.
+  useEffect(() => {
+    if (searchParams.get('generate') !== '1') return;
+    const request = takeGenerationRequest(page.id);
+    if (request) {
+      setAutoGenerate(request);
+      setAiAssistOpen(true);
+    }
+    router.replace(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -157,7 +179,14 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         />
       )}
 
-      {aiAssistOpen && <AIAssistPanel editor={editor} websiteId={websiteId} onClose={() => setAiAssistOpen(false)} />}
+      {aiAssistOpen && (
+        <AIAssistPanel
+          editor={editor}
+          websiteId={websiteId}
+          onClose={() => setAiAssistOpen(false)}
+          autoGenerate={autoGenerate}
+        />
+      )}
     </div>
   );
 }

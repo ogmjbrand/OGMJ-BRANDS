@@ -2,13 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, Edit, Trash2, ExternalLink, Wand2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Globe, Eye, Code, Share2, MoreHorizontal, AlertCircle, FileText, Edit, Trash2, ExternalLink, Wand2, Sparkles, LayoutTemplate } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getWebsites, getPages, createWebsite, updateWebsite, deleteWebsite, createPage, updatePage, deletePage, publishPage, getTemplates, type Website, type Page, type Template } from '@/lib/services/builder.service';
+import { stashGenerationRequest } from '@/lib/editor/websiteGeneration';
 
 export default function BuilderPage() {
+  const router = useRouter();
   const { currentBusiness } = useBusinessContext();
   const [websites, setWebsites] = useState<Website[]>([]);
   const [pages, setPages] = useState<Record<string, Page[]>>({});
@@ -19,6 +22,8 @@ export default function BuilderPage() {
   const [editWebsiteId, setEditWebsiteId] = useState<string | null>(null);
   const [newWebsiteName, setNewWebsiteName] = useState('');
   const [newWebsiteDescription, setNewWebsiteDescription] = useState('');
+  const [creationMode, setCreationMode] = useState<'blank' | 'ai'>('blank');
+  const [aiRequirements, setAiRequirements] = useState('');
   const [creatingWebsite, setCreatingWebsite] = useState(false);
   const [websiteActionError, setWebsiteActionError] = useState<string | null>(null);
   const [creatingPage, setCreatingPage] = useState<string | null>(null);
@@ -139,6 +144,75 @@ export default function BuilderPage() {
       } else {
         setWebsiteActionError(result.error?.message || 'Failed to create website');
       }
+    } catch (err) {
+      setWebsiteActionError('Failed to create website');
+      console.error(err);
+    } finally {
+      setCreatingWebsite(false);
+    }
+  }
+
+  /**
+   * AI creation mode: reuses the EXISTING createWebsite/createPage APIs
+   * unchanged (no new endpoint) -- the only new step is stashing the
+   * business description/requirements for the page editor to pick up and
+   * run through the EXISTING /api/ai/website-assist + editor.apply path
+   * (see AIAssistPanel.tsx's `autoGenerate` prop). If anything after the
+   * website itself is created fails, the website still exists and shows
+   * up in the list below exactly like a blank one -- never a broken or
+   * inaccessible website, just one that didn't get AI content yet.
+   */
+  async function handleCreateWebsiteWithAI(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentBusiness) return;
+    if (!newWebsiteName.trim() || !newWebsiteDescription.trim()) return;
+
+    setCreatingWebsite(true);
+    setWebsiteActionError(null);
+
+    try {
+      const siteResult = await createWebsite(currentBusiness.id, {
+        businessId: currentBusiness.id,
+        name: newWebsiteName.trim(),
+        description: newWebsiteDescription.trim(),
+      });
+
+      if (!siteResult.success || !siteResult.data) {
+        setWebsiteActionError(siteResult.error?.message || 'Failed to create website');
+        return;
+      }
+
+      const website = siteResult.data;
+      setWebsites((prev) => [website, ...prev]);
+
+      const pageResult = await createPage({
+        businessId: currentBusiness.id,
+        websiteId: website.id,
+        title: 'Home',
+        slug: 'home',
+      });
+
+      if (!pageResult.success || !pageResult.data) {
+        // The website exists and is now visible below like any other --
+        // just without a page yet. Let the user add one manually rather
+        // than leaving them with nothing to do.
+        setWebsiteActionError(
+          pageResult.error?.message || 'Website created, but the first page could not be created. Open it below and add a page to continue.'
+        );
+        setIsCreateWebsiteOpen(false);
+        return;
+      }
+
+      stashGenerationRequest(pageResult.data.id, {
+        description: newWebsiteDescription.trim(),
+        requirements: aiRequirements.trim() || undefined,
+      });
+
+      setIsCreateWebsiteOpen(false);
+      setNewWebsiteName('');
+      setNewWebsiteDescription('');
+      setAiRequirements('');
+      router.push(`/dashboard/builder/${website.id}/${pageResult.data.id}?generate=1`);
     } catch (err) {
       setWebsiteActionError('Failed to create website');
       console.error(err);
@@ -297,6 +371,8 @@ export default function BuilderPage() {
     setNewWebsiteName(template.name);
     setNewWebsiteDescription('');
     setWebsiteActionError(null);
+    setCreationMode('blank'); // a template is applied via the blank-creation path's templateId, not AI generation
+    setAiRequirements('');
     setIsCreateWebsiteOpen(true);
   }
 
@@ -357,6 +433,8 @@ export default function BuilderPage() {
             setNewWebsiteDescription('');
             setSelectedTemplateId(null);
             setWebsiteActionError(null);
+            setCreationMode('blank');
+            setAiRequirements('');
           }
         }}>
           <DialogTrigger asChild>
@@ -369,7 +447,46 @@ export default function BuilderPage() {
             <DialogHeader>
               <DialogTitle>{editWebsiteId ? 'Edit website' : 'Create a new website'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={editWebsiteId ? handleUpdateWebsite : handleCreateWebsite} className="space-y-4 pt-2">
+
+            {!editWebsiteId && (
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCreationMode('ai')}
+                  className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                    creationMode === 'ai'
+                      ? 'border-[#C8FF00]/60 bg-[#C8FF00]/10'
+                      : 'border-[#C8FF00]/10 bg-[#07070A] hover:border-[#C8FF00]/30'
+                  }`}
+                >
+                  <Sparkles className={`mt-0.5 h-5 w-5 shrink-0 ${creationMode === 'ai' ? 'text-[#C8FF00]' : 'text-[#C8FF00]/50'}`} />
+                  <div>
+                    <p className="text-sm font-semibold text-white">Describe your business</p>
+                    <p className="mt-1 text-xs text-[#C8FF00]/60">AI generates a complete homepage you can refine, then publish.</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreationMode('blank')}
+                  className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
+                    creationMode === 'blank'
+                      ? 'border-[#C8FF00]/60 bg-[#C8FF00]/10'
+                      : 'border-[#C8FF00]/10 bg-[#07070A] hover:border-[#C8FF00]/30'
+                  }`}
+                >
+                  <LayoutTemplate className={`mt-0.5 h-5 w-5 shrink-0 ${creationMode === 'blank' ? 'text-[#C8FF00]' : 'text-[#C8FF00]/50'}`} />
+                  <div>
+                    <p className="text-sm font-semibold text-white">Start blank</p>
+                    <p className="mt-1 text-xs text-[#C8FF00]/60">An empty website you build yourself in the visual editor.</p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            <form
+              onSubmit={editWebsiteId ? handleUpdateWebsite : creationMode === 'ai' ? handleCreateWebsiteWithAI : handleCreateWebsite}
+              className="space-y-4 pt-2"
+            >
               <div className="grid gap-4">
                 {websiteActionError && (
                   <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
@@ -388,19 +505,42 @@ export default function BuilderPage() {
                   />
                 </label>
                 <label className="space-y-2 text-sm text-[#C8FF00]/70">
-                  Description
+                  {!editWebsiteId && creationMode === 'ai' ? 'Describe your business' : 'Description'}
                   <textarea
                     value={newWebsiteDescription}
                     onChange={(e) => setNewWebsiteDescription(e.target.value)}
                     rows={4}
                     className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
-                    placeholder="One sentence summary of the website"
+                    placeholder={
+                      !editWebsiteId && creationMode === 'ai'
+                        ? 'What does this business do, who is it for, and what should the website include?'
+                        : 'One sentence summary of the website'
+                    }
+                    required={!editWebsiteId && creationMode === 'ai'}
                   />
                 </label>
+                {!editWebsiteId && creationMode === 'ai' && (
+                  <label className="space-y-2 text-sm text-[#C8FF00]/70">
+                    Specific requirements (optional)
+                    <textarea
+                      value={aiRequirements}
+                      onChange={(e) => setAiRequirements(e.target.value)}
+                      rows={2}
+                      className="w-full rounded-3xl border border-[#C8FF00]/10 bg-[#07070A] px-4 py-3 text-white outline-hidden focus:border-[#C8FF00]"
+                      placeholder="e.g. include a pricing section, mention we're open 24/7"
+                    />
+                  </label>
+                )}
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={creatingWebsite}>
-                  {creatingWebsite ? (editWebsiteId ? 'Saving...' : 'Creating...') : editWebsiteId ? 'Save Changes' : 'Create Website'}
+                  {creatingWebsite
+                    ? editWebsiteId ? 'Saving...' : 'Creating...'
+                    : editWebsiteId
+                      ? 'Save Changes'
+                      : creationMode === 'ai'
+                        ? 'Generate Website'
+                        : 'Create Website'}
                 </Button>
               </DialogFooter>
             </form>

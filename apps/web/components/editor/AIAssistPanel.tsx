@@ -14,16 +14,28 @@
  * typing a second instruction after applying the first naturally refines
  * the live result (see websiteAssist.ts's module doc comment).
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Loader2, Sparkles, X } from 'lucide-react';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import type { RejectedOperation } from '@/lib/ai/websiteAssist';
 import type { ValidatedDocumentOperation } from '@/lib/document-model';
+import { buildGenerationInstruction, documentNeedsPresetSeed, presetSeedOperations, type GenerationRequest } from '@/lib/editor/websiteGeneration';
 
 interface AIAssistPanelProps {
   editor: DocumentEditor;
   websiteId: string;
   onClose: () => void;
+  /**
+   * Set only when this panel was opened right after "New Website" → AI
+   * creation mode (see the builder list page and the page-editor route).
+   * On mount, seeds the preset component library into the document (the
+   * SAME `upsertComponent` operations ComponentsPanel's "Load the starter
+   * library" button dispatches) if it isn't already loaded, then
+   * immediately runs one generation pass for the whole homepage -- same
+   * `/api/ai/website-assist` call, same proposal-review-then-apply flow
+   * as any manual instruction, just pre-filled and auto-started once.
+   */
+  autoGenerate?: GenerationRequest | null;
 }
 
 interface Proposal {
@@ -57,15 +69,18 @@ function describeOperation(op: ValidatedDocumentOperation): string {
   }
 }
 
-export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps) {
+export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate }: AIAssistPanelProps) {
   const [instruction, setInstruction] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isInitialGeneration, setIsInitialGeneration] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [applied, setApplied] = useState(false);
+  const autoGenerateStarted = useRef(false);
 
-  async function handleGenerate() {
-    if (!instruction.trim() || loading) return;
+  async function handleGenerate(instructionOverride?: string) {
+    const effectiveInstruction = (instructionOverride ?? instruction).trim();
+    if (!effectiveInstruction || loading) return;
     setLoading(true);
     setError(null);
     setApplied(false);
@@ -73,19 +88,37 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
       const res = await fetch('/api/ai/website-assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ websiteId, instruction: instruction.trim(), document: editor.document }),
+        body: JSON.stringify({ websiteId, instruction: effectiveInstruction, document: editor.document }),
       });
       const result = await res.json();
       if (!res.ok || !result.success) {
         throw new Error(result.error || 'AI request failed');
       }
-      setProposal({ instruction: instruction.trim(), explanation: result.data.explanation, operations: result.data.operations, rejected: result.data.rejected });
+      setProposal({ instruction: effectiveInstruction, explanation: result.data.explanation, operations: result.data.operations, rejected: result.data.rejected });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'AI request failed');
     } finally {
       setLoading(false);
     }
   }
+
+  // Runs once, only when this panel was opened from "New Website" → AI
+  // creation mode. Seeding the preset library first (if the document
+  // doesn't already have it) means the generation call below can see --
+  // and the model is told to prefer -- the same 9 presets a user would
+  // otherwise load manually from the Components panel.
+  useEffect(() => {
+    if (!autoGenerate || autoGenerateStarted.current) return;
+    autoGenerateStarted.current = true;
+    if (documentNeedsPresetSeed(editor.document)) {
+      for (const op of presetSeedOperations()) editor.apply(op, 'ai');
+    }
+    const generationInstruction = buildGenerationInstruction(autoGenerate);
+    setInstruction(generationInstruction);
+    setIsInitialGeneration(true);
+    void handleGenerate(generationInstruction);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoGenerate]);
 
   function handleApply() {
     if (!proposal) return;
@@ -99,6 +132,7 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
     setProposal(null);
     setInstruction('');
     setApplied(false);
+    setIsInitialGeneration(false);
   }
 
   return (
@@ -116,8 +150,9 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <p className="text-xs leading-snug text-[#6b6b6b]">
-            Describe a change to THIS page -- e.g. &quot;add a pricing section&quot; or &quot;make the heading larger and center it&quot;. You&apos;ll see
-            exactly what it proposes before anything is applied, and every applied change can be undone.
+            {isInitialGeneration
+              ? "Generating your homepage from the business description you gave -- you'll see exactly what it proposes before anything is applied, and you can keep refining it conversationally afterward."
+              : 'Describe a change to THIS page -- e.g. "add a pricing section" or "make the heading larger and center it". You\'ll see exactly what it proposes before anything is applied, and every applied change can be undone.'}
           </p>
 
           <div className="space-y-2">
@@ -129,12 +164,12 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
               className="w-full rounded-md border border-[#D4AF37]/20 bg-[#121212] px-2.5 py-1.5 text-sm text-[#F0F0F0] outline-none focus:border-[#D4AF37]"
             />
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={!instruction.trim() || loading}
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#10B981] py-2 text-xs font-semibold text-[#07070A] transition hover:bg-[#0ea371] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-              {loading ? 'Thinking…' : 'Generate'}
+              {loading ? (isInitialGeneration ? 'Generating your homepage…' : 'Thinking…') : 'Generate'}
             </button>
           </div>
 
