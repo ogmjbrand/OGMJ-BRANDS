@@ -18,6 +18,7 @@ import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AIProviderError, getProvider } from '@/lib/ai/providers';
 import { checkAndIncrementRateLimit } from '@/lib/ai/rateLimit';
 import { logFailedAIExecution, logSuccessfulAIExecution } from '@/lib/ai/usageLogging';
+import { safeErrorSummary } from '@/lib/ai/errorSummary';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -34,23 +35,6 @@ const SYSTEM_PROMPT = `You are OGMJ AI, the business intelligence assistant insi
 Help the user with their business -- strategy, marketing, content, operations -- using only what they actually tell you in this conversation. You have no access to their live business data in this request; never invent revenue, customers, traffic, or performance numbers. If a question needs data you don't have, say so and ask for it or say what you'd need to check.
 
 Be direct and useful: lead with the recommendation, then the reasoning. No filler, no fake enthusiasm.`;
-
-/**
- * Formats an unknown thrown value for a log line WITHOUT ever including
- * the raw error object. Some error types that can reach this route's
- * catch blocks (HTTP client errors from either SDK, in particular) can
- * carry response headers or echo request details as extra properties --
- * never something this app wants verbatim in a log. Only a message and
- * (for a real Error) its name are kept; that's enough to diagnose a
- * failure while being provably free of credentials, headers, or raw
- * request content.
- */
-function safeErrorSummary(error: unknown): { name?: string; message: string } {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message };
-  }
-  return { message: typeof error === 'string' ? error : 'Non-Error value thrown' };
-}
 
 /** Classifies an AIProviderError into the right HTTP status -- the one place this mapping lives, so every failure path agrees. */
 function statusForProviderError(error: AIProviderError): number {

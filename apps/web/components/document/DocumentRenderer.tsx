@@ -234,9 +234,25 @@ function resolveAsset(assetRef: AssetId, ctx: RenderContext): AssetRef | undefin
  * `emittedRuleKeys` then makes the later, real render pass's calls to
  * `nodeInlineStyle` idempotent instead of duplicating every rule.
  */
+/**
+ * `getChildren` deliberately excludes a slot's `defaultContent` -- a slot's
+ * content comes from `setSlotContent`, never from `insertNode`, so it must
+ * stay out of the insert/move/remove container semantics `getChildren`
+ * serves for the tree-mutation helpers. CSS collection and cycle detection
+ * both need the FULL reachable tree regardless of that distinction: a
+ * styled node or a cyclic componentInstance reachable only through a
+ * slot's defaultContent (the common case for any preset/custom component
+ * whose list-shaped slot ships real default content, as opposed to an
+ * empty one filled only via an instance) still has to be found by both.
+ */
+function childrenForTraversal(node: DocumentNode): DocumentNode[] | undefined {
+  if (node.kind === 'slot') return node.defaultContent;
+  return getChildren(node);
+}
+
 function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
   nodeInlineStyle(node, ctx);
-  const children = getChildren(node);
+  const children = childrenForTraversal(node);
   if (children) {
     for (const child of children) collectCssRules(child, ctx);
   }
@@ -246,7 +262,7 @@ function collectCssRules(node: DocumentNode, ctx: RenderContext): void {
     // markCyclicComponentInstances, which has already run by this point.
     if (ctx.cyclicInstances.has(node)) return;
     const definition = safeObjectLookup(ctx.document.components, node.componentId);
-    if (definition) collectCssRules(substituteSlots(definition.template, node.slotContent), ctx);
+    if (definition) collectCssRules(resolveComponentInstance(definition, node), ctx);
   }
 }
 
@@ -288,7 +304,7 @@ function markCyclicComponentInstances(node: DocumentNode, ctx: RenderContext, ch
     chain.delete(definition.id);
     return;
   }
-  const children = getChildren(node);
+  const children = childrenForTraversal(node);
   if (children) {
     for (const child of children) markCyclicComponentInstances(child, ctx, chain);
   }
@@ -422,6 +438,136 @@ function substituteSlots(template: DocumentNode, slotContent: Record<string, Doc
   return { ...template, children: nextChildren } as DocumentNode;
 }
 
+/**
+ * Keys a variant's or an instance's `propOverrides` is allowed to patch onto
+ * a specific template node (see the convention documented on
+ * `ComponentVariant.propOverrides` in types.ts): a node-id-keyed map of
+ * shallow patches, e.g. `{ 'tpl-heading': { text: 'New headline' } }`.
+ *
+ * SECURITY: deliberately an allowlist, not a blocklist. `id`/`kind`/
+ * `children`/`componentId`/`slotContent`/`slotName`/`defaultContent` can
+ * never be patched this way -- allowing any of them would let an override
+ * change a node's structural identity (e.g. retarget a nested
+ * componentInstance's componentId, which `markCyclicComponentInstances`
+ * does not re-check after override application) or desync it from the
+ * children array the renderer is currently walking.
+ */
+const OVERRIDABLE_NODE_KEYS = new Set(['style', 'text', 'label', 'href', 'variant', 'objectFit', 'caption', 'level', 'a11yLabel', 'hidden']);
+
+function applyNodeOverride(node: DocumentNode, patch: Record<string, unknown>): DocumentNode {
+  const next: Record<string, unknown> = { ...node };
+  for (const [key, value] of Object.entries(patch)) {
+    if (!OVERRIDABLE_NODE_KEYS.has(key)) continue;
+    if (key === 'style' && value && typeof value === 'object') {
+      // One level deep, so a variant/instance can override just `background`
+      // without having to repeat every other style field on the node.
+      next.style = { ...(node as { style?: Record<string, unknown> }).style, ...(value as Record<string, unknown>) };
+    } else {
+      next[key] = value;
+    }
+  }
+  return next as unknown as DocumentNode;
+}
+
+/**
+ * Applies a node-id-keyed overrides map (already merged from variant +
+ * instance propOverrides, instance taking precedence) across a resolved
+ * template tree. Runs AFTER substituteSlots, so overrides can target nodes
+ * that came from slot content too.
+ */
+function applyTemplateOverrides(node: DocumentNode, overrides: Record<string, Record<string, unknown>>): DocumentNode {
+  // SECURITY/CORRECTNESS: never patch a componentInstance's OWN fields.
+  // markCyclicComponentInstances tracks cyclic nodes by OBJECT IDENTITY,
+  // computed from the plain slot-substituted tree (no overrides applied).
+  // If an override here produced a NEW object for a nested
+  // componentInstance node (even via an otherwise-harmless allowlisted
+  // key), that fresh object would no longer match ctx.cyclicInstances'
+  // entry for it, silently defeating cycle protection for exactly the node
+  // a crafted document would most want to retarget. Overrides are for
+  // leaf/content nodes; reconfiguring a nested instance is what
+  // instantiating or editing it directly is for.
+  if (node.kind === 'componentInstance') return node;
+  // An UNFILLED slot (substituteSlots leaves it as a literal slot node when
+  // no slotContent was supplied -- see its own comment) is never itself
+  // patched either, but its defaultContent still needs walking: a preset's
+  // list-shaped slot commonly ships real styled default content, and an
+  // override must still be able to reach a node inside it.
+  if (node.kind === 'slot') {
+    if (!node.defaultContent) return node;
+    return { ...node, defaultContent: node.defaultContent.map((c) => applyTemplateOverrides(c, overrides)) };
+  }
+  const patch = isSafeIdentifier(node.id) ? safeObjectLookup(overrides, node.id) : undefined;
+  const patched = patch ? applyNodeOverride(node, patch) : node;
+  const children = getChildren(patched);
+  if (!children) return patched;
+  return { ...patched, children: children.map((c) => applyTemplateOverrides(c, overrides)) } as DocumentNode;
+}
+
+/** `propOverrides` on a variant/instance is a node-id-keyed patch map, but may be absent, malformed, or (pre-Phase-3 data) a flat propSchema-name map -- treat anything that isn't a plain record of records as "no overrides" rather than throwing. */
+function asNodeOverridesMap(value: unknown): Record<string, Record<string, unknown>> {
+  if (!value || typeof value !== 'object') return {};
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (v && typeof v === 'object' && isSafeIdentifier(k)) out[k] = v as Record<string, unknown>;
+  }
+  return out;
+}
+
+/**
+ * The one place slot content, variant overrides, and per-instance overrides
+ * all resolve into the final tree a componentInstance renders -- used by
+ * both the CSS-collection pre-pass and the real JSX pass so they never
+ * disagree about what a given instance actually looks like.
+ */
+function resolveComponentInstance(definition: { template: DocumentNode; variants: Array<{ id: string; propOverrides?: Record<string, unknown> }> }, node: ComponentInstanceNode): DocumentNode {
+  const slotted = substituteSlots(definition.template, node.slotContent);
+  const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
+  const variantOverrides = asNodeOverridesMap(variant?.propOverrides);
+  const instanceOverrides = asNodeOverridesMap(node.propOverrides);
+  const merged: Record<string, Record<string, unknown>> = { ...variantOverrides };
+  // Per-node-id merge, not a top-level replace -- an instance overriding
+  // `text` on a node must not silently drop that same node's variant-level
+  // `style` override.
+  for (const [nodeId, patch] of Object.entries(instanceOverrides)) {
+    merged[nodeId] = { ...merged[nodeId], ...patch };
+  }
+  const overridden = Object.keys(merged).length === 0 ? slotted : applyTemplateOverrides(slotted, merged);
+  return namespaceLeafIds(overridden, node.id);
+}
+
+/**
+ * Prefixes every LEAF/content node's `.id` with the enclosing instance's own
+ * id (e.g. "navbar-1__navbar-logo"), so two instances of the same component
+ * never emit the same `--n-<id>-<prop>` CSS variable name or `data-node`
+ * value. Without this, `resolveResponsiveCssVar`'s dedup-by-nodeId (see its
+ * own comment) means the SECOND instance's style rule for a given template
+ * node id is silently dropped -- two navbar instances with different
+ * variants would visually bleed into whichever one rendered its CSS first.
+ *
+ * Deliberately mirrors applyTemplateOverrides' componentInstance/slot
+ * exclusion: a nested componentInstance node must keep the EXACT object
+ * reference markCyclicComponentInstances recorded it by, or cycle
+ * protection silently stops matching it. Its own id does not need
+ * namespacing here anyway -- when IT renders, resolveComponentInstance runs
+ * again for its own id and namespaces everything inside IT in turn, so
+ * nesting composes without every level needing to rewrite its children.
+ */
+function namespaceLeafIds(node: DocumentNode, instancePrefix: string): DocumentNode {
+  if (node.kind === 'componentInstance') return node;
+  if (!isSafeIdentifier(instancePrefix)) return node; // fail safe: render unprefixed rather than emit an unvalidated id
+  // An unfilled slot keeps its own id (it carries no CSS of its own -- see
+  // SlotBlock, which renders only its children) but its defaultContent still
+  // needs namespacing, for the same reason applyTemplateOverrides walks it.
+  if (node.kind === 'slot') {
+    if (!node.defaultContent) return node;
+    return { ...node, defaultContent: node.defaultContent.map((c) => namespaceLeafIds(c, instancePrefix)) };
+  }
+  const renamed = isSafeIdentifier(node.id) ? { ...node, id: `${instancePrefix}__${node.id}` } : node;
+  const children = getChildren(renamed);
+  if (!children) return renamed;
+  return { ...renamed, children: children.map((c) => namespaceLeafIds(c, instancePrefix)) } as DocumentNode;
+}
+
 function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ctx: RenderContext }) {
   // SECURITY: a plain-object lookup keyed by document-supplied data must
   // reject __proto__/constructor/prototype (see security.ts) -- otherwise
@@ -435,12 +581,7 @@ function ComponentInstanceBlock({ node, ctx }: { node: ComponentInstanceNode; ct
   // via a stack tracked live here) -- never expand it, or this recurses
   // without bound and crashes the render.
   if (ctx.cyclicInstances.has(node)) return <CyclicComponentPlaceholder node={node} />;
-  const variant = node.variantId ? definition.variants.find((v) => v.id === node.variantId) : undefined;
-  // Variant/instance propOverrides are resolved against propSchema defaults in a
-  // future editor-facing prop-binding layer; Phase 1 establishes the shape and
-  // slot substitution, which is the part the renderer must get right today.
-  void variant;
-  const resolved = substituteSlots(definition.template, node.slotContent);
+  const resolved = resolveComponentInstance(definition, node);
   return (
     <div data-node={node.id} data-component={definition.id} data-variant={node.variantId ?? 'default'}>
       <RenderNode node={resolved} ctx={ctx} />

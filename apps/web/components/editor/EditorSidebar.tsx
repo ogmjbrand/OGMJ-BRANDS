@@ -1,19 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Layers, Plus, Image as ImageIcon } from 'lucide-react';
+import { Blocks, FileText, Layers, Menu, Plus, Image as ImageIcon } from 'lucide-react';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { BlockPalette } from './BlockPalette';
 import { LayerTree } from './LayerTree';
 import { PagesPanel } from './PagesPanel';
 import { AssetsPanel } from './AssetsPanel';
+import { ComponentsPanel } from './ComponentsPanel';
+import { NavigationPanel } from './NavigationPanel';
 
-type Tab = 'pages' | 'layers' | 'add' | 'assets';
+type Tab = 'pages' | 'layers' | 'add' | 'components' | 'nav' | 'assets';
 
 const TABS: Array<{ key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { key: 'pages', label: 'Pages', icon: FileText },
   { key: 'layers', label: 'Layers', icon: Layers },
   { key: 'add', label: 'Add', icon: Plus },
+  { key: 'components', label: 'Components', icon: Blocks },
+  { key: 'nav', label: 'Nav', icon: Menu },
   { key: 'assets', label: 'Assets', icon: ImageIcon },
 ];
 
@@ -49,7 +53,9 @@ export function EditorSidebar({ editor, businessId, websiteId, pageId }: EditorS
         {tab === 'pages' && <PagesPanel businessId={businessId} websiteId={websiteId} currentPageId={pageId} />}
         {tab === 'layers' && <LayerTree editor={editor} />}
         {tab === 'add' && <BlockPalette editor={editor} />}
-        {tab === 'assets' && <AssetsPanel editor={editor} />}
+        {tab === 'components' && <ComponentsPanel editor={editor} />}
+        {tab === 'nav' && <NavigationPanel businessId={businessId} websiteId={websiteId} />}
+        {tab === 'assets' && <AssetsPanel editor={editor} businessId={businessId} />}
       </div>
     </aside>
   );

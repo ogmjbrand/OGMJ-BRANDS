@@ -18,6 +18,7 @@ interface EditorToolbarProps {
   onSave: () => void;
   onPublish: () => void;
   onOpenSettings: () => void;
+  onOpenAIAssist: () => void;
 }
 
 export function EditorToolbar({
@@ -32,6 +33,7 @@ export function EditorToolbar({
   onSave,
   onPublish,
   onOpenSettings,
+  onOpenAIAssist,
 }: EditorToolbarProps) {
   return (
     <div className="flex h-14 shrink-0 items-center gap-3 border-b border-[#D4AF37]/15 bg-[#121212] px-4">
@@ -85,13 +87,12 @@ export function EditorToolbar({
       </div>
 
       <button
-        disabled
-        title="AI-assisted editing -- architecture is in place (every edit already carries an actor: 'user' | 'ai' tag), wiring up a real assistant is a future stage, not this one"
-        className="flex items-center gap-1.5 rounded-md border border-[#10B981]/20 px-3 py-1.5 text-xs text-[#10B981]/50 cursor-not-allowed"
+        onClick={onOpenAIAssist}
+        title="AI Assist -- describe a change to this page"
+        className="flex items-center gap-1.5 rounded-md border border-[#10B981]/30 px-3 py-1.5 text-xs text-[#10B981] transition hover:bg-[#10B981]/10"
       >
         <Sparkles className="h-3.5 w-3.5" />
         AI Assist
-        <span className="rounded-full bg-[#10B981]/10 px-1.5 py-0.5 text-[10px]">Soon</span>
       </button>
 
       <Link

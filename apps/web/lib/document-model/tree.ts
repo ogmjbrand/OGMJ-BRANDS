@@ -13,6 +13,7 @@
  */
 
 import type { DocumentNode, NodeId, RootNode } from './types';
+import { isSafeIdentifier } from './security';
 
 /** Thrown by an invalid tree operation (see module doc above). Never swallowed -- callers must handle or propagate it. */
 export class DocumentOperationError extends Error {}
@@ -167,9 +168,24 @@ export function moveNode(root: RootNode, nodeId: NodeId, newParentId: NodeId, ne
   return insertNode(withoutNode, newParentId, newIndex, node);
 }
 
-/** Set a (possibly nested) property on a node by a dot/bracket-free path of plain keys. */
+/**
+ * Set a (possibly nested) property on a node by a dot/bracket-free path of
+ * plain keys. Every path segment is a plain-object key assigned via
+ * `cursor[key] = next` -- which, unlike a guarded `safeObjectLookup`-style
+ * read, is a REAL write, so a segment of `__proto__` would not just miss a
+ * lookup but actually repoint `cursor`'s (or `clone`'s) prototype. Every
+ * existing call site already passes fixed, hardcoded field names (all of
+ * which satisfy the allowlist below), so this changes nothing for them; it
+ * matters once a path segment can originate from caller-supplied data, as
+ * with a component's propSchema-driven per-instance override path.
+ */
 export function setNodeProp(node: DocumentNode, path: string[], value: unknown): DocumentNode {
   if (path.length === 0) return node;
+  for (let i = 0; i < path.length; i++) {
+    if (!isSafeIdentifier(path[i])) {
+      throw new DocumentOperationError(`updateNodeProps: "${path[i]}" is not a safe property path segment`);
+    }
+  }
   const clone: Record<string, unknown> = { ...(node as unknown as Record<string, unknown>) };
   let cursor: Record<string, unknown> = clone;
   for (let i = 0; i < path.length - 1; i++) {

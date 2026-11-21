@@ -190,6 +190,54 @@ export interface DocumentLimitViolation {
 }
 
 /**
+ * The shared non-recursive stack walk both `checkDocumentLimits` (below)
+ * and `checkOperationNodeLimits` (operationSchema.ts's pre-check for a
+ * single AI- or user-supplied node/template before it reaches ANY
+ * recursive Zod schema) run. Explicit stack, never function recursion --
+ * the whole point is that a pathological input cannot overflow the call
+ * stack while this is still deciding whether to reject it.
+ */
+function walkForLimitViolation(roots: unknown[]): DocumentLimitViolation | null {
+  let nodeCount = 0;
+  const stack: Array<{ node: unknown; depth: number }> = roots.map((node) => ({ node, depth: 1 }));
+  while (stack.length > 0) {
+    const { node, depth } = stack.pop() as { node: unknown; depth: number };
+    if (depth > MAX_DOCUMENT_DEPTH) {
+      return { kind: 'depth', message: `Document tree depth exceeds the limit of ${MAX_DOCUMENT_DEPTH}` };
+    }
+    nodeCount++;
+    if (nodeCount > MAX_NODE_COUNT) {
+      return { kind: 'nodeCount', message: `Document has more than ${MAX_NODE_COUNT} nodes` };
+    }
+    if (node && typeof node === 'object') {
+      const children = (node as { children?: unknown }).children;
+      if (Array.isArray(children)) {
+        for (const child of children) stack.push({ node: child, depth: depth + 1 });
+      }
+      // A slot node's OWN defaultContent -- distinct from `children` above
+      // and from componentInstance's slotContent below. Without this, an
+      // attacker could nest pathological depth/count inside
+      // `{kind:'slot', defaultContent:[...]}` and reach Zod's unguarded
+      // recursive parse directly, which is exactly the stack-overflow this
+      // function exists to prevent before that parse ever runs.
+      const defaultContent = (node as { defaultContent?: unknown }).defaultContent;
+      if (Array.isArray(defaultContent)) {
+        for (const child of defaultContent) stack.push({ node: child, depth: depth + 1 });
+      }
+      const slotContent = (node as { slotContent?: unknown }).slotContent;
+      if (slotContent && typeof slotContent === 'object' && !Array.isArray(slotContent)) {
+        for (const value of Object.values(slotContent as Record<string, unknown>)) {
+          if (Array.isArray(value)) {
+            for (const child of value) stack.push({ node: child, depth: depth + 1 });
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Measures an UNTRUSTED, not-yet-validated document's depth and node count
  * using an explicit stack, never function recursion — so a pathological
  * input (the thing we're specifically defending against) cannot overflow
@@ -227,34 +275,33 @@ export function checkDocumentLimits(rawDocument: unknown): DocumentLimitViolatio
     }
   }
 
-  let nodeCount = 0;
-  const stack: Array<{ node: unknown; depth: number }> = [
-    { node: root, depth: 1 },
-    ...componentTemplateRoots.map((node) => ({ node, depth: 1 })),
-  ];
-  while (stack.length > 0) {
-    const { node, depth } = stack.pop() as { node: unknown; depth: number };
-    if (depth > MAX_DOCUMENT_DEPTH) {
-      return { kind: 'depth', message: `Document tree depth exceeds the limit of ${MAX_DOCUMENT_DEPTH}` };
-    }
-    nodeCount++;
-    if (nodeCount > MAX_NODE_COUNT) {
-      return { kind: 'nodeCount', message: `Document has more than ${MAX_NODE_COUNT} nodes` };
-    }
-    if (node && typeof node === 'object') {
-      const children = (node as { children?: unknown }).children;
-      if (Array.isArray(children)) {
-        for (const child of children) stack.push({ node: child, depth: depth + 1 });
-      }
-      const slotContent = (node as { slotContent?: unknown }).slotContent;
-      if (slotContent && typeof slotContent === 'object' && !Array.isArray(slotContent)) {
-        for (const value of Object.values(slotContent as Record<string, unknown>)) {
-          if (Array.isArray(value)) {
-            for (const child of value) stack.push({ node: child, depth: depth + 1 });
-          }
-        }
-      }
-    }
+  return walkForLimitViolation([root, ...componentTemplateRoots]);
+}
+
+/**
+ * The same pre-check as `checkDocumentLimits`, but for a single node (and
+ * any byte-size budget, scaled down) -- used before validating a
+ * `DocumentOperation`'s embedded `node`/`content`/`definition.template`
+ * (operationSchema.ts), which is exactly as recursive as a full document's
+ * `root` but arrives one node at a time rather than as a whole document.
+ * AI-proposed operations are UNTRUSTED input by this project's own
+ * doctrine (see this module's header) just as much as anything else here,
+ * so they get the identical guard before ever reaching a recursive Zod
+ * parse.
+ */
+export function checkOperationNodeLimits(rawNode: unknown): DocumentLimitViolation | null {
+  let byteSize: number;
+  try {
+    byteSize = JSON.stringify(rawNode)?.length ?? 0;
+  } catch {
+    return { kind: 'malformed', message: 'Operation node could not be serialized to measure its size' };
   }
-  return null;
+  // A single node within an operation has no business approaching the
+  // whole-DOCUMENT byte budget -- 10% of it is already generous for one
+  // AI-proposed insertion.
+  const maxBytes = MAX_DOCUMENT_BYTES / 10;
+  if (byteSize > maxBytes) {
+    return { kind: 'byteSize', message: `Operation node is ${byteSize} bytes, exceeding the ${maxBytes}-byte limit` };
+  }
+  return walkForLimitViolation([rawNode]);
 }

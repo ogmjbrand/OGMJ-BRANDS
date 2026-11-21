@@ -31,7 +31,7 @@ import {
 // `isSafeIdentifier` (not just the SAFE_IDENTIFIER_PATTERN regex) so the
 // reserved-property-name check (__proto__/constructor/prototype) is
 // enforced here too -- a regex-only check would still accept them.
-const safeId = (what: string) =>
+export const safeId = (what: string) =>
   z.string().refine(isSafeIdentifier, `${what} must be 1-128 characters of letters, digits, "_" or "-", and not a reserved property name`);
 
 const safeHrefSchema = z.string().refine(isSafeHref, 'unsafe or malformed URL (allowed: http(s), mailto, tel, site-relative, #anchor)');
@@ -293,7 +293,7 @@ const designTokenSetSchema = z.object({
     .optional(),
 });
 
-const assetRefSchema = z.object({
+export const assetRefSchema = z.object({
   id: safeId('asset id'),
   kind: z.enum(['image', 'video', 'audio', 'font', 'model3d']),
   url: safeSrcSchema,
@@ -305,7 +305,7 @@ const assetRefSchema = z.object({
   generatedBy: z.enum(['upload', 'ai-generated']).optional(),
 });
 
-const componentDefinitionSchema = z.object({
+export const componentDefinitionSchema = z.object({
   id: safeId('component id'),
   name: z.string().max(256),
   propSchema: z

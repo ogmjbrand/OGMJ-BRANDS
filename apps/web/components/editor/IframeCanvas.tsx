@@ -20,9 +20,19 @@ const BASE_IFRAME_STYLES = `
 interface IframeCanvasProps {
   widthPx: number;
   children: ReactNode;
+  /**
+   * Fires once with the iframe's own `contentWindow` after it's ready.
+   * `keydown` inside the iframe's own document is a SEPARATE browsing
+   * context from the parent window -- it never bubbles up to a
+   * `window.addEventListener('keydown', ...)` attached on the parent page.
+   * A caller that needs a shortcut to work while focus happens to be
+   * inside the canvas (e.g. after clicking an element to select it) must
+   * attach its own listener to this window too, not just the parent's.
+   */
+  onWindowReady?: (win: Window) => void;
 }
 
-export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
+export function IframeCanvas({ widthPx, children, onWindowReady }: IframeCanvasProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
@@ -38,6 +48,8 @@ export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
     doc.write(`<!DOCTYPE html><html><head><style>${BASE_IFRAME_STYLES}</style></head><body><div id="ogmj-canvas-root"></div></body></html>`);
     doc.close();
     setMountNode(doc.getElementById('ogmj-canvas-root'));
+    if (iframe?.contentWindow) onWindowReady?.(iframe.contentWindow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -45,6 +57,24 @@ export function IframeCanvas({ widthPx, children }: IframeCanvasProps) {
       <iframe
         ref={iframeRef}
         title="Page preview"
+        // SECURITY: `allow-same-origin` only, never `allow-scripts`.
+        // `allow-same-origin` is required -- without it a sandboxed,
+        // src-less iframe gets an opaque origin and `contentDocument`
+        // access above throws a SecurityError, breaking this component
+        // entirely. `allow-scripts` is NOT needed: the portaled React
+        // content is built and reconciled by the PARENT frame's JS engine
+        // (synthetic events, DOM mutations) and never writes a <script>
+        // tag into the iframe's OWN document -- DocumentRenderer has no
+        // node kind that emits one. Empirically verified (Playwright,
+        // isolated from the app): with exactly this sandbox value, (1)
+        // contentDocument access and document.write still work, (2) a
+        // DOM listener the parent attaches to a node inside the iframe
+        // still fires on a click, and (3) a literal <script> tag written
+        // into the sandboxed document does NOT execute -- so if a future
+        // bug ever let one reach rendered output, it would be inert here
+        // instead of a live XSS. Do not add allow-scripts "to be safe";
+        // it would remove exactly the protection this exists to add.
+        sandbox="allow-same-origin"
         style={{ width: widthPx, height: '100%', border: 'none', display: 'block', background: '#fff' }}
       />
       {mountNode ? createPortal(children, mountNode) : null}

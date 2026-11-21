@@ -19,11 +19,13 @@ import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
 import { Inspector } from '@/components/editor/Inspector';
 import { SettingsDrawer } from '@/components/editor/SettingsDrawer';
+import { AIAssistPanel } from '@/components/editor/AIAssistPanel';
 
 type LoadState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; page: EditablePage };
 
 function EditorBody({ page: initialPage, websiteId, businessId }: { page: EditablePage; websiteId: string; businessId: string }) {
   const [page, setPage] = useState(initialPage);
+  const [pageVersion, setPageVersion] = useState(initialPage.version);
   const editor = useDocumentEditor(initialPage.document.document);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
   const [publishedStatus, setPublishedStatus] = useState<string | null>(null);
   const [websiteName, setWebsiteName] = useState(websiteId);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiAssistOpen, setAiAssistOpen] = useState(false);
 
   useEffect(() => {
     loadWebsiteName(websiteId).then(setWebsiteName);
@@ -40,14 +43,19 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
     setSaving(true);
     setSaveError(null);
     try {
-      await saveEditablePage(page.id, { schemaVersion: initialPage.document.schemaVersion, document: editor.document });
+      const { version } = await saveEditablePage(
+        page.id,
+        { schemaVersion: initialPage.document.schemaVersion, document: editor.document },
+        pageVersion
+      );
+      setPageVersion(version); // track the new version so the NEXT save's compare-and-swap uses it
       editor.markSaved();
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
-  }, [page.id, initialPage.document.schemaVersion, editor]);
+  }, [page.id, initialPage.document.schemaVersion, editor, pageVersion]);
 
   const handlePublish = useCallback(async () => {
     setPublishing(true);
@@ -115,6 +123,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         onSave={handleSave}
         onPublish={handlePublish}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenAIAssist={() => setAiAssistOpen(true)}
       />
 
       {(saveError || editor.lastError) && (
@@ -132,7 +141,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         </main>
 
         <aside className="w-80 shrink-0 overflow-y-auto border-l border-[#D4AF37]/15 bg-[#101010]">
-          <Inspector editor={editor} />
+          <Inspector editor={editor} businessId={businessId} />
         </aside>
       </div>
 
@@ -141,9 +150,14 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
           pageId={page.id}
           initial={{ title: page.title, slug: page.slug, seo: page.seo }}
           onClose={() => setSettingsOpen(false)}
-          onSaved={(next) => setPage((p) => ({ ...p, ...next }))}
+          onSaved={({ version, ...next }) => {
+            setPage((p) => ({ ...p, ...next }));
+            setPageVersion(version); // keep in sync so the next content save's expectedVersion isn't stale (see handleSave)
+          }}
         />
       )}
+
+      {aiAssistOpen && <AIAssistPanel editor={editor} websiteId={websiteId} onClose={() => setAiAssistOpen(false)} />}
     </div>
   );
 }

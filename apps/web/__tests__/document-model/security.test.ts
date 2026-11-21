@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DocumentRenderer } from '@/components/document/DocumentRenderer';
 import { validateDocument } from '@/lib/document-model/schema';
 import { DEFAULT_BREAKPOINTS, DEFAULT_TOKEN_SET } from '@/lib/document-model/tokens';
-import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT, checkDocumentLimits, safeObjectLookup } from '@/lib/document-model/security';
+import { MAX_DOCUMENT_DEPTH, MAX_NODE_COUNT, checkDocumentLimits, checkOperationNodeLimits, safeObjectLookup } from '@/lib/document-model/security';
 import type { DocumentRoot } from '@/lib/document-model/types';
 
 function emptyDoc(): DocumentRoot {
@@ -256,6 +256,27 @@ describe('document size and recursion limits', () => {
     expect(result?.success).toBe(false);
   });
 
+  it('a pathologically deep tree hidden inside a SLOT\'s defaultContent is caught too, not just via `children`', () => {
+    // Regression: checkDocumentLimits originally walked `children` and
+    // componentInstance's `slotContent`, but not a slot node's OWN
+    // `defaultContent` -- a depth bomb nested there would skip the
+    // non-recursive pre-check entirely and reach Zod's unguarded recursive
+    // parse directly, defeating the exact protection this test's siblings
+    // above exist to prove.
+    let node: DocumentRoot['root']['children'][number] = { id: 'leaf', kind: 'heading', text: 'x', level: 1 };
+    for (let i = 0; i < MAX_DOCUMENT_DEPTH + 10; i++) {
+      node = { id: `n${i}`, kind: 'slot', slotName: 's', defaultContent: [node] };
+    }
+    const doc = emptyDoc();
+    doc.root.children = [node];
+    let result: ReturnType<typeof validateDocument> | undefined;
+    expect(() => {
+      result = validateDocument(doc);
+    }).not.toThrow();
+    expect(result?.success).toBe(false);
+    if (!result?.success) expect(result?.errors.join(' ')).toContain('depth');
+  });
+
   it('a normally-sized, deeply-but-reasonably nested document still passes', () => {
     let node: DocumentRoot['root']['children'][number] = { id: 'leaf', kind: 'heading', text: 'x', level: 1 };
     for (let i = 0; i < 10; i++) {
@@ -275,6 +296,55 @@ describe('document size and recursion limits', () => {
     }).not.toThrow();
     expect(result!).not.toBeNull();
     expect(result!.kind).toBe('malformed');
+  });
+});
+
+describe('checkOperationNodeLimits -- the single-node pre-check AI-proposed operations go through', () => {
+  it('passes a small, reasonable node', () => {
+    expect(checkOperationNodeLimits({ id: 'n1', kind: 'heading', text: 'Hi', level: 1 })).toBeNull();
+  });
+
+  it('rejects (without crashing) a single node deeper than MAX_DOCUMENT_DEPTH', () => {
+    let node: unknown = { id: 'leaf', kind: 'heading', text: 'x', level: 1 };
+    for (let i = 0; i < MAX_DOCUMENT_DEPTH + 10; i++) {
+      node = { id: `n${i}`, kind: 'container', children: [node] };
+    }
+    let result: ReturnType<typeof checkOperationNodeLimits>;
+    expect(() => {
+      result = checkOperationNodeLimits(node);
+    }).not.toThrow();
+    expect(result?.kind).toBe('depth');
+  });
+
+  it('rejects a single node subtree with more than MAX_NODE_COUNT descendants', () => {
+    const node = { id: 'root', kind: 'container', children: Array.from({ length: MAX_NODE_COUNT + 10 }, (_, i) => ({ id: `n${i}`, kind: 'text', text: 'x' })) };
+    const result = checkOperationNodeLimits(node);
+    expect(result?.kind).toBe('nodeCount');
+  });
+
+  it('catches a depth bomb hidden inside a slot\'s own defaultContent, not just `children`', () => {
+    let node: unknown = { id: 'leaf', kind: 'heading', text: 'x', level: 1 };
+    for (let i = 0; i < MAX_DOCUMENT_DEPTH + 10; i++) {
+      node = { id: `n${i}`, kind: 'slot', slotName: 's', defaultContent: [node] };
+    }
+    const result = checkOperationNodeLimits(node);
+    expect(result?.kind).toBe('depth');
+  });
+
+  it('rejects an oversized single node well under the whole-document byte limit', () => {
+    const node = { id: 'n1', kind: 'text', text: 'x'.repeat(500_000) };
+    const result = checkOperationNodeLimits(node);
+    expect(result?.kind).toBe('byteSize');
+  });
+
+  it('reports "malformed" instead of throwing on a circular reference', () => {
+    const circular: Record<string, unknown> = { id: 'n1', kind: 'container' };
+    circular.children = [circular];
+    let result: ReturnType<typeof checkOperationNodeLimits>;
+    expect(() => {
+      result = checkOperationNodeLimits(circular);
+    }).not.toThrow();
+    expect(result?.kind).toBe('malformed');
   });
 });
 

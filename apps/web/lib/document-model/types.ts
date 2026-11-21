@@ -335,7 +335,13 @@ export interface ComponentInstanceNode extends BaseNode {
   kind: 'componentInstance';
   componentId: ComponentId;
   variantId?: VariantId;
-  /** Per-instance prop overrides, keyed by the component's declared propSchema. */
+  /**
+   * Per-instance node-id-keyed patch map -- same shape and allowlist as
+   * `ComponentVariant.propOverrides` (see its doc comment). Applied on top
+   * of the selected variant's own overrides, so an instance can tweak one
+   * node (e.g. the CTA button's label) without detaching from the shared
+   * component or losing the variant's other overrides.
+   */
   propOverrides?: Record<string, unknown>;
   /** Content supplied for each named slot in the component's template. */
   slotContent?: Record<string, DocumentNode[]>;
@@ -388,7 +394,15 @@ export interface ComponentPropDef {
 export interface ComponentVariant {
   id: VariantId;
   name: string;
-  /** Default propOverrides applied when an instance selects this variant. */
+  /**
+   * A map of TEMPLATE NODE ID -> shallow prop/style patch, applied to the
+   * resolved template when an instance selects this variant (see
+   * `resolveComponentInstance` in DocumentRenderer.tsx). Only a fixed
+   * allowlisted set of keys can be patched this way (`style`, `text`,
+   * `label`, `href`, etc. -- never `id`/`kind`/`children`/`componentId`),
+   * so a variant can genuinely restyle/re-copy specific nodes in the
+   * template without being able to change its structure.
+   */
   propOverrides?: Record<string, unknown>;
 }
 
@@ -448,7 +462,16 @@ export type DocumentOperation =
   // `document.assets` directly, for the same reason every other field goes
   // through an operation: reversible, auditable, and usable by both a human
   // and a future AI editor through the identical path.
-  | { op: 'upsertAsset'; assetId: AssetId; asset: AssetRef | undefined };
+  | { op: 'upsertAsset'; assetId: AssetId; asset: AssetRef | undefined }
+  // Same "undefined = absent" convention: defines, replaces, or deletes a
+  // component in `document.components`. This is how the editor's component
+  // library and component editor create/rename/duplicate/delete a
+  // reusable component definition -- never a direct write to
+  // `document.components`. Editing which SLOT CONTENT an instance supplies
+  // is still `setSlotContent`; this operation is for the shared definition
+  // (template/slots/variants/propSchema) every instance of a component
+  // points at.
+  | { op: 'upsertComponent'; componentId: ComponentId; definition: ComponentDefinition | undefined };
 
 export interface OperationHistoryEntry {
   operation: DocumentOperation;

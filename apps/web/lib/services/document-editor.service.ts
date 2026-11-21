@@ -17,6 +17,8 @@ export interface EditablePage {
   slug: string;
   seo: { title?: string; description?: string };
   document: VersionedDocument;
+  /** The row's `web_pages.version` at load time -- passed back on save as `expectedVersion` for stale-write detection (see the PUT route). */
+  version: number;
 }
 
 export async function loadEditablePage(pageId: string): Promise<EditablePage> {
@@ -34,14 +36,24 @@ export async function loadEditablePage(pageId: string): Promise<EditablePage> {
     slug: page.slug ?? '',
     seo: { title: page.seo?.title, description: page.seo?.description },
     document: migrateLegacyContent(page.content, page.title ?? 'Untitled page'),
+    version: typeof page.version === 'number' ? page.version : 0,
   };
 }
 
-/** Page-metadata save (title/slug/SEO) -- separate from `saveEditablePage` (document content) so editing one never has to re-send the other. */
+/**
+ * Page-metadata save (title/slug/SEO) -- separate from `saveEditablePage`
+ * (document content) so editing one never has to re-send the other. The
+ * PUT route increments `version` on EVERY successful update regardless of
+ * which fields changed, so this still has to return the new version: a
+ * caller tracking version for the content-save's compare-and-swap (see
+ * saveEditablePage) must stay in sync across either kind of save, or its
+ * next content save would present a now-stale expectedVersion and get a
+ * false-positive conflict.
+ */
 export async function savePageSettings(
   pageId: string,
   settings: { title: string; slug: string; seo: { title?: string; description?: string } }
-): Promise<void> {
+): Promise<{ version: number }> {
   const res = await fetch(`/api/builder/pages/${pageId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -51,6 +63,7 @@ export async function savePageSettings(
   if (!res.ok) {
     throw new Error(result.error || 'Failed to save page settings');
   }
+  return { version: typeof result.data?.version === 'number' ? result.data.version : 0 };
 }
 
 export async function loadWebsiteName(websiteId: string): Promise<string> {
@@ -66,7 +79,7 @@ export async function loadWebsiteName(websiteId: string): Promise<string> {
  * content, so a corrupted editor state can't silently become corrupted
  * stored content.
  */
-export async function saveEditablePage(pageId: string, document: VersionedDocument): Promise<void> {
+export async function saveEditablePage(pageId: string, document: VersionedDocument, expectedVersion: number): Promise<{ version: number }> {
   const validation = validateVersionedDocument(document);
   if (!validation.success) {
     throw new Error(`Cannot save an invalid document: ${validation.errors.join('; ')}`);
@@ -75,10 +88,14 @@ export async function saveEditablePage(pageId: string, document: VersionedDocume
   const res = await fetch(`/api/builder/pages/${pageId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content: document }),
+    body: JSON.stringify({ content: document, expectedVersion }),
   });
   const result = await res.json();
   if (!res.ok) {
+    // 409 is a real conflict (see the PUT route) -- surfaced as-is, since
+    // its message already tells the caller exactly what happened and what
+    // to do (reload before saving again), not a generic failure.
     throw new Error(result.error || 'Failed to save page');
   }
+  return { version: typeof result.data?.version === 'number' ? result.data.version : expectedVersion + 1 };
 }

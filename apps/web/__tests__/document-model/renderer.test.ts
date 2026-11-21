@@ -150,6 +150,33 @@ describe('DocumentRenderer', () => {
     expect(render(document)).toContain('Default copy');
   });
 
+  it('collects CSS rules for styled nodes inside a slot\'s defaultContent, not just inside normal children', () => {
+    // Regression: collectCssRules originally walked only getChildren(node),
+    // which excludes a slot's defaultContent -- a styled default-content
+    // node would be rendered referencing a CSS variable the <style> block
+    // never actually defined, so its style silently never applied.
+    const document: DocumentRoot = {
+      root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'callout' }] },
+      tokenSetId: DEFAULT_TOKEN_SET.id,
+      breakpoints: DEFAULT_BREAKPOINTS,
+      components: {
+        callout: {
+          id: 'callout', name: 'Callout', propSchema: [], slots: ['body'], variants: [],
+          template: {
+            id: 'tpl', kind: 'container',
+            children: [{
+              id: 'tpl-slot', kind: 'slot', slotName: 'body',
+              defaultContent: [{ id: 'default-text', kind: 'text', text: 'Default copy', style: { background: '#112233' } }],
+            }],
+          },
+        },
+      },
+      assets: {},
+    };
+    const html = render(document);
+    expect(html).toMatch(/--n-instance-1__default-text-background:#112233/);
+  });
+
   it('renders an invisible placeholder (never throws) for a componentInstance referencing a missing component', () => {
     const document: DocumentRoot = {
       root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'does-not-exist' }] },
@@ -263,6 +290,34 @@ describe('DocumentRenderer', () => {
       expect(html).toContain('data-component="outer"');
       expect(html).toContain('data-component="inner"');
       expect(html).not.toContain('data-ogmj-cyclic-component');
+    });
+
+    it('catches a cyclic componentInstance reachable only through a SLOT\'s defaultContent, not just through children', () => {
+      // Regression: markCyclicComponentInstances originally walked only
+      // getChildren(node), which returns undefined for a slot node --
+      // defaultContent was invisible to it, so a cycle hidden inside a
+      // slot's own default content would never be flagged and would
+      // recurse without bound at render time.
+      const document: DocumentRoot = {
+        root: { id: 'root', kind: 'root', children: [{ id: 'instance-1', kind: 'componentInstance', componentId: 'compA' }] },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          compA: {
+            id: 'compA', name: 'A', propSchema: [], slots: ['body'], variants: [],
+            template: {
+              id: 'tpl',
+              kind: 'slot',
+              slotName: 'body',
+              defaultContent: [{ id: 'inner', kind: 'componentInstance', componentId: 'compA' }],
+            },
+          },
+        },
+        assets: {},
+      };
+      expect(() => render(document)).not.toThrow();
+      const html = render(document);
+      expect(html).toContain('data-ogmj-cyclic-component="compA"');
     });
 
     it('preserves the SAME (non-cyclic) component legitimately instantiated twice in unrelated branches', () => {
@@ -395,6 +450,118 @@ describe('DocumentRenderer', () => {
     };
     const html = render(document);
     expect(html).toContain('mask-image:linear-gradient(black, transparent)');
+  });
+
+  describe('componentInstance variant and per-instance propOverrides', () => {
+    function docWithHero(options: { variantId?: string; instanceOverrides?: Record<string, unknown> }): DocumentRoot {
+      return {
+        root: {
+          id: 'root',
+          kind: 'root',
+          children: [
+            {
+              id: 'instance-1',
+              kind: 'componentInstance',
+              componentId: 'hero',
+              variantId: options.variantId,
+              propOverrides: options.instanceOverrides,
+            },
+          ],
+        },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          hero: {
+            id: 'hero',
+            name: 'Hero',
+            propSchema: [],
+            slots: [],
+            variants: [{ id: 'dark', name: 'Dark', propOverrides: { 'tpl-heading': { style: { background: '#000000' } } } }],
+            template: {
+              id: 'tpl',
+              kind: 'container',
+              children: [{ id: 'tpl-heading', kind: 'heading', text: 'Default headline', level: 1, style: { background: '#ffffff' } }],
+            },
+          },
+        },
+        assets: {},
+      };
+    }
+
+    it('applying a variant restyles the specific template node it targets', () => {
+      const html = render(docWithHero({ variantId: 'dark' }));
+      // CSS variable names are namespaced by the instance id (instance-1__...)
+      // so two instances of the same component never collide -- see
+      // namespaceLeafIds in DocumentRenderer.tsx.
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000');
+    });
+
+    it('with no variant selected, the template node keeps its own default style', () => {
+      const html = render(docWithHero({}));
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#ffffff');
+    });
+
+    it('a per-instance propOverride patches content on a specific template node without detaching from the component', () => {
+      const html = render(docWithHero({ instanceOverrides: { 'tpl-heading': { text: 'Custom headline for this instance' } } }));
+      expect(html).toContain('Custom headline for this instance');
+      expect(html).toContain('data-component="hero"'); // still a real instance, not detached
+    });
+
+    it('instance-level overrides win over the variant on the same key, but the variant\'s other overrides on that node survive', () => {
+      const html = render(
+        docWithHero({
+          variantId: 'dark',
+          instanceOverrides: { 'tpl-heading': { text: 'Instance headline' } },
+        })
+      );
+      expect(html).toContain('Instance headline');
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000'); // variant's style override still applied
+    });
+
+    it('two instances of the SAME component with different variants do not bleed CSS into each other', () => {
+      const document: DocumentRoot = {
+        root: {
+          id: 'root',
+          kind: 'root',
+          children: [
+            { id: 'instance-1', kind: 'componentInstance', componentId: 'hero', variantId: 'dark' },
+            { id: 'instance-2', kind: 'componentInstance', componentId: 'hero' },
+          ],
+        },
+        tokenSetId: DEFAULT_TOKEN_SET.id,
+        breakpoints: DEFAULT_BREAKPOINTS,
+        components: {
+          hero: {
+            id: 'hero',
+            name: 'Hero',
+            propSchema: [],
+            slots: [],
+            variants: [{ id: 'dark', name: 'Dark', propOverrides: { 'tpl-heading': { style: { background: '#000000' } } } }],
+            template: {
+              id: 'tpl',
+              kind: 'container',
+              children: [{ id: 'tpl-heading', kind: 'heading', text: 'Headline', level: 1, style: { background: '#ffffff' } }],
+            },
+          },
+        },
+        assets: {},
+      };
+      const html = render(document);
+      // Without per-instance id namespacing both instances would emit the
+      // SAME CSS variable name for "tpl-heading", and whichever rule came
+      // first would win for both -- this proves they're independent.
+      expect(html).toContain('--n-instance-1__tpl-heading-background:#000000');
+      expect(html).toContain('--n-instance-2__tpl-heading-background:#ffffff');
+    });
+
+    it('cannot patch structural keys (id/kind/children/componentId) via propOverrides', () => {
+      const document = docWithHero({ instanceOverrides: { 'tpl-heading': { kind: 'button', id: 'hijacked', children: [] } } });
+      const html = render(document);
+      // The node still rendered as its real kind (<h1>), proving the
+      // disallowed keys in the patch were silently dropped, not applied.
+      expect(html).toContain('<h1');
+      expect(html).not.toContain('hijacked');
+    });
   });
 
   it('records a shaderRef as an explicit data attribute instead of silently dropping it', () => {

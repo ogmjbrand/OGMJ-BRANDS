@@ -8,7 +8,7 @@ interface SettingsDrawerProps {
   pageId: string;
   initial: { title: string; slug: string; seo: { title?: string; description?: string } };
   onClose: () => void;
-  onSaved: (next: { title: string; slug: string }) => void;
+  onSaved: (next: { title: string; slug: string; version: number }) => void;
 }
 
 export function SettingsDrawer({ pageId, initial, onClose, onSaved }: SettingsDrawerProps) {
@@ -23,8 +23,8 @@ export function SettingsDrawer({ pageId, initial, onClose, onSaved }: SettingsDr
     setSaving(true);
     setError(null);
     try {
-      await savePageSettings(pageId, { title, slug, seo: { title: seoTitle || undefined, description: seoDescription || undefined } });
-      onSaved({ title, slug });
+      const { version } = await savePageSettings(pageId, { title, slug, seo: { title: seoTitle || undefined, description: seoDescription || undefined } });
+      onSaved({ title, slug, version });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save settings');

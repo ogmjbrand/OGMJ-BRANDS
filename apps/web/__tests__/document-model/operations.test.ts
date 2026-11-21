@@ -52,6 +52,16 @@ describe('applyOperation + invert', () => {
     expect(restored).toEqual(doc);
   });
 
+  it('updateNodeProps rejects __proto__/constructor/prototype anywhere in the path instead of repointing a prototype', () => {
+    const doc = baseDocument();
+    for (const dangerous of ['__proto__', 'constructor', 'prototype']) {
+      expect(() => applyOperation(doc, { op: 'updateNodeProps', nodeId: 'heading-1', path: ['style', dangerous], value: { polluted: true } })).toThrow();
+      expect(() => applyOperation(doc, { op: 'updateNodeProps', nodeId: 'heading-1', path: [dangerous], value: 'x' })).toThrow();
+    }
+    // And no prototype was actually repointed by any of the attempts above.
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
   it('removeNode + inverse restores the node at its original index among siblings', () => {
     const doc = baseDocument();
     const { document: removed, inverse } = applyOperation(doc, { op: 'removeNode', nodeId: 'heading-1' });
@@ -237,5 +247,73 @@ describe('upsertAsset', () => {
     }
     // And the document is provably untouched -- no polluted prototype leaking into a fresh object.
     expect(({} as Record<string, unknown>).kind).toBeUndefined();
+  });
+});
+
+describe('upsertComponent', () => {
+  function sampleDefinition() {
+    return {
+      id: 'hero-1',
+      name: 'Hero',
+      propSchema: [],
+      slots: ['body'],
+      variants: [{ id: 'v1', name: 'V1' }],
+      template: { id: 'tpl', kind: 'container' as const, children: [{ id: 'tpl-slot', kind: 'slot' as const, slotName: 'body' }] },
+    };
+  }
+
+  it('adds a new component definition, and undo removes the key entirely (not an empty placeholder)', () => {
+    const doc = baseDocument();
+    const definition = sampleDefinition();
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertComponent', componentId: 'hero-1', definition });
+    expect(next.components['hero-1']).toEqual(definition);
+    expect(inverse).toEqual({ op: 'upsertComponent', componentId: 'hero-1', definition: undefined });
+
+    const { document: undone } = applyOperation(next, inverse);
+    expect('hero-1' in undone.components).toBe(false);
+    expect(undone).toEqual(doc);
+  });
+
+  it('replacing an existing component definition inverts back to the exact prior value', () => {
+    const doc = baseDocument();
+    const original = sampleDefinition();
+    doc.components['hero-1'] = original;
+    const replacement = { ...sampleDefinition(), name: 'Hero (renamed)' };
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertComponent', componentId: 'hero-1', definition: replacement });
+    expect(next.components['hero-1']).toEqual(replacement);
+    const { document: undone } = applyOperation(next, inverse);
+    expect(undone.components['hero-1']).toEqual(original);
+  });
+
+  it('deleting a component definition (definition: undefined) inverts back to restoring it', () => {
+    const doc = baseDocument();
+    const definition = sampleDefinition();
+    doc.components['hero-1'] = definition;
+    const { document: next, inverse } = applyOperation(doc, { op: 'upsertComponent', componentId: 'hero-1', definition: undefined });
+    expect('hero-1' in next.components).toBe(false);
+    const { document: restored } = applyOperation(next, inverse);
+    expect(restored.components['hero-1']).toEqual(definition);
+  });
+
+  it('rejects __proto__/constructor/prototype as a component id instead of touching Object.prototype', () => {
+    const doc = baseDocument();
+    for (const dangerous of ['__proto__', 'constructor', 'prototype']) {
+      expect(() => applyOperation(doc, { op: 'upsertComponent', componentId: dangerous, definition: { ...sampleDefinition(), id: dangerous } })).toThrow();
+    }
+    expect(({} as Record<string, unknown>).kind).toBeUndefined();
+  });
+
+  it('a componentInstance referencing a deleted component degrades gracefully, not a crash', () => {
+    // DocumentRenderer already renders a MissingComponentPlaceholder for a
+    // dangling componentId -- upsertComponent deliberately does not block
+    // deletion while instances exist, matching that existing graceful-degradation behavior.
+    let doc = baseDocument();
+    doc.components['hero-1'] = sampleDefinition();
+    const { document: withInstance } = applyOperation(doc, {
+      op: 'insertNode', parentId: 'section-1', index: 0, node: { id: 'instance-1', kind: 'componentInstance', componentId: 'hero-1' },
+    });
+    const { document: afterDelete } = applyOperation(withInstance, { op: 'upsertComponent', componentId: 'hero-1', definition: undefined });
+    expect(findNode(afterDelete.root, 'instance-1')).not.toBeNull();
+    expect('hero-1' in afterDelete.components).toBe(false);
   });
 });
