@@ -19,7 +19,13 @@ import { AlertTriangle, Loader2, Sparkles, X } from 'lucide-react';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import type { RejectedOperation } from '@/lib/ai/websiteAssist';
 import type { ValidatedDocumentOperation } from '@/lib/document-model';
-import { buildGenerationInstruction, documentNeedsPresetSeed, presetSeedOperations, type GenerationRequest } from '@/lib/editor/websiteGeneration';
+import {
+  buildGenerationInstruction,
+  clearGenerationRequest,
+  documentNeedsPresetSeed,
+  presetSeedOperations,
+  type GenerationRequest,
+} from '@/lib/editor/websiteGeneration';
 
 interface AIAssistPanelProps {
   editor: DocumentEditor;
@@ -36,6 +42,13 @@ interface AIAssistPanelProps {
    * as any manual instruction, just pre-filled and auto-started once.
    */
   autoGenerate?: GenerationRequest | null;
+  /**
+   * Needed only alongside `autoGenerate`, to clear its sessionStorage
+   * stash once the user applies or discards the resulting proposal -- see
+   * clearGenerationRequest's doc comment for why consumption happens
+   * there rather than on the page route's read of the stash.
+   */
+  pageId?: string;
 }
 
 interface Proposal {
@@ -69,7 +82,7 @@ function describeOperation(op: ValidatedDocumentOperation): string {
   }
 }
 
-export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate }: AIAssistPanelProps) {
+export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId }: AIAssistPanelProps) {
   const [instruction, setInstruction] = useState('');
   const [loading, setLoading] = useState(false);
   const [isInitialGeneration, setIsInitialGeneration] = useState(false);
@@ -116,6 +129,15 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate }: AIAs
     const generationInstruction = buildGenerationInstruction(autoGenerate);
     setInstruction(generationInstruction);
     setIsInitialGeneration(true);
+    // Deliberately NOT cleared here, even once this call settles -- the
+    // page route can remount shortly after the initial redirect (see
+    // peekGenerationRequest's doc comment), which unmounts this whole
+    // panel instance, proposal and all. Leaving the stash in place means
+    // the fresh instance that mounts after any such remount re-reads it
+    // and simply runs generation again, rather than the user watching
+    // "Generating..." and then silently seeing nothing. It's only cleared
+    // once the user actually acts on a proposal (handleApply/handleDiscard
+    // below), the first point a remount can no longer cost them anything.
     void handleGenerate(generationInstruction);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoGenerate]);
@@ -125,10 +147,12 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate }: AIAs
     for (const op of proposal.operations) {
       editor.apply(op, 'ai');
     }
+    if (pageId) clearGenerationRequest(pageId);
     setApplied(true);
   }
 
   function handleDiscard() {
+    if (pageId) clearGenerationRequest(pageId);
     setProposal(null);
     setInstruction('');
     setApplied(false);
@@ -137,7 +161,7 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate }: AIAs
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={onClose}>
-      <div className="flex h-full w-[28rem] flex-col bg-[#101010] text-sm text-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+      <div className="flex h-full w-full flex-col bg-[#101010] text-sm text-[#E5E5E5] sm:w-[28rem]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#D4AF37]/15 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-[#10B981]" />

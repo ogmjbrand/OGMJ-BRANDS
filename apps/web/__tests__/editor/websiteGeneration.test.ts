@@ -1,10 +1,12 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import {
   buildGenerationInstruction,
+  clearGenerationRequest,
   documentNeedsPresetSeed,
+  peekGenerationRequest,
   presetSeedOperations,
+  shouldAutoGenerate,
   stashGenerationRequest,
-  takeGenerationRequest,
 } from '@/lib/editor/websiteGeneration';
 import { PRESET_COMPONENTS } from '@/lib/editor/presetComponents';
 
@@ -76,7 +78,7 @@ describe('presetSeedOperations', () => {
  * This repo's vitest environment is plain Node (see vitest.config.ts), not
  * jsdom -- `sessionStorage` isn't a real global here the way it is in a
  * browser. A minimal in-memory stand-in (get/set/remove/clear) is enough
- * for stashGenerationRequest/takeGenerationRequest's actual usage, without
+ * for stashGenerationRequest/peekGenerationRequest/clearGenerationRequest's actual usage, without
  * pulling in a new test-environment dependency for one module.
  */
 class MemorySessionStorage {
@@ -95,7 +97,7 @@ class MemorySessionStorage {
   }
 }
 
-describe('stashGenerationRequest / takeGenerationRequest', () => {
+describe('stashGenerationRequest / peekGenerationRequest / clearGenerationRequest', () => {
   const pageId = 'page-123';
 
   beforeEach(() => {
@@ -108,34 +110,85 @@ describe('stashGenerationRequest / takeGenerationRequest', () => {
 
   it('round-trips a stashed request for the exact page id', () => {
     stashGenerationRequest(pageId, { description: 'A bakery.', requirements: 'Mention our sourdough.' });
-    const taken = takeGenerationRequest(pageId);
-    expect(taken).toEqual({ description: 'A bakery.', requirements: 'Mention our sourdough.' });
+    const peeked = peekGenerationRequest(pageId);
+    expect(peeked).toEqual({ description: 'A bakery.', requirements: 'Mention our sourdough.' });
   });
 
-  it('is consumed exactly once -- a second read returns null', () => {
+  it('is non-destructive -- repeated reads keep returning it until explicitly cleared', () => {
     stashGenerationRequest(pageId, { description: 'A bakery.' });
-    expect(takeGenerationRequest(pageId)).not.toBeNull();
-    expect(takeGenerationRequest(pageId)).toBeNull();
+    expect(peekGenerationRequest(pageId)).not.toBeNull();
+    expect(peekGenerationRequest(pageId)).not.toBeNull();
+    clearGenerationRequest(pageId);
+    expect(peekGenerationRequest(pageId)).toBeNull();
+  });
+
+  it('clearGenerationRequest is safe to call for a page id nothing was stashed for', () => {
+    expect(() => clearGenerationRequest('some-other-page')).not.toThrow();
   });
 
   it('returns null for a page id nothing was stashed for', () => {
-    expect(takeGenerationRequest('some-other-page')).toBeNull();
+    expect(peekGenerationRequest('some-other-page')).toBeNull();
   });
 
   it('omits requirements entirely when none were given', () => {
     stashGenerationRequest(pageId, { description: 'A bakery.' });
-    const taken = takeGenerationRequest(pageId);
-    expect(taken?.requirements).toBeUndefined();
+    const peeked = peekGenerationRequest(pageId);
+    expect(peeked?.requirements).toBeUndefined();
   });
 
   it('returns null rather than throwing on malformed stored JSON', () => {
     sessionStorage.setItem('ogmj:ai-website-generate:' + pageId, 'not valid json');
-    expect(() => takeGenerationRequest(pageId)).not.toThrow();
-    expect(takeGenerationRequest(pageId)).toBeNull();
+    expect(() => peekGenerationRequest(pageId)).not.toThrow();
+    expect(peekGenerationRequest(pageId)).toBeNull();
   });
 
   it('returns null and does not throw when description is missing or not a string', () => {
     sessionStorage.setItem('ogmj:ai-website-generate:' + pageId, JSON.stringify({ requirements: 'x' }));
-    expect(takeGenerationRequest(pageId)).toBeNull();
+    expect(peekGenerationRequest(pageId)).toBeNull();
+  });
+});
+
+describe('shouldAutoGenerate', () => {
+  // shouldAutoGenerate tracks "has this page id's ?generate=1 been seen" in
+  // a module-level Set that persists for the whole process, not just one
+  // test -- every test here uses its own unique page id so they can't leak
+  // state into each other.
+  beforeEach(() => {
+    (globalThis as { sessionStorage?: unknown }).sessionStorage = new MemorySessionStorage();
+  });
+
+  afterEach(() => {
+    delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+  });
+
+  it('returns the stash on the first mount with the URL flag set', () => {
+    const pageId = 'shouldgen-first-mount';
+    stashGenerationRequest(pageId, { description: 'A bakery.' });
+    expect(shouldAutoGenerate(pageId, true)).toEqual({ description: 'A bakery.', requirements: undefined });
+  });
+
+  it('recovers on a later mount with the URL flag already stripped, as long as the flag was seen earlier this load', () => {
+    const pageId = 'shouldgen-remount-recovery';
+    stashGenerationRequest(pageId, { description: 'A bakery.' });
+    expect(shouldAutoGenerate(pageId, true)).not.toBeNull(); // first mount: URL still has it
+    expect(shouldAutoGenerate(pageId, false)).not.toBeNull(); // remount: URL already stripped, but recovers
+  });
+
+  it('never triggers for a page id whose ?generate=1 was never seen this load', () => {
+    const pageId = 'shouldgen-never-seen';
+    stashGenerationRequest(pageId, { description: 'A bakery.' });
+    expect(shouldAutoGenerate(pageId, false)).toBeNull();
+  });
+
+  it('does not re-trigger after the stash was cleared, even with the flag seen', () => {
+    const pageId = 'shouldgen-cleared';
+    stashGenerationRequest(pageId, { description: 'A bakery.' });
+    expect(shouldAutoGenerate(pageId, true)).not.toBeNull();
+    clearGenerationRequest(pageId);
+    expect(shouldAutoGenerate(pageId, false)).toBeNull();
+  });
+
+  it('returns null when nothing was ever stashed, regardless of the URL flag', () => {
+    expect(shouldAutoGenerate('shouldgen-nothing-stashed', true)).toBeNull();
   });
 });

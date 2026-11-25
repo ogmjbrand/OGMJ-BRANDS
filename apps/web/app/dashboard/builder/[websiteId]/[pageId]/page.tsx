@@ -15,7 +15,7 @@ import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { publishPage } from '@/lib/services/builder.service';
 import { loadEditablePage, loadWebsiteName, saveEditablePage, type EditablePage } from '@/lib/services/document-editor.service';
 import { useDocumentEditor } from '@/lib/editor/useDocumentEditor';
-import { takeGenerationRequest, type GenerationRequest } from '@/lib/editor/websiteGeneration';
+import { shouldAutoGenerate, type GenerationRequest } from '@/lib/editor/websiteGeneration';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
@@ -47,17 +47,25 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
 
   // Handoff from "New Website" -> AI creation mode (see the builder list
   // page): a generation request was stashed for this exact page id right
-  // before navigating here. Consumed at most once -- takeGenerationRequest
-  // clears it from sessionStorage, and stripping the query param means a
-  // page refresh never re-triggers it.
+  // before navigating here. shouldAutoGenerate (not a plain URL check) is
+  // what decides whether THIS mount should act on it -- this route can
+  // remount shortly after the initial redirect, an existing characteristic
+  // of this dynamic route and not specific to this feature, and by then
+  // the URL has often already had `?generate=1` stripped by the first
+  // mount's router.replace below. A plain "does the URL say generate=1"
+  // gate would skip the very remount it needs to recover from, while
+  // dropping the gate entirely would let a real refresh keep
+  // re-generating forever (the sessionStorage stash is deliberately kept
+  // around until the user acts -- see clearGenerationRequest's doc
+  // comment). shouldAutoGenerate's doc comment covers exactly how it
+  // threads this needle.
   useEffect(() => {
-    if (searchParams.get('generate') !== '1') return;
-    const request = takeGenerationRequest(page.id);
+    const request = shouldAutoGenerate(page.id, searchParams.get('generate') === '1');
     if (request) {
       setAutoGenerate(request);
       setAiAssistOpen(true);
     }
-    router.replace(pathname);
+    if (searchParams.get('generate') === '1') router.replace(pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -185,6 +193,7 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
           websiteId={websiteId}
           onClose={() => setAiAssistOpen(false)}
           autoGenerate={autoGenerate}
+          pageId={page.id}
         />
       )}
     </div>
