@@ -11,9 +11,16 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Uses the sandbox's pre-installed Chromium directly instead of
  * `playwright install`, since this container has no browser download path.
+ *
+ * A separate config file (not the default playwright.config.ts) because
+ * PR #79's AI-website-creation suite already owns that file, its own
+ * e2e/support/supabase-mock-server.cjs, and ports 3100/4100 -- this suite
+ * uses 3200/4200 and its own overlay-mock-server.cjs so both coexist.
+ * Run with `npx playwright test -c playwright.overlay.config.ts`.
  */
 export default defineConfig({
   testDir: './e2e',
+  testMatch: 'overlay-portal.spec.ts',
   timeout: 30_000,
   fullyParallel: false,
   retries: 0,
@@ -42,7 +49,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'node e2e/support/supabase-mock-server.cjs',
+      command: 'node e2e/support/overlay-mock-server.cjs',
       url: 'http://127.0.0.1:4200/auth/v1/user',
       reuseExistingServer: true,
       timeout: 15_000,

@@ -12,8 +12,14 @@
  * and the server land on the same loopback mock, with no mismatch.
  *
  * Plain CommonJS/node:http on purpose -- runs directly via
- * `node e2e/support/supabase-mock-server.cjs` from Playwright's webServer
+ * `node e2e/support/overlay-mock-server.cjs` from Playwright's webServer
  * config, no build step, no new runtime dependency.
+ *
+ * Named/ported apart from e2e/support/supabase-mock-server.cjs (PR #79's
+ * own mock, ports 3100/4100): that one backs e2e/ai-website-creation.spec.ts
+ * via the default playwright.config.ts, this one backs e2e/overlay-portal.spec.ts
+ * via playwright.overlay.config.ts -- kept separate so neither suite's
+ * webServer config can collide with or shadow the other's.
  */
 const http = require('node:http');
 
