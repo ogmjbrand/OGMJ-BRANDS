@@ -90,6 +90,16 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId
   const [error, setError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [applied, setApplied] = useState(false);
+  /**
+   * Set only when the request that just succeeded needed more than one
+   * attempt -- the server (proposeWebsiteOperations, see websiteAssist.ts)
+   * retries a transient Anthropic failure (rate limit, 5xx, network error)
+   * automatically, within the one request/response cycle this fetch already
+   * waits on; there's no separate "retrying now" moment to show live since
+   * nothing streams mid-request, so this is surfaced after the fact instead
+   * of invented as a fake live progress indicator.
+   */
+  const [retriedNotice, setRetriedNotice] = useState<string | null>(null);
   const autoGenerateStarted = useRef(false);
 
   async function handleGenerate(instructionOverride?: string) {
@@ -98,6 +108,7 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId
     setLoading(true);
     setError(null);
     setApplied(false);
+    setRetriedNotice(null);
     try {
       const res = await fetch('/api/ai/website-assist', {
         method: 'POST',
@@ -109,6 +120,9 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId
         throw new Error(result.error || 'AI request failed');
       }
       setProposal({ instruction: effectiveInstruction, explanation: result.data.explanation, operations: result.data.operations, rejected: result.data.rejected });
+      if (typeof result.data.attemptsUsed === 'number' && result.data.attemptsUsed > 1) {
+        setRetriedNotice(`Succeeded after retrying a temporary issue (attempt ${result.data.attemptsUsed} of 3).`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'AI request failed');
     } finally {
@@ -158,6 +172,7 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId
     setInstruction('');
     setApplied(false);
     setIsInitialGeneration(false);
+    setRetriedNotice(null);
   }
 
   return (
@@ -202,7 +217,14 @@ export function AIAssistPanel({ editor, websiteId, onClose, autoGenerate, pageId
               {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
               {loading ? (isInitialGeneration ? 'Generating your homepage…' : 'Thinking…') : 'Generate'}
             </button>
+            {loading && (
+              <p className="text-[10px] text-[#6b6b6b]">A temporary issue (rate limit or a brief outage) is retried automatically -- no need to resubmit.</p>
+            )}
           </div>
+
+          {retriedNotice && !loading && (
+            <p className="rounded-md border border-[#10B981]/20 bg-[#10B981]/10 p-2 text-xs text-[#10B981]">{retriedNotice}</p>
+          )}
 
           {error && (
             <p className="flex items-start gap-2 rounded-md border border-[#B91C1C]/30 bg-[#B91C1C]/10 p-2 text-xs text-[#f09a9a]">

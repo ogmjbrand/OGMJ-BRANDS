@@ -24,6 +24,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicClient, isAIConfigured, AI_MODEL } from './anthropic';
 import { validateOperation, type DocumentRoot, type ValidatedDocumentOperation } from '@/lib/document-model';
+import { safeErrorSummary } from './errorSummary';
+import { MAX_ATTEMPTS, withAnthropicRetry, type RetryObservers } from './retry';
 
 export const MAX_OPERATIONS_PER_REQUEST = 20;
 /** A document much larger than this is already an unusual amount of context to hand an LLM in one call; refuse clearly rather than sending an enormous, expensive request. */
@@ -40,6 +42,8 @@ export interface WebsiteAssistResult {
   explanation: string;
   operations: ValidatedDocumentOperation[];
   rejected: RejectedOperation[];
+  /** How many Anthropic API attempts this call needed (1 = succeeded first try, no retry). Surfaced so the UI can tell the user a transient issue was retried automatically rather than staying silent about it. */
+  attemptsUsed: number;
 }
 
 const SYSTEM_PROMPT = `You are the AI editing assistant inside OGMJ BRANDS' visual website builder.
@@ -97,7 +101,16 @@ function extractJson(text: string): ParsedModelResponse {
   throw new WebsiteAssistError('The AI response was not valid JSON.');
 }
 
-export async function proposeWebsiteOperations(instruction: string, document: DocumentRoot): Promise<WebsiteAssistResult> {
+/** True for a 400 whose body specifically says the account's credit balance is the problem -- Anthropic's own wording for this, checked case-insensitively since the exact casing isn't a documented contract. */
+function isInsufficientCreditError(error: InstanceType<typeof Anthropic.APIError>): boolean {
+  return error.status === 400 && /credit balance/i.test(error.message);
+}
+
+export async function proposeWebsiteOperations(
+  instruction: string,
+  document: DocumentRoot,
+  observers: RetryObservers = {}
+): Promise<WebsiteAssistResult> {
   if (!isAIConfigured()) {
     throw new WebsiteAssistError('AI is not configured on this deployment (ANTHROPIC_API_KEY is not set).');
   }
@@ -113,24 +126,78 @@ export async function proposeWebsiteOperations(instruction: string, document: Do
   }
 
   const client = getAnthropicClient();
-  let response: Awaited<ReturnType<typeof client.messages.create>>;
+  let response: Anthropic.Message;
+  let attemptsUsed = 1;
   try {
-    response = await client.messages.create({
-      model: AI_MODEL,
-      max_tokens: 8_000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Current document (JSON):\n${documentJson}\n\nInstruction: ${instruction.trim()}` }],
-    });
+    response = await withAnthropicRetry(
+      async (attemptNumber) => {
+        attemptsUsed = attemptNumber;
+        return client.messages.create(
+          {
+            model: AI_MODEL,
+            max_tokens: 8_000,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: `Current document (JSON):\n${documentJson}\n\nInstruction: ${instruction.trim()}` }],
+          },
+          // Disables the SDK's own hidden retry so this module's explicit
+          // policy (what's retryable, how many attempts, what backoff) is
+          // the only retry behavior in effect -- running both would mean
+          // this module's MAX_ATTEMPTS cap and backoff math no longer
+          // reflect what actually happens on the wire.
+          { maxRetries: 0 }
+        );
+      },
+      {
+        sleep: observers.sleep,
+        onRetry: (info) => {
+          // safeErrorSummary, not the raw error: consistent with every
+          // other log line in this module, and this one fires on EVERY
+          // retry, not just the final failure, so it must be equally safe.
+          console.warn(
+            `Anthropic request failed (attempt ${info.attempt}/${MAX_ATTEMPTS}), retrying in ${Math.round(info.delayMs)}ms:`,
+            safeErrorSummary(info.error)
+          );
+          observers.onRetry?.(info);
+        },
+      }
+    );
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) throw new WebsiteAssistError('Invalid ANTHROPIC_API_KEY.');
-    if (error instanceof Anthropic.RateLimitError) throw new WebsiteAssistError('AI rate limit reached -- try again shortly.');
+    if (error instanceof Anthropic.RateLimitError) {
+      throw new WebsiteAssistError(`AI rate limit reached after ${attemptsUsed} attempt(s) -- try again shortly.`);
+    }
     // Classified explicitly (consistent with lib/ai/providers/anthropicProvider.ts)
     // rather than falling through to APIError/the raw rethrow below: a timeout
     // is a distinct, actionable failure mode (retry is reasonable; a bad key or
     // bad request is not), and leaving it unclassified means the raw SDK error
     // object reaches this module's caller's catch block undifferentiated.
-    if (error instanceof Anthropic.APIConnectionTimeoutError) throw new WebsiteAssistError('AI request timed out.');
-    if (error instanceof Anthropic.APIError) throw new WebsiteAssistError(`AI request failed (${error.status}).`);
+    if (error instanceof Anthropic.APIConnectionTimeoutError) {
+      throw new WebsiteAssistError(`AI request timed out after ${attemptsUsed} attempt(s).`);
+    }
+    if (error instanceof Anthropic.APIError) {
+      // error.message is the SDK's own `"{status} {body message}"` (e.g.
+      // "400 Your credit balance is too low to access the Claude API.") --
+      // the body detail is exactly what's needed to tell an invalid-request
+      // bug apart from a billing/quota problem apart from a transient
+      // provider fault, so it's surfaced here (both to the caller and to
+      // this log line) rather than discarded in favor of a bare status
+      // code, which left every prior occurrence of this undiagnosable from
+      // logs alone.
+      console.error('Anthropic API error in proposeWebsiteOperations:', safeErrorSummary(error));
+      if (isInsufficientCreditError(error)) {
+        // Never retried (see isRetryableAnthropicError) and explicitly
+        // distinguished from an ordinary bad request: retrying this
+        // automatically can never succeed, and doing so anyway would just
+        // keep failing instantly as a no-op -- not transient, not
+        // something a retry policy can fix. The user needs to know it's a
+        // billing problem on the connected Anthropic account specifically,
+        // not a bug in their instruction or document.
+        throw new WebsiteAssistError(
+          `AI request failed: ${error.message} This is a billing issue on the connected Anthropic account, not a transient error -- resolve it in the Anthropic Console (Billing) before trying again.`
+        );
+      }
+      throw new WebsiteAssistError(`AI request failed: ${error.message}`);
+    }
     throw error;
   }
 
@@ -160,5 +227,5 @@ export async function proposeWebsiteOperations(instruction: string, document: Do
     }
   }
 
-  return { explanation, operations, rejected };
+  return { explanation, operations, rejected, attemptsUsed };
 }
