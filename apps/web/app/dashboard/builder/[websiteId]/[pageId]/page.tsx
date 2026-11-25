@@ -9,11 +9,13 @@
  * UI that drives them, not a second implementation of any of them.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { publishPage } from '@/lib/services/builder.service';
 import { loadEditablePage, loadWebsiteName, saveEditablePage, type EditablePage } from '@/lib/services/document-editor.service';
 import { useDocumentEditor } from '@/lib/editor/useDocumentEditor';
+import { shouldAutoGenerate, type GenerationRequest } from '@/lib/editor/websiteGeneration';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
@@ -34,10 +36,38 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
   const [websiteName, setWebsiteName] = useState(websiteId);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiAssistOpen, setAiAssistOpen] = useState(false);
+  const [autoGenerate, setAutoGenerate] = useState<GenerationRequest | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     loadWebsiteName(websiteId).then(setWebsiteName);
   }, [websiteId]);
+
+  // Handoff from "New Website" -> AI creation mode (see the builder list
+  // page): a generation request was stashed for this exact page id right
+  // before navigating here. shouldAutoGenerate (not a plain URL check) is
+  // what decides whether THIS mount should act on it -- this route can
+  // remount shortly after the initial redirect, an existing characteristic
+  // of this dynamic route and not specific to this feature, and by then
+  // the URL has often already had `?generate=1` stripped by the first
+  // mount's router.replace below. A plain "does the URL say generate=1"
+  // gate would skip the very remount it needs to recover from, while
+  // dropping the gate entirely would let a real refresh keep
+  // re-generating forever (the sessionStorage stash is deliberately kept
+  // around until the user acts -- see clearGenerationRequest's doc
+  // comment). shouldAutoGenerate's doc comment covers exactly how it
+  // threads this needle.
+  useEffect(() => {
+    const request = shouldAutoGenerate(page.id, searchParams.get('generate') === '1');
+    if (request) {
+      setAutoGenerate(request);
+      setAiAssistOpen(true);
+    }
+    if (searchParams.get('generate') === '1') router.replace(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -157,7 +187,15 @@ function EditorBody({ page: initialPage, websiteId, businessId }: { page: Editab
         />
       )}
 
-      {aiAssistOpen && <AIAssistPanel editor={editor} websiteId={websiteId} onClose={() => setAiAssistOpen(false)} />}
+      {aiAssistOpen && (
+        <AIAssistPanel
+          editor={editor}
+          websiteId={websiteId}
+          onClose={() => setAiAssistOpen(false)}
+          autoGenerate={autoGenerate}
+          pageId={page.id}
+        />
+      )}
     </div>
   );
 }
