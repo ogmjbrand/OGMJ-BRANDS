@@ -6,6 +6,7 @@ import { createDeal, updateDeal, listPipelineStages } from '@/lib/services/crm';
 import { listContacts } from '@/lib/services/crm';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import type { CreateDealInput, Contact, Deal, PipelineStage } from '@/lib/types';
+import { Portal } from '@/components/ui/portal';
 
 interface CreateDealModalProps {
   isOpen: boolean;
@@ -160,6 +161,8 @@ export function CreateDealModal({
   if (!isOpen) return null;
 
   return (
+    // Portaled: see components/ui/portal.tsx's doc comment.
+    <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-lg w-full mx-4 space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
@@ -326,6 +329,7 @@ export function CreateDealModal({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }
 

@@ -5,6 +5,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { createContact, updateContact } from '@/lib/services/crm';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import type { Contact, CreateContactInput } from '@/lib/types';
+import { Portal } from '@/components/ui/portal';
 
 interface CreateContactModalProps {
   isOpen: boolean;
@@ -112,6 +113,8 @@ export function CreateContactModal({
   if (!isOpen) return null;
 
   return (
+    // Portaled: see components/ui/portal.tsx's doc comment.
+    <Portal>
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
         {/* Header */}
@@ -241,6 +244,7 @@ export function CreateContactModal({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }
 

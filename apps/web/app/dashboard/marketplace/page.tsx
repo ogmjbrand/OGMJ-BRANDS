@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Store, Clock, RotateCcw, ShoppingBag, X } from 'lucide-react';
+import { Portal } from '@/components/ui/portal';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { SectionPanel } from '@/components/dashboard/EmpireCards';
 import {
@@ -88,6 +89,8 @@ function OrderModal({
   }
 
   return (
+    // Portaled: see components/ui/portal.tsx's doc comment.
+    <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={onClose}>
       <div
         className="w-full max-w-md rounded-[1.75rem] border border-[#C8FF00]/10 bg-[#0E1116] p-6"
@@ -124,6 +127,7 @@ function OrderModal({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }
 

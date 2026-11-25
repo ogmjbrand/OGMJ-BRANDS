@@ -19,6 +19,7 @@ import { AlertTriangle, Loader2, Sparkles, X } from 'lucide-react';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import type { RejectedOperation } from '@/lib/ai/websiteAssist';
 import type { ValidatedDocumentOperation } from '@/lib/document-model';
+import { Portal } from '@/components/ui/portal';
 
 interface AIAssistPanelProps {
   editor: DocumentEditor;
@@ -102,6 +103,12 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
   }
 
   return (
+    // Portaled to document.body: see components/ui/portal.tsx's doc comment --
+    // PageTransition's animated motion.div is an ancestor of this panel on
+    // every route it's used from, and breaks `fixed` positioning here on any
+    // route whose content overflows the viewport (the Visual Editor's own
+    // sidebar+canvas+inspector layout does, at a mobile viewport width).
+    <Portal>
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={onClose}>
       <div className="flex h-full w-[28rem] flex-col bg-[#101010] text-sm text-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#D4AF37]/15 p-4">
@@ -217,5 +224,6 @@ export function AIAssistPanel({ editor, websiteId, onClose }: AIAssistPanelProps
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Search, Plus, MoreHorizontal, AlertCircle } from 'lucide-react';
+import { Portal } from '@/components/ui/portal';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { listContacts, deleteContact } from '@/lib/services/crm';
 import { CreateContactModal } from '@/components/CreateContactModal';
@@ -162,7 +163,10 @@ export default function ContactsPage() {
                       </button>
                       {openMenuId === contact.id && (
                         <>
-                          <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                          {/* Portaled: see components/ui/portal.tsx's doc comment. Only this invisible click-outside catcher needs it -- the menu below stays `absolute` against its own positioned <td> ancestor, unaffected. */}
+                          <Portal>
+                            <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                          </Portal>
                           <div className="absolute right-6 top-12 z-20 w-36 rounded-lg border border-[#C8FF00]/20 bg-[#0E1116] py-1 shadow-xl text-left">
                             <button
                               onClick={() => {
