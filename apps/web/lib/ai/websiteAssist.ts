@@ -24,6 +24,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicClient, isAIConfigured, AI_MODEL } from './anthropic';
 import { validateOperation, type DocumentRoot, type ValidatedDocumentOperation } from '@/lib/document-model';
+import { safeErrorSummary } from './errorSummary';
 
 export const MAX_OPERATIONS_PER_REQUEST = 20;
 /** A document much larger than this is already an unusual amount of context to hand an LLM in one call; refuse clearly rather than sending an enormous, expensive request. */
@@ -130,7 +131,18 @@ export async function proposeWebsiteOperations(instruction: string, document: Do
     // bad request is not), and leaving it unclassified means the raw SDK error
     // object reaches this module's caller's catch block undifferentiated.
     if (error instanceof Anthropic.APIConnectionTimeoutError) throw new WebsiteAssistError('AI request timed out.');
-    if (error instanceof Anthropic.APIError) throw new WebsiteAssistError(`AI request failed (${error.status}).`);
+    if (error instanceof Anthropic.APIError) {
+      // error.message is the SDK's own `"{status} {body message}"` (e.g.
+      // "400 Your credit balance is too low to access the Claude API.") --
+      // the body detail is exactly what's needed to tell an invalid-request
+      // bug apart from a billing/quota problem apart from a transient
+      // provider fault, so it's surfaced here (both to the caller and to
+      // this log line) rather than discarded in favor of a bare status
+      // code, which left every prior occurrence of this undiagnosable from
+      // logs alone.
+      console.error('Anthropic API error in proposeWebsiteOperations:', safeErrorSummary(error));
+      throw new WebsiteAssistError(`AI request failed: ${error.message}`);
+    }
     throw error;
   }
 

@@ -123,4 +123,23 @@ describe('proposeWebsiteOperations', () => {
     await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(WebsiteAssistError);
     await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(/timed out/i);
   });
+
+  it('REGRESSION: surfaces the Anthropic API error body (e.g. a billing/credit-balance 400) instead of a bare status code', async () => {
+    // Previously this branch discarded everything but `error.status`,
+    // throwing just "AI request failed (400)." for every possible 400 --
+    // indistinguishable from a malformed request, and with nothing logged
+    // server-side to tell them apart after the fact either. The SDK's own
+    // error.message already includes the body detail (e.g. Anthropic's
+    // "Your credit balance is too low to access the Claude API."), so this
+    // asserts that detail actually reaches the caller now.
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    createShouldThrow = new Anthropic.APIError(
+      400,
+      { error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Claude API.' } },
+      'Your credit balance is too low to access the Claude API.',
+      new Headers()
+    );
+    await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(WebsiteAssistError);
+    await expect(proposeWebsiteOperations('x', emptyDocument())).rejects.toThrow(/credit balance is too low/i);
+  });
 });
