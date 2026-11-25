@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useEmailSequences } from '@/lib/hooks'
 import { Plus, Play, Pause, Trash2, Mail, Users } from 'lucide-react'
+import { Portal } from '@/components/ui/portal'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SequencesPage() {
@@ -60,8 +61,9 @@ export default function SequencesPage() {
           </button>
         </div>
 
-        {/* Create Modal */}
+        {/* Create Modal -- portaled: see components/ui/portal.tsx's doc comment. */}
         {showCreateModal && (
+          <Portal>
           <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50">
             <div className="bg-[#0E1116] border border-[#C8FF00]/20 rounded-lg p-6 w-full max-w-md">
               <h2 className="text-2xl font-bold text-white mb-4">Create New Sequence</h2>
@@ -88,6 +90,7 @@ export default function SequencesPage() {
               </div>
             </div>
           </div>
+          </Portal>
         )}
 
         {/* Sequences Grid */}

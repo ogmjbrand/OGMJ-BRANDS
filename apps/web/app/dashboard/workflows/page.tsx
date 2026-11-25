@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Zap, GitBranch, Send, Sparkles, CheckCircle2, PlayCircle, Plus, Trash2 } from 'lucide-react';
+import { Portal } from '@/components/ui/portal';
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards';
 import { useWorkflows } from '@/lib/hooks';
 import { createClient } from '@/lib/supabase/client';
@@ -191,6 +192,8 @@ export default function WorkflowsPage() {
       )}
 
       {showCreateModal && (
+        // Portaled: see components/ui/portal.tsx's doc comment.
+        <Portal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-[1.6rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <h2 className="mb-4 text-2xl font-bold text-white">Create New Workflow</h2>
@@ -270,6 +273,7 @@ export default function WorkflowsPage() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

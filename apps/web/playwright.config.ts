@@ -12,9 +12,17 @@ import { defineConfig, devices } from '@playwright/test';
  * Uses the sandbox's pre-installed Chromium directly (see CLAUDE
  * environment notes) instead of `playwright install`, since this
  * container has no browser download path.
+ *
+ * Scoped to this suite's own spec file: e2e/ also holds
+ * overlay-portal.spec.ts (a separate fix, its own
+ * playwright.overlay.config.ts, its own mock server on different ports)
+ * -- without this, running `playwright test` with no args would sweep
+ * both suites into one run against this config's ports/mocks, and the
+ * other suite's tests would fail for reasons unrelated to either fix.
  */
 export default defineConfig({
   testDir: './e2e',
+  testMatch: 'ai-website-creation.spec.ts',
   timeout: 30_000,
   fullyParallel: false,
   retries: 0,

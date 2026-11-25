@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { savePageSettings } from '@/lib/services/document-editor.service';
+import { Portal } from '@/components/ui/portal';
 
 interface SettingsDrawerProps {
   pageId: string;
@@ -34,8 +35,13 @@ export function SettingsDrawer({ pageId, initial, onClose, onSaved }: SettingsDr
   }
 
   return (
+    // Portaled: see components/ui/portal.tsx's doc comment -- this drawer
+    // is a `fixed`-positioned descendant of PageTransition's animated
+    // motion.div on the Visual Editor route, whose content overflows a
+    // mobile viewport and would otherwise break this drawer's positioning.
+    <Portal>
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={onClose}>
-      <div className="h-full w-96 space-y-4 overflow-y-auto bg-[#101010] p-5 text-sm text-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+      <div className="h-full w-full space-y-4 overflow-y-auto bg-[#101010] p-5 text-sm text-[#E5E5E5] sm:w-96" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-[#D4AF37]">Page settings</h2>
           <button onClick={onClose} className="text-[#9a9a9a] hover:text-white">
@@ -93,5 +99,6 @@ export function SettingsDrawer({ pageId, initial, onClose, onSaved }: SettingsDr
         </button>
       </div>
     </div>
+    </Portal>
   );
 }

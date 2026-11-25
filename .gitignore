@@ -29,8 +29,8 @@ Thumbs.db
 # Turborepo
 .turbo/
 
-# Playwright (apps/web/e2e)
-/apps/web/test-results/
-/apps/web/playwright-report/
-/apps/web/blob-report/
-/apps/web/playwright/.cache/
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
