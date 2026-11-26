@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
   Cpu,
@@ -37,6 +38,38 @@ const quickPrompts = [
   'Suggest a 7-day CRM automation sequence.',
   'Write a payment reminder email that keeps the relationship warm.',
 ];
+
+/**
+ * Splits assistant text on URLs so a propose_website_edit tool result's
+ * reviewUrl (or any other link the model mentions) renders as something the
+ * user can actually click, instead of inert plain text.
+ */
+function renderMessageContent(content: string): React.ReactNode {
+  const parts = content.split(/(\/dashboard\/builder\/[^\s)]+|https?:\/\/[^\s)]+)/g);
+  return parts.map((part, index) => {
+    if (/^\/dashboard\/builder\//.test(part)) {
+      return (
+        <Link key={index} href={part} className="underline decoration-dotted underline-offset-2 text-[#C8FF00] hover:text-[#C8FF00]/80">
+          {part}
+        </Link>
+      );
+    }
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-dotted underline-offset-2 text-[#C8FF00] hover:text-[#C8FF00]/80"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>;
+  });
+}
 
 export default function AIPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -204,7 +237,9 @@ export default function AIPage() {
                       : 'border border-[#C8FF00]/10 bg-[#11151E] text-[#F8F9FA]/85'
                   }`}
                 >
-                  {message.content || (
+                  {message.content ? (
+                    renderMessageContent(message.content)
+                  ) : (
                     <span className="inline-flex items-center gap-2 text-[#F8F9FA]/50">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-[#C8FF00]" />
                       Thinking…
