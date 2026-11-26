@@ -54,7 +54,7 @@ import {
   Workflow,
   type LucideIcon,
 } from 'lucide-react'
-import { TESTIMONIALS } from '@/lib/marketing/content'
+import { getPublicTestimonials } from '@/lib/marketing/content'
 
 const syne = Syne({
   subsets: ['latin'],
@@ -174,13 +174,13 @@ const content: PageContent = {
     { month: 'Aug', value: 81 },
   ],
   metrics: [
-    { label: 'Revenue growth', value: '+41.2%', detail: 'Predictive growth systems active' },
-    { label: 'Automation speed', value: '0.04s', detail: 'Average decision latency' },
+    { label: 'AI marketing tools', value: '13', detail: 'Guided by your brand strategy' },
+    { label: 'Business modules', value: '10+', detail: 'CRM, invoicing, marketing, video and more' },
   ],
   stats: [
-    { label: 'Launch tracks', value: '18' },
-    { label: 'Service categories', value: '42' },
-    { label: 'Automations', value: '120+' },
+    { label: 'Business modules', value: '10+' },
+    { label: 'Service categories', value: '9' },
+    { label: 'Payment rails', value: 'Paystack + Flutterwave' },
     { label: 'Operating regions', value: 'Global' },
   ],
   divisions: [
@@ -1120,6 +1120,10 @@ const TESTIMONIAL_PHOTOS: Record<string, string> = {
 }
 
 function TestimonialsSection() {
+  // Only founder-verified testimonials are shown; the section hides itself otherwise.
+  const testimonials = getPublicTestimonials()
+  if (testimonials.length === 0) return null
+
   return (
     <section id="testimonials" className="border-t border-white/5 bg-obsidian-soft/40 px-4 py-24 md:px-10 lg:py-32">
       <div className="mx-auto max-w-[1400px]">
@@ -1131,7 +1135,7 @@ function TestimonialsSection() {
         </Reveal>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {TESTIMONIALS.map((testimonial, index) => (
+          {testimonials.map((testimonial, index) => (
             <Reveal key={testimonial.name} delay={index * 0.08}>
               <BentoCard className="h-full">
                 <p className="text-base leading-7 text-content-muted">&ldquo;{testimonial.quote}&rdquo;</p>

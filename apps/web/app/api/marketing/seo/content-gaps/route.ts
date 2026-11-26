@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const GAP_SYSTEM = `You are an SEO/content strategist reviewing what a business has already published against its stated content pillars. Return ONLY valid JSON (no markdown fences): {"summary": "string (2-3 sentences)", "wellCovered": ["string", ...], "gaps": [{"pillar": "string", "suggestion": "string"}, ...] (3-6 items), "quickWins": ["string", ...] (2-4 specific, immediately actionable content ideas)}.`;
 
 export async function POST(request: NextRequest) {
@@ -59,6 +60,9 @@ export async function POST(request: NextRequest) {
       contentPillars,
       publishedContent: items.map((i) => ({ type: i.type, topic: i.topic, title: i.title, status: i.status })),
     };
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'seo-gaps');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

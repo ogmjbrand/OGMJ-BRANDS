@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BLOG_POSTS } from '@/lib/marketing/content'
+import { getPublicBlogPosts } from '@/lib/marketing/content'
 
 export const metadata: Metadata = {
   title: 'Blog & Insights — OGMJ BRANDS',
@@ -22,7 +22,7 @@ export default function BlogPage() {
         </div>
 
         <div className="space-y-6">
-          {BLOG_POSTS.map((post) => (
+          {getPublicBlogPosts().map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { TEAM, SITE } from '@/lib/marketing/content'
+import { getPublicTeam, SITE } from '@/lib/marketing/content'
 
 export const metadata: Metadata = {
   title: 'About — OGMJ BRANDS',
@@ -9,6 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default function AboutPage() {
+  // Team profiles appear only once the founder has verified them (see lib/marketing/content.ts).
+  const team = getPublicTeam()
+
   return (
     <div className="px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
@@ -30,9 +33,9 @@ export default function AboutPage() {
 
         <div className="mb-20 grid gap-6 sm:grid-cols-3">
           {[
-            { value: '200+', label: 'Businesses launched' },
-            { value: '15+', label: 'Countries served' },
-            { value: '96%', label: 'Client retention' },
+            { value: '9', label: 'Service categories' },
+            { value: '10+', label: 'Platform modules' },
+            { value: 'Global', label: 'Served online' },
           ].map((stat) => (
             <div key={stat.label} className="rounded-4xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
               <p className="text-4xl font-black text-gold">{stat.value}</p>
@@ -41,13 +44,15 @@ export default function AboutPage() {
           ))}
         </div>
 
+        {team.length > 0 && (
+        <>
         <div className="mb-12">
           <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Leadership</p>
           <h2 className="mt-4 text-3xl font-black text-white">The team behind the platform</h2>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          {TEAM.map((member) => (
+          {team.map((member) => (
             <div
               key={member.name}
               className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl transition hover:border-gold/30"
@@ -73,6 +78,8 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
+        </>
+        )}
 
         <div className="mt-20 rounded-4xl border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">

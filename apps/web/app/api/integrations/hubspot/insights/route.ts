@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentUserServer as getCurrentUser } from "@/lib/auth.server";
 import { AI_MODEL, buildSystemPrompt, getAnthropicClient, isAIConfigured } from "@/lib/ai/anthropic";
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const INSIGHTS_INSTRUCTIONS = `You're reviewing a business's HubSpot-synced CRM data (mirrored from HubSpot into OGMJ's own CRM). Produce:
 
 1. A 2-3 sentence executive summary of relationship health.
@@ -114,6 +115,9 @@ export async function POST(request: NextRequest) {
         lastContact: c.last_contact_at,
       })),
     };
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'hubspot-insights');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({

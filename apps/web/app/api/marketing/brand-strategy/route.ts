@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { AI_MODEL, getAnthropicClient, isAIConfigured } from '@/lib/ai/anthropic';
 
+import { enforceAIUsageLimit } from '@/lib/ai/usage-limits';
 const STRATEGY_SYSTEM = `You are the AI Brand Strategist inside OGMJ BRANDS. You turn a founder's raw business inputs into a complete, usable brand + marketing strategy.
 
 Return ONLY valid JSON (no markdown fences, no commentary) matching this exact shape:
@@ -130,6 +131,9 @@ export async function PUT(request: NextRequest) {
       goals,
       market,
     };
+
+    const usageLimited = await enforceAIUsageLimit(businessId, 'ai:generate', 'brand-strategy');
+    if (usageLimited) return usageLimited;
 
     const client = getAnthropicClient();
     const response = await client.messages.create({
