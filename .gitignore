@@ -28,3 +28,9 @@ Thumbs.db
 *.tsbuildinfo
 # Turborepo
 .turbo/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

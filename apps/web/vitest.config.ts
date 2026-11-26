@@ -12,4 +12,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, '.'),
     },
   },
+  // apps/web's tsconfig sets jsx: "preserve" (Next.js transforms JSX itself via
+  // SWC at build time). This Vite version transforms via oxc by default, which
+  // needs an explicit JSX mode regardless, so .tsx files imported by tests
+  // (e.g. the document renderer) can be parsed. Test-runner only; the Next.js
+  // build is untouched.
+  oxc: {
+    jsx: { runtime: 'automatic' },
+  },
 });

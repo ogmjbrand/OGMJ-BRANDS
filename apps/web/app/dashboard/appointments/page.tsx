@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { CalendarDays, Clock3, MapPin, Plus, Sparkles, Video } from 'lucide-react'
+import { Portal } from '@/components/ui/portal'
 import { createClient } from '@/lib/supabase/client'
 import { MetricCard, SectionPanel } from '@/components/dashboard/EmpireCards'
 
@@ -228,6 +229,8 @@ export default function AppointmentsPage() {
       </SectionPanel>
 
       {showNewModal && (
+        // Portaled: see components/ui/portal.tsx's doc comment.
+        <Portal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md space-y-4 rounded-xl border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <h2 className="text-xl font-semibold text-white">New appointment</h2>
@@ -302,6 +305,7 @@ export default function AppointmentsPage() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   )

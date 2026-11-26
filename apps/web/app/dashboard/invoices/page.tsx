@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Plus, Eye, Trash2, Edit2, Sparkles, Receipt, CircleDollarSign } from 'lucide-react';
+import { Portal } from '@/components/ui/portal';
 import { useRouter } from 'next/navigation';
 import { useBusinessContext } from '@/lib/context/BusinessContext';
 import { listInvoices, deleteInvoice, getInvoiceStats, type Invoice } from '@/lib/services/invoices.service';
@@ -176,6 +177,8 @@ export default function InvoicesPage() {
       </SectionPanel>
 
       {deleteConfirm && (
+        // Portaled: see components/ui/portal.tsx's doc comment.
+        <Portal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-w-sm rounded-[1.35rem] border border-[#C8FF00]/20 bg-[#0E1116] p-6">
             <p className="mb-4 font-semibold text-white">Delete invoice?</p>
@@ -190,6 +193,7 @@ export default function InvoicesPage() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );
