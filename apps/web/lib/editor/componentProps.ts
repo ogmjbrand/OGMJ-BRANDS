@@ -8,7 +8,8 @@
  */
 import { getChildren } from '@/lib/document-model/tree';
 import { isSafeIdentifier } from '@/lib/document-model/security';
-import type { DocumentNode } from '@/lib/document-model/types';
+import type { DocumentNode, SlotNode } from '@/lib/document-model/types';
+import { freshNodeId } from './createDefaultNode';
 
 export interface ParsedPropName {
   nodeId: string;
@@ -57,4 +58,43 @@ export function findNodeIncludingSlotDefaults(node: DocumentNode, nodeId: string
     if (found) return found;
   }
   return null;
+}
+
+/**
+ * Every `slot` node inside a component's `template`, each paired with its
+ * `slotName` -- the Inspector's per-slot item editor walks this list to know
+ * which slots a component instance has, independently of which (if any) are
+ * actually filled yet (`ComponentInstanceNode.slotContent` is only set once
+ * a slot has been edited away from its template default).
+ */
+export function findSlotNodes(template: DocumentNode): Array<{ slotName: string; node: SlotNode }> {
+  const out: Array<{ slotName: string; node: SlotNode }> = [];
+  function recurse(node: DocumentNode) {
+    if (node.kind === 'slot') {
+      out.push({ slotName: node.slotName, node });
+      // A slot's own defaultContent is never itself slot-filled content
+      // (see DocumentRenderer.tsx's substituteSlots), so there's nothing
+      // further to find inside it for this purpose.
+      return;
+    }
+    for (const child of getChildren(node) ?? []) recurse(child);
+  }
+  recurse(template);
+  return out;
+}
+
+/**
+ * Deep-clones a node with every id in its subtree replaced by a fresh one.
+ * Used when duplicating a slot item (e.g. "Add item" on a pricing plan or
+ * nav link list): `insertNode` throws on a duplicate id, and the item being
+ * cloned always starts from an existing sibling, whose ids (and every
+ * descendant's) are already present in the document.
+ */
+export function cloneWithFreshIds(node: DocumentNode): DocumentNode {
+  const children = getChildren(node);
+  const clone: DocumentNode = { ...node, id: freshNodeId(node.kind) };
+  if (children) {
+    (clone as unknown as { children: DocumentNode[] }).children = children.map(cloneWithFreshIds);
+  }
+  return clone;
 }
