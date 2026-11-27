@@ -10,9 +10,13 @@ import {
 } from '@/lib/ai/anthropic';
 import { enforceAIUsageLimit, resolveUserBusinessId } from '@/lib/ai/usage-limits';
 import { WEBSITE_EDIT_TOOLS, executeWebsiteEditTool } from '@/lib/ai/tools/websiteEditTool';
+import { CRM_TOOLS, executeCrmTool } from '@/lib/ai/tools/crmTool';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
+
+const ALL_TOOLS: Anthropic.Tool[] = [...WEBSITE_EDIT_TOOLS, ...CRM_TOOLS];
+const WEBSITE_TOOL_NAMES = new Set(WEBSITE_EDIT_TOOLS.map((tool) => tool.name));
 
 /**
  * Hard cap on how many times one chat turn can round-trip through a tool
@@ -95,7 +99,7 @@ export async function POST(request: NextRequest) {
               thinking: { type: 'adaptive' },
               system: buildSystemPrompt(agent),
               messages: conversation,
-              tools: WEBSITE_EDIT_TOOLS,
+              tools: ALL_TOOLS,
             });
             activeStream = stream;
 
@@ -122,12 +126,9 @@ export async function POST(request: NextRequest) {
             const toolResults: Anthropic.ToolResultBlockParam[] = [];
             for (const block of final.content) {
               if (block.type !== 'tool_use') continue;
-              const resultText = await executeWebsiteEditTool(
-                supabase,
-                usageBusinessId,
-                block.name,
-                block.input
-              );
+              const resultText = WEBSITE_TOOL_NAMES.has(block.name)
+                ? await executeWebsiteEditTool(supabase, usageBusinessId, block.name, block.input)
+                : await executeCrmTool(supabase, usageBusinessId, user.id, block.name, block.input);
               toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: resultText });
             }
             conversation.push({ role: 'user', content: toolResults });
