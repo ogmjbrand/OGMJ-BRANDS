@@ -38,6 +38,12 @@ vi.mock('@/lib/ai/tools/crmTool', () => ({
   executeCrmTool: (...args: unknown[]) => executeCrmToolMock(...args),
 }));
 
+const executeWorkflowToolMock = vi.fn(async () => JSON.stringify({ ok: true }));
+vi.mock('@/lib/ai/tools/workflowTool', () => ({
+  WORKFLOW_TOOLS: [{ name: 'list_workflows' }, { name: 'run_workflow' }],
+  executeWorkflowTool: (...args: unknown[]) => executeWorkflowToolMock(...args),
+}));
+
 /** A fake Anthropic MessageStream: async-iterates `events`, then resolves `finalMessage()` to `final`. */
 function fakeStream(events: Array<{ type: string; delta?: { type: string; text: string } }>, final: { stop_reason: string; content: unknown[] }) {
   return {
@@ -90,6 +96,7 @@ describe('POST /api/ai/chat', () => {
     streamCalls.length = 0;
     executeWebsiteEditToolMock.mockClear();
     executeCrmToolMock.mockClear();
+    executeWorkflowToolMock.mockClear();
   });
 
   it('streams a plain text-only answer with a single model turn', async () => {
@@ -151,6 +158,26 @@ describe('POST /api/ai/chat', () => {
 
     expect(text).toBe('Found Jane.');
     expect(executeCrmToolMock).toHaveBeenCalledWith(expect.anything(), 'biz-1', 'user-1', 'list_crm_contacts', { search: 'jane' });
+    expect(executeWebsiteEditToolMock).not.toHaveBeenCalled();
+    expect(executeWorkflowToolMock).not.toHaveBeenCalled();
+  });
+
+  it('routes a workflow tool_use block to executeWorkflowTool, with the authenticated user id', async () => {
+    streamQueue.push(
+      fakeStream([], {
+        stop_reason: 'tool_use',
+        content: [{ type: 'tool_use', id: 'tool-1', name: 'run_workflow', input: { workflowId: 'wf-1' } }],
+      }),
+      fakeStream([textDelta('Ran it.')], { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Ran it.' }] })
+    );
+
+    const { POST } = await import('@/app/api/ai/chat/route');
+    const res = await POST(makeRequest({ messages: [{ role: 'user', content: 'run my welcome workflow' }] }));
+    const text = await res.text();
+
+    expect(text).toBe('Ran it.');
+    expect(executeWorkflowToolMock).toHaveBeenCalledWith(expect.anything(), 'biz-1', 'user-1', 'run_workflow', { workflowId: 'wf-1' });
+    expect(executeCrmToolMock).not.toHaveBeenCalled();
     expect(executeWebsiteEditToolMock).not.toHaveBeenCalled();
   });
 

@@ -78,7 +78,13 @@ describe('every AI route is metered', () => {
   it('calls enforceAIUsageLimit in every route that calls the model', async () => {
     const { readFileSync } = await import('node:fs')
     const { execSync } = await import('node:child_process')
-    const files = execSync("grep -rl 'getAnthropicClient()' app/api", { cwd: process.cwd() }).toString().trim().split('\n')
+    // lib/workflows/runWorkflow.ts also calls the model (extracted from
+    // app/api/workflows/[id]/run/route.ts so the Empire AI chat's
+    // run_workflow tool can reuse it) -- included explicitly, not all of
+    // lib, since lib/ai/websiteAssist.ts and friends intentionally call
+    // the model without metering themselves: their callers (the routes)
+    // meter before calling them, which the app/api scan below still checks.
+    const files = execSync("grep -rl 'getAnthropicClient()' app/api lib/workflows", { cwd: process.cwd() }).toString().trim().split('\n')
     expect(files.length).toBeGreaterThan(10)
     for (const file of files) {
       expect(readFileSync(file, 'utf8'), file).toContain('enforceAIUsageLimit(')
