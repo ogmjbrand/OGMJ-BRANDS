@@ -9,7 +9,6 @@
 import { getChildren } from '@/lib/document-model/tree';
 import { isSafeIdentifier } from '@/lib/document-model/security';
 import type { DocumentNode, SlotNode } from '@/lib/document-model/types';
-import { freshNodeId } from './createDefaultNode';
 
 export interface ParsedPropName {
   nodeId: string;
@@ -81,20 +80,4 @@ export function findSlotNodes(template: DocumentNode): Array<{ slotName: string;
   }
   recurse(template);
   return out;
-}
-
-/**
- * Deep-clones a node with every id in its subtree replaced by a fresh one.
- * Used when duplicating a slot item (e.g. "Add item" on a pricing plan or
- * nav link list): `insertNode` throws on a duplicate id, and the item being
- * cloned always starts from an existing sibling, whose ids (and every
- * descendant's) are already present in the document.
- */
-export function cloneWithFreshIds(node: DocumentNode): DocumentNode {
-  const children = getChildren(node);
-  const clone: DocumentNode = { ...node, id: freshNodeId(node.kind) };
-  if (children) {
-    (clone as unknown as { children: DocumentNode[] }).children = children.map(cloneWithFreshIds);
-  }
-  return clone;
 }

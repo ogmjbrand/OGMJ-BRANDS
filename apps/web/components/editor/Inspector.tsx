@@ -31,7 +31,8 @@ import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
 import { VIEWPORTS } from '@/lib/editor/useDocumentEditor';
 import { AssetPicker } from './AssetPicker';
 import { freshNodeId } from '@/lib/editor/createDefaultNode';
-import { findNodeIncludingSlotDefaults, findSlotNodes, cloneWithFreshIds, friendlyPropLabel, parsePropSchemaName } from '@/lib/editor/componentProps';
+import { cloneNodeWithFreshIds } from '@/lib/editor/duplicateNode';
+import { findNodeIncludingSlotDefaults, findSlotNodes, friendlyPropLabel, parsePropSchemaName } from '@/lib/editor/componentProps';
 import type { ComponentInstanceNode } from '@/lib/document-model/types';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -457,7 +458,7 @@ function SlotEditor({
   function addItem() {
     const template = items[items.length - 1];
     if (!template) return;
-    const clone = cloneWithFreshIds(template);
+    const clone = cloneNodeWithFreshIds(template);
     commit(insertNode(wrapper as unknown as RootNode, wrapper.id, items.length, clone) as unknown as DocumentNode);
   }
 
