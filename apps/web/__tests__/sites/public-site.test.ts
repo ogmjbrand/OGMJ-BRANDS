@@ -1,4 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Importing the module runs its top-level `cache(...)` call -- real React
+// (vitest doesn't use Next's RSC-aware build) doesn't export it outside
+// the 'react-server' condition, so importing the module crashed, same as
+// public-routes.test.ts.
+vi.mock('react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react')>()),
+  cache: <T,>(fn: T) => fn,
+}));
+
 import {
   getPublicDocument,
   isValidWebsiteId,

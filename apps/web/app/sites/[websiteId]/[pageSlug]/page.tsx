@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import { PublicPageView } from '@/components/sites/PublicPageView';
 import {
   buildPageMetadata,
-  getPublicWebsite,
-  getPublishedPage,
+  getPublicWebsiteAndPage,
   getPublishedPageList,
   parseSlugParam,
 } from '@/lib/sites/public-site';
@@ -17,11 +16,9 @@ type Params = { params: { websiteId: string; pageSlug: string } };
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const slug = parseSlugParam(params.pageSlug);
   if (!slug) return { title: 'Page not found' };
-  const website = await getPublicWebsite(params.websiteId);
-  if (!website) return { title: 'Page not found' };
-  const page = await getPublishedPage(website.id, slug);
-  if (!page) return { title: 'Page not found' };
-  return buildPageMetadata(website, page);
+  const result = await getPublicWebsiteAndPage(params.websiteId, slug);
+  if (!result) return { title: 'Page not found' };
+  return buildPageMetadata(result.website, result.page);
 }
 
 export default async function PublicSitePage({ params }: Params) {
@@ -29,11 +26,9 @@ export default async function PublicSitePage({ params }: Params) {
   const slug = parseSlugParam(params.pageSlug);
   if (!slug) notFound();
 
-  const website = await getPublicWebsite(params.websiteId);
-  if (!website) notFound();
-
-  const page = await getPublishedPage(website.id, slug);
-  if (!page) notFound();
+  const result = await getPublicWebsiteAndPage(params.websiteId, slug);
+  if (!result) notFound();
+  const { website, page } = result;
 
   const pageList = await getPublishedPageList(website.id, slug);
   return <PublicPageView website={website} page={page} pageList={pageList} />;

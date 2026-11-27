@@ -18,8 +18,9 @@ import type { NavLink, SiteNavigation } from '@/lib/services/navigation.service'
  */
 
 function resolveHref(link: NavLink, pages: PublicPageListEntry[]): string | undefined {
-  if (link.target.type === 'external') return safeHref(link.target.href);
-  const page = pages.find((p) => p.id === link.target.pageId);
+  const target = link.target;
+  if (target.type === 'external') return safeHref(target.href);
+  const page = pages.find((p) => p.id === target.pageId);
   return page ? `/${page.slug}` : undefined;
 }
 

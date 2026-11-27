@@ -203,6 +203,20 @@ export async function getPublishedPage(websiteId: string, slug: string): Promise
 }
 
 /**
+ * Resolves a non-homepage page AND its website from a single RPC call.
+ * `getPublicWebsite` + `getPublishedPage` look like they'd compose, but
+ * `getPublicWebsite` fetches the row keyed to the HOMEPAGE (slug=null) --
+ * calling it on a /[pageSlug] route would wrongly 404 a published "about"
+ * page just because the site's homepage isn't published. Every row already
+ * carries the same website_* fields regardless of which page it's for, so
+ * one call keyed to the actual requested slug gives both.
+ */
+export async function getPublicWebsiteAndPage(websiteId: string, slug: string): Promise<{ website: PublicWebsite; page: PublicPage } | null> {
+  const result = await fetchPublishedPage(websiteId, slug);
+  return result ? { website: result.website, page: result.page } : null;
+}
+
+/**
  * Picks the homepage among a website's published pages: a page whose type is
  * 'home', else slug 'home' / 'index' / '', else the oldest published page.
  * (Selection happens inside the get_published_page RPC.)

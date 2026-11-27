@@ -1,5 +1,5 @@
 import { DocumentRenderer } from '@/components/document/DocumentRenderer';
-import { DEFAULT_TOKEN_SET, validateVersionedDocument } from '@/lib/document-model';
+import { DEFAULT_TOKEN_SET, validateVersionedDocument, type DocumentRoot } from '@/lib/document-model';
 import { getPublicDocument, type PublicPage, type PublicPageListEntry, type PublicWebsite } from '@/lib/sites/public-site';
 import { PublicSiteNav } from '@/components/sites/PublicNav';
 
@@ -19,7 +19,13 @@ export function PublicPageView({ website, page, pageList }: { website: PublicWeb
   // ever produces a current, well-formed document; a document that somehow
   // fails validation renders as empty rather than crashing the page.
   const validation = validateVersionedDocument(versioned);
-  const document = validation.success ? validation.data.document : null;
+  // documentNodeSchema is `z.ZodType<unknown>` (schema.ts's fix for z.lazy's
+  // circular-inference problem with recursive nodes), so Zod's inferred type
+  // for `root.children` is `unknown[]` even though safeParse has already
+  // confirmed the real DocumentNode shape at runtime -- same gap other
+  // DocumentRenderer callers avoid by typing their document some other way
+  // (e.g. loadEditablePage's declared DocumentRoot return type).
+  const document = validation.success ? (validation.data.document as unknown as DocumentRoot) : null;
 
   return (
     <div className="min-h-screen bg-obsidian text-white">
