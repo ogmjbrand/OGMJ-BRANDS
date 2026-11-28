@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Shared by the Inspector's image field and the sidebar Assets panel.
+ * Shared by the Inspector's image/video fields and the sidebar Assets
+ * panel (image only, for now).
  *
  * Two fully real ways to add an image: "Upload" (a real file -> Supabase
  * Storage, via asset-upload.ts) and "Add by URL" (validated through the
@@ -12,6 +13,11 @@
  * not applied (see asset-upload.ts); until an authorized operator applies
  * that migration, an upload attempt fails with a clear, caught error
  * rather than silently going nowhere.
+ *
+ * `kindFilter: 'video'` only enables the "Add by URL" path -- there is no
+ * `uploadVideoFile` counterpart to `uploadImageFile` yet, so the Upload
+ * section (which is image-upload-specific end to end) is hidden rather
+ * than wired to something that doesn't exist.
  */
 import { useRef, useState } from 'react';
 import { Search, Link2, ImageOff, Trash2, Upload as UploadIcon } from 'lucide-react';
@@ -65,10 +71,13 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, businessId, o
     return haystack.includes(query.trim().toLowerCase());
   });
 
+  const isVideo = kindFilter === 'video';
+  const kindLabel = isVideo ? 'video' : 'image';
+
   function handleAdd() {
     const safe = safeSrc(urlDraft.trim());
     if (!safe) {
-      setUrlError('Enter a valid http(s) or site-relative image URL');
+      setUrlError(`Enter a valid http(s) or site-relative ${kindLabel} URL`);
       return;
     }
     setUrlError(null);
@@ -106,6 +115,10 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, businessId, o
                 // that an asset reaching this list was already validated.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={safeSrc(asset.url)} alt={asset.altText ?? ''} className="h-full w-full object-cover" />
+              ) : asset.kind === 'video' && safeSrc(asset.url) ? (
+                // Silent, uncontrolled -- a thumbnail, not a player; same
+                // defense-in-depth re-validation as the image branch above.
+                <video src={safeSrc(asset.url)} muted playsInline className="h-full w-full object-cover" />
               ) : (
                 <ImageOff className="h-5 w-5 text-[#6b6b6b]" />
               )}
@@ -123,40 +136,44 @@ export function AssetPicker({ assets, kindFilter, selectedAssetId, businessId, o
         ))}
       </div>
 
-      <div className="space-y-2 rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[#D4AF37]/80">
-          <UploadIcon className="h-3 w-3" />
-          Upload image
+      {!isVideo && (
+        <div className="space-y-2 rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[#D4AF37]/80">
+            <UploadIcon className="h-3 w-3" />
+            Upload image
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_IMAGE_TYPES.join(',')}
+            onChange={(e) => handleFileSelected(e.target.files?.[0])}
+            disabled={uploading}
+            className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#9a9a9a] outline-none file:mr-2 file:rounded-sm file:border-0 file:bg-[#D4AF37]/15 file:px-2 file:py-1 file:text-[#D4AF37]"
+          />
+          {uploading && <p className="text-[11px] text-[#9a9a9a]">Uploading…</p>}
+          {uploadError && <p className="text-[11px] text-[#f09a9a]">{uploadError}</p>}
         </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_TYPES.join(',')}
-          onChange={(e) => handleFileSelected(e.target.files?.[0])}
-          disabled={uploading}
-          className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#9a9a9a] outline-none file:mr-2 file:rounded-sm file:border-0 file:bg-[#D4AF37]/15 file:px-2 file:py-1 file:text-[#D4AF37]"
-        />
-        {uploading && <p className="text-[11px] text-[#9a9a9a]">Uploading…</p>}
-        {uploadError && <p className="text-[11px] text-[#f09a9a]">{uploadError}</p>}
-      </div>
+      )}
 
       <div className="space-y-2 rounded-md border border-[#D4AF37]/15 bg-[#161616] p-2.5">
         <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[#D4AF37]/80">
           <Link2 className="h-3 w-3" />
-          Add image by URL
+          Add {kindLabel} by URL
         </div>
         <input
           value={urlDraft}
           onChange={(e) => setUrlDraft(e.target.value)}
-          placeholder="https://example.com/image.jpg"
+          placeholder={isVideo ? 'https://example.com/video.mp4' : 'https://example.com/image.jpg'}
           className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#E5E5E5] outline-none focus:border-[#D4AF37]"
         />
-        <input
-          value={altDraft}
-          onChange={(e) => setAltDraft(e.target.value)}
-          placeholder="Alt text (for accessibility)"
-          className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#E5E5E5] outline-none focus:border-[#D4AF37]"
-        />
+        {!isVideo && (
+          <input
+            value={altDraft}
+            onChange={(e) => setAltDraft(e.target.value)}
+            placeholder="Alt text (for accessibility)"
+            className="w-full rounded-sm border border-[#D4AF37]/15 bg-[#0d0d0d] px-2 py-1 text-xs text-[#E5E5E5] outline-none focus:border-[#D4AF37]"
+          />
+        )}
         {urlError && <p className="text-[11px] text-[#f09a9a]">{urlError}</p>}
         <button
           onClick={handleAdd}

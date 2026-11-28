@@ -5,13 +5,14 @@
  */
 import type { DocumentNode } from '@/lib/document-model';
 
-export type InsertableBlockKind = 'heading' | 'text' | 'button' | 'image' | 'container' | 'section';
+export type InsertableBlockKind = 'heading' | 'text' | 'button' | 'image' | 'video' | 'container' | 'section';
 
 export const INSERTABLE_BLOCKS: Array<{ kind: InsertableBlockKind; label: string }> = [
   { kind: 'heading', label: 'Heading' },
   { kind: 'text', label: 'Text' },
   { kind: 'button', label: 'Button' },
   { kind: 'image', label: 'Image' },
+  { kind: 'video', label: 'Video' },
   { kind: 'container', label: 'Container' },
   { kind: 'section', label: 'Section' },
 ];
@@ -39,6 +40,11 @@ export function createDefaultNode(kind: InsertableBlockKind): DocumentNode {
       // renderer safely resolves it to nothing (see ImageBlock/resolveAsset),
       // same as any other missing-reference case in this document model.
       return { id, kind: 'image', assetRef: freshNodeId('asset') };
+    case 'video':
+      // Same not-yet-populated-asset pattern as 'image' above; VideoBlock
+      // resolves an empty assetRef to nothing until the inspector's video
+      // picker writes a real asset in.
+      return { id, kind: 'video', assetRef: freshNodeId('asset'), muted: true };
     case 'container':
       return { id, kind: 'container', children: [] };
     case 'section':

@@ -296,6 +296,35 @@ function KindFields({
     case 'video':
       return (
         <div className="space-y-3">
+          <Field label="Video">
+            <AssetPicker
+              assets={editor.document.assets}
+              kindFilter="video"
+              businessId={businessId}
+              selectedAssetId={node.assetRef}
+              onSelect={(assetId) => setProp(['assetRef'], assetId)}
+              onAddByUrl={(url) => {
+                // Same replace-in-place pattern as the image case above.
+                const assetId = node.assetRef || freshNodeId('asset');
+                editor.apply({ op: 'upsertAsset', assetId, asset: { id: assetId, kind: 'video', url } });
+                if (assetId !== node.assetRef) setProp(['assetRef'], assetId);
+              }}
+            />
+          </Field>
+          <Field label="Poster image (shown before playback)">
+            <AssetPicker
+              assets={editor.document.assets}
+              kindFilter="image"
+              businessId={businessId}
+              selectedAssetId={node.posterAssetRef}
+              onSelect={(assetId) => setProp(['posterAssetRef'], assetId)}
+              onAddByUrl={(url, altText) => {
+                const assetId = node.posterAssetRef || freshNodeId('asset');
+                editor.apply({ op: 'upsertAsset', assetId, asset: { id: assetId, kind: 'image', url, altText: altText || undefined } });
+                if (assetId !== node.posterAssetRef) setProp(['posterAssetRef'], assetId);
+              }}
+            />
+          </Field>
           <label className="flex items-center gap-2 text-sm text-[#E5E5E5]">
             <input type="checkbox" checked={!!node.autoplay} onChange={(e) => setProp(['autoplay'], e.target.checked)} />
             Autoplay
