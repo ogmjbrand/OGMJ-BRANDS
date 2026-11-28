@@ -90,9 +90,21 @@ export function EditorCanvas({ editor }: { editor: DocumentEditor }) {
         if (!editor.selectedNodeId) return;
         e.preventDefault();
         duplicateSelected();
+      } else if (mod && e.key.toLowerCase() === 'z' && e.shiftKey) {
+        if (!editor.canRedo) return;
+        e.preventDefault();
+        editor.redo();
+      } else if (mod && e.key.toLowerCase() === 'z') {
+        if (!editor.canUndo) return;
+        e.preventDefault();
+        editor.undo();
+      } else if (mod && e.key.toLowerCase() === 'y') {
+        if (!editor.canRedo) return;
+        e.preventDefault();
+        editor.redo();
       }
     },
-    [editor.selectedNodeId, deleteSelected, duplicateSelected]
+    [editor.selectedNodeId, editor.canUndo, editor.canRedo, editor.undo, editor.redo, deleteSelected, duplicateSelected]
   );
 
   // `handleCanvasKeyDown` gets a new identity whenever selectedNodeId
