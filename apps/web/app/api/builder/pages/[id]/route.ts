@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { NextRequest } from 'next/server';
 import { createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/utils/api';
+import { isValidSlugFormat } from '@/lib/utils/slug';
 
 export async function GET(
   request: NextRequest,
@@ -116,6 +117,17 @@ export async function PUT(
     }
     updateData.updated_at = new Date().toISOString();
 
+    // `web_pages.slug` has no format CHECK at the DB level (only
+    // `UNIQUE (website_id, slug)` -- see lib/utils/slug.ts's module doc
+    // comment), and unlike page CREATION (which always derives the slug
+    // from `uniqueSlug()`/`slugify()` client-side), the page-settings
+    // drawer lets a user type an arbitrary string directly into this
+    // field. Reject an invalid one here, server-side, rather than letting
+    // it reach a public route that expects a `SLUG_FORMAT`-shaped segment.
+    if (typeof updateData.slug === 'string' && !isValidSlugFormat(updateData.slug)) {
+      return createErrorResponse('Slug must be lowercase letters, numbers, and hyphens only (no leading/trailing hyphen).', 400);
+    }
+
     // STALE-WRITE / CONFLICT DETECTION (opt-in, backward compatible): a
     // caller that loaded the page and tracked its `version` can pass
     // `expectedVersion` to get a real compare-and-swap -- the UPDATE only
@@ -146,6 +158,14 @@ export async function PUT(
           'This page was changed by someone else since you loaded it. Reload the latest version before saving again.',
           409
         );
+      }
+      // Postgres unique_violation on `web_pages_website_id_slug_key` --
+      // renaming this page's slug to one another page on the same website
+      // already has. Surface it as a clear, actionable conflict instead of
+      // a generic 500 (same treatment POST's pre-check gives this error at
+      // creation time).
+      if ((error as { code?: string } | null)?.code === '23505') {
+        return createErrorResponse('That URL is already used by another page on this site. Choose a different slug.', 409);
       }
       return createErrorResponse('Failed to update page', 500);
     }
