@@ -71,7 +71,7 @@ export function EditorToolbar({
         <button
           onClick={editor.undo}
           disabled={!editor.canUndo}
-          title="Undo"
+          title="Undo (Ctrl/Cmd+Z)"
           className="rounded-md p-2 text-[#9a9a9a] transition hover:bg-white/5 hover:text-[#E5E5E5] disabled:opacity-30"
         >
           <Undo2 className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function EditorToolbar({
         <button
           onClick={editor.redo}
           disabled={!editor.canRedo}
-          title="Redo"
+          title="Redo (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)"
           className="rounded-md p-2 text-[#9a9a9a] transition hover:bg-white/5 hover:text-[#E5E5E5] disabled:opacity-30"
         >
           <Redo2 className="h-4 w-4" />
