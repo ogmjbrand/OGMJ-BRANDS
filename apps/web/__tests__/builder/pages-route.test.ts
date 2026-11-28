@@ -145,3 +145,45 @@ describe('PUT /api/builder/pages/[id] -- stale-write detection', () => {
     expect(updateCalls).toHaveLength(0);
   });
 });
+
+/**
+ * `web_pages.slug` carries no format CHECK at the DB level -- only
+ * `UNIQUE (website_id, slug)` -- so an arbitrary string typed into the
+ * page-settings drawer's slug field previously reached the database
+ * unvalidated, and a collision with another page's slug surfaced as a
+ * generic 500. These tests cover both gaps closing.
+ */
+describe('PUT /api/builder/pages/[id] -- slug validation', () => {
+  beforeEach(() => {
+    currentUser = { id: 'user-1', email: 'user@example.com' };
+    accessCheckResult = { data: { role: 'owner' }, error: null };
+    pageRow = { business_id: 'biz-1', version: 3 };
+    updateResults = [];
+    updateCalls = [];
+  });
+
+  it('rejects an invalid slug before ever touching the database', async () => {
+    const { PUT } = await import('@/app/api/builder/pages/[id]/route');
+    const res = await PUT(makeRequest({ slug: 'Not A Valid Slug!' }), { params: Promise.resolve({ id: 'page-1' }) });
+    const body = await res.json();
+    expect(res.status).toBe(400);
+    expect(body.error).toMatch(/lowercase/i);
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it('accepts a valid lowercase-hyphenated slug', async () => {
+    updateResults = [{ data: { id: 'page-1', slug: 'about-us', version: 4 }, error: null }];
+    const { PUT } = await import('@/app/api/builder/pages/[id]/route');
+    const res = await PUT(makeRequest({ slug: 'about-us' }), { params: Promise.resolve({ id: 'page-1' }) });
+    expect(res.status).toBe(200);
+  });
+
+  it('maps a unique-constraint violation (another page already has this slug) to a clear 409, not a generic 500', async () => {
+    updateResults = [{ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "web_pages_website_id_slug_key"' } }];
+    const { PUT } = await import('@/app/api/builder/pages/[id]/route');
+    const res = await PUT(makeRequest({ slug: 'pricing' }), { params: Promise.resolve({ id: 'page-1' }) });
+    const body = await res.json();
+    expect(res.status).toBe(409);
+    expect(body.error).toMatch(/already used by another page/i);
+  });
+});

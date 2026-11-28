@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getCurrentUserServer as getCurrentUser } from '@/lib/auth.server';
 import { NextRequest } from 'next/server';
 import { createErrorResponse, createSuccessResponse, handleApiError } from '@/lib/utils/api';
+import { isValidSlugFormat } from '@/lib/utils/slug';
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,6 +87,10 @@ export async function POST(request: NextRequest) {
 
     if (!businessId || !websiteId || !title || !slug) {
       return createErrorResponse('Business ID, website ID, title, and slug are required', 400);
+    }
+
+    if (!isValidSlugFormat(slug)) {
+      return createErrorResponse('Slug must be lowercase letters, numbers, and hyphens only (no leading/trailing hyphen).', 400);
     }
 
     const supabase = await createServerClient();
