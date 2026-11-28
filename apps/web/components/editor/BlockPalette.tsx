@@ -8,7 +8,7 @@
  * otherwise as a child of the document root -- so inserting a block never
  * requires a drag.
  */
-import { Heading1, Type, MousePointerClick, Square, LayoutPanelTop, Image as ImageIcon } from 'lucide-react';
+import { Heading1, Type, MousePointerClick, Square, LayoutPanelTop, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { canHaveChildren, findNode, getChildren } from '@/lib/document-model';
 import { createDefaultNode, INSERTABLE_BLOCKS, type InsertableBlockKind } from '@/lib/editor/createDefaultNode';
 import type { DocumentEditor } from '@/lib/editor/useDocumentEditor';
@@ -19,6 +19,7 @@ const ICONS: Record<InsertableBlockKind, React.ComponentType<{ className?: strin
   text: Type,
   button: MousePointerClick,
   image: ImageIcon,
+  video: VideoIcon,
   container: Square,
   section: LayoutPanelTop,
 };
