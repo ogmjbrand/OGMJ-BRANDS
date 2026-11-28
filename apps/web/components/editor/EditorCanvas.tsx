@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Copy, Minus, Plus, Scan, Trash2 } from 'lucide-react';
+import { Blocks, Copy, Minus, Plus, Scan, Trash2 } from 'lucide-react';
 import { DocumentRenderer } from '@/components/document/DocumentRenderer';
 import {
   DEFAULT_TOKEN_SET,
@@ -12,8 +12,9 @@ import {
   type NodeId,
 } from '@/lib/document-model';
 import { IframeCanvas } from './IframeCanvas';
-import { createDefaultNode, type InsertableBlockKind } from '@/lib/editor/createDefaultNode';
+import { createDefaultNode, freshNodeId, type InsertableBlockKind } from '@/lib/editor/createDefaultNode';
 import { cloneNodeWithFreshIds } from '@/lib/editor/duplicateNode';
+import { createComponentFromNode } from '@/lib/editor/createComponentFromNode';
 import { VIEWPORTS, type DocumentEditor } from '@/lib/editor/useDocumentEditor';
 
 export const DRAG_BLOCK_MIME = 'application/x-ogmj-block';
@@ -65,6 +66,22 @@ export function EditorCanvas({ editor }: { editor: DocumentEditor }) {
     const clone = cloneNodeWithFreshIds(node);
     editor.apply({ op: 'insertNode', parentId: located.parent.id, index: located.index + 1, node: clone });
     editor.select(clone.id);
+  }, [editor]);
+
+  const saveSelectionAsComponent = useCallback(() => {
+    const id = editor.selectedNodeId;
+    if (!id || id === editor.document.root.id) return;
+    const node = findNode(editor.document.root, id);
+    const located = findParent(editor.document.root, id);
+    if (!node || !located) return;
+    const name = window.prompt('Name this component', 'New component');
+    if (!name || !name.trim()) return;
+    const definition = createComponentFromNode(node, name.trim());
+    const instanceId = freshNodeId('instance');
+    editor.apply({ op: 'upsertComponent', componentId: definition.id, definition });
+    editor.apply({ op: 'removeNode', nodeId: id });
+    editor.apply({ op: 'insertNode', parentId: located.parent.id, index: located.index, node: { id: instanceId, kind: 'componentInstance', componentId: definition.id } });
+    editor.select(instanceId);
   }, [editor]);
 
   const fitToScreen = useCallback(() => {
@@ -285,6 +302,15 @@ export function EditorCanvas({ editor }: { editor: DocumentEditor }) {
           className="rounded p-1.5 text-[#9a9a9a] hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Trash2 className="h-3.5 w-3.5" />
+        </button>
+        <div className="mx-1 h-4 w-px bg-white/10" />
+        <button
+          onClick={saveSelectionAsComponent}
+          disabled={!editor.selectedNodeId || editor.selectedNodeId === editor.document.root.id}
+          title="Save selected as a reusable component"
+          className="rounded p-1.5 text-[#9a9a9a] hover:bg-white/5 hover:text-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <Blocks className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
